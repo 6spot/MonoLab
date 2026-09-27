@@ -57,6 +57,8 @@ Rework may reactivate a COMPLETED Node back into active execution.
 
 When a Node is reworked, that Node and all descendants in the current Plan are invalidated back to PENDING. Independent Nodes are unaffected. Historical execution data remains immutable.
 
+A BLOCKED Node returns to PENDING when its external condition is explicitly resolved. This is the only formal Node transition needed for unblock/resume; Task status is then re-derived by Orchestrator.
+
 ## Attempt state
 
 ~~~text
