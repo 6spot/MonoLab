@@ -27,14 +27,16 @@ Project
 - name
 - context / description
 - resources[]
-- roles[]
+- role_ids[]
 ~~~
 
 Project Context is Owner-authored. It may include the project description, long-lived constraints, delivery conventions, and other stable information needed by Planner and execution agents. Do not require AI to generate or own the canonical Project Context.
 
 Resources are the repositories or other execution resources that belong to the Project. Resource-specific default refs belong to the resource configuration rather than the Execution Task.
 
-Roles are also Project-owned long-lived configuration in V1. A Project directly defines the small set of Roles Planner may use for that Project. Do not insert a separate Team / Team Blueprint abstraction between Project and Role.
+Roles are globally reusable behavioral profiles. A Project stores only the Role IDs that Planner may use for that Project.
+
+Do not insert a separate Team / Team Blueprint abstraction between Project and Role. Project selects reusable Roles directly.
 
 Project Context is injected directly when Planner or an execution Agent works. Execution Tasks do not duplicate or bind Project resources.
 
