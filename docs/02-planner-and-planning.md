@@ -15,6 +15,97 @@ DISCUSSION
 
 Planner itself runs on a configured Runtime through its own Execution Policy.
 
+## Planner instruction layers
+
+Planner behavior is assembled from two different instruction layers:
+
+~~~text
+Fixed System Protocol
++ Owner Planner Guidance
+~~~
+
+Fixed System Protocol defines MonoLab's non-overridable product and orchestration rules, including formal state/tool boundaries, required Owner confirmations, immutable Task/Plan semantics, and final acceptance/delivery authority.
+
+Owner Planner Guidance is user-editable and controls collaboration style, preferences, tone, planning habits, and other soft behavior. It must not override the Fixed System Protocol.
+
+Do not expose the raw Fixed System Protocol as an editable prompt. UI may show a read-only summary of managed system behavior.
+
+## Phase-specific Planner context
+
+Do not use one ever-growing universal Planner prompt. The same Planner is reused across phases, but Context Builder assembles different context for each phase.
+
+### DISCUSSION
+
+Default context should include:
+
+- Fixed System Protocol;
+- Owner Planner Guidance;
+- current Project Context when assigned;
+- immutable Original Capture;
+- current Working Requirement State;
+- recent Discussion within a deterministic token/message budget;
+- current Owner message.
+
+Do not inject the complete Discussion history by default. Older Discussion remains available through read/search tools when needed.
+
+Do not add a separate AI context-optimizer in V1 merely to summarize recent Discussion. Working Requirement State plus a deterministic recent-message window is sufficient.
+
+### MATERIALIZE TASK
+
+When execution intent is clear, context remains centered on the current requirement:
+
+- Fixed System Protocol;
+- Owner Planner Guidance;
+- Project Context;
+- Original Capture;
+- Working Requirement State;
+- recent Discussion;
+- current Owner message.
+
+This phase produces only the proposed title/specification for the mandatory Execution Task Preview. It should not pull Runtime, Workspace, Git Log, or full Role instructions into the context merely because execution is about to begin.
+
+### PLAN EXECUTION
+
+After Owner confirmation creates the immutable Execution Task, planning switches from the Discussion world to the formal execution world.
+
+Default context should include:
+
+- Fixed System Protocol;
+- Owner Planner Guidance;
+- immutable Execution Task Specification as the primary semantic input;
+- current Project Context;
+- Project resource summary;
+- selected reusable Role descriptors (role_id, name, description);
+- only the formal/current facts needed to build the Plan.
+
+Do not inject the full Todo Discussion by default after the Task has been frozen. Rejected ideas, reversals, and exploratory conversation should not continue to pollute execution planning when the effective requirement is already captured by the Specification.
+
+Planner does not need full Role instructions in order to choose a Role. Full Role instructions are injected later when that Role actually executes a Node.
+
+### REPLAN
+
+Default Replan context should include:
+
+- Fixed System Protocol;
+- Owner Planner Guidance;
+- immutable Execution Task Specification;
+- current effective Plan;
+- current Node states and relevant completion summaries;
+- relevant Artifacts / formal outputs;
+- request_replan(reason);
+- current Project Context;
+- selected reusable Role descriptors.
+
+Do not return to the full Todo Discussion unless an explicit read is needed to resolve a concrete ambiguity.
+
+## Context precedence
+
+System invariants cannot be overridden.
+
+Within semantic/project guidance, newer explicit Owner intent for the current Todo/Task may create a task-specific exception to older Project defaults. Such an exception applies only to the current requirement and must not silently mutate Project Context.
+
+When materialized, the effective exception belongs in the immutable Execution Task Specification.
+
 ## Discussion behavior
 
 Planner should advance Owner intent rather than interrogate for formal completeness.
