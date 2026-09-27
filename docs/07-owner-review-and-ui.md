@@ -239,6 +239,28 @@ A Project overview may show:
 
 Project-scoped Todos and Execution Tasks should still use the canonical Todo Workspace and Execution Board.
 
+Project Roles are created and maintained directly inside the Project. The Project view/configuration should provide an explicit Roles section with a clear creation entry point:
+
+~~~text
+Project
+├─ Context
+├─ Resources
+└─ Roles
+   ├─ General Coding
+   ├─ Swift / macOS
+   └─ + New Role
+~~~
+
+There is no separate global Role library in V1. Creating a Role always creates it for the current Project.
+
+A Role editor may include:
+
+- name;
+- description;
+- instructions;
+- optional expected outputs;
+- optional custom Execution Policy, otherwise use the applicable default policy.
+
 For example:
 
 ~~~text
