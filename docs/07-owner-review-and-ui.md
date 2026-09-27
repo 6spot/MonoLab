@@ -77,6 +77,28 @@ The Todo list remains visible while the Owner discusses the selected Todo on the
 
 This reduces context drift when several Todos are active: the Owner can always see which Todo is selected and can switch directly without leaving the workspace.
 
+### No Todo selected
+
+When no Todo is selected, the right workspace should show a quiet empty state rather than auto-opening an arbitrary Todo.
+
+Recommended empty state:
+
+~~~text
+No Todo selected
+
+Select a Todo on the left to view it or start a discussion.
+
+[Create Todo]
+~~~
+
+The primary creation surface still lives in the Todo list column. The right-side Create Todo action, if shown, should simply focus/open that same capture flow rather than introducing a second creation model.
+
+Do not invoke Planner, show Current Understanding, or preload a Discussion when no Todo is selected.
+
+When possible, the client may restore the Owner's previously selected Todo for the current scope/session if it still exists and is visible. If there is no valid previous selection, remain in the explicit empty state rather than automatically selecting the first Todo.
+
+If the current scope contains no Todos at all, the empty state may instead explain that the scope is empty and point to the same quick-capture action.
+
 The right side is the Todo working surface, not a modal that hides the surrounding Todo context. On smaller/mobile screens the same information may use a full-screen presentation, but the conceptual model remains list + selected Todo workspace.
 
 The selected Todo workspace contains:
