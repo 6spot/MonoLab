@@ -34,6 +34,84 @@ Planner/Role/Runtime configuration belongs to settings/infrastructure areas, not
 
 Do not introduce a separate Activity page to replace the Execution Board.
 
+
+## Todo workspace
+
+Todo is the fastest capture surface in the product.
+
+Creating a Todo should require only the idea itself. Project selection is optional and must not block capture. The Owner can associate the Todo with a Project later.
+
+On desktop/web, selecting a Todo should not navigate away from the Todo list into a completely separate page.
+
+Prefer a split workspace:
+
+~~~text
+Todo workspace
+
+┌──────────────────────┬─────────────────────────────────────┐
+│ Todo list            │ Selected Todo                       │
+│                      │                                     │
+│ Todo A               │ Discussion with Planner             │
+│ Todo B  ← selected   │                                     │
+│ Todo C               │ Execution Task preview/cards        │
+│ Todo D               │                                     │
+│                      │ Message composer                    │
+└──────────────────────┴─────────────────────────────────────┘
+~~~
+
+The left Todo list remains visible while the Owner discusses the selected Todo on the right.
+
+This reduces context drift when several Todos are active: the Owner can always see which Todo is selected and can switch directly without leaving the workspace.
+
+The right side is the Todo working surface, not a modal that hides the surrounding Todo context. On smaller/mobile screens the same information may use a full-screen presentation, but the conceptual model remains list + selected Todo workspace.
+
+The selected Todo workspace contains:
+
+- Todo title and optional Project association;
+- optional expandable Current Understanding;
+- long-lived Discussion;
+- transient Execution Task preview when proposed;
+- inline cards for confirmed Execution Tasks created from this Todo;
+- message composer.
+
+### Execution Task preview
+
+Every proposed Execution Task must be previewed before formal creation, regardless of whether creation was initiated through natural language or a UI button.
+
+The preview should be lightweight:
+
+~~~text
+Execution Task Preview
+
+Title
+...
+
+Specification
+...
+
+Project
+Morie / Unassigned
+
+[Cancel] [Continue discussing] [Confirm & Start]
+~~~
+
+The Owner can reread the exact title/specification that will become immutable.
+
+The preview is not a persisted Draft Task and should not introduce another domain lifecycle. It is temporary UI state.
+
+After confirmation, the system creates the immutable Execution Task and replaces/inserts the preview with a confirmed inline card in the Discussion flow.
+
+A confirmed Execution Task card may show:
+
+- title;
+- created time;
+- current execution state;
+- View Task;
+- Run/Review status appropriate to the current Task state.
+
+The card anchors the moment in the Discussion when that formal execution was created, while full execution detail remains in Execution Task Detail / Execution Board.
+
+
 ## Execution Board
 
 Board columns are user-facing organization, not a 1:1 copy of internal Task states.
