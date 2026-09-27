@@ -62,6 +62,9 @@ When a Node is reworked, that Node and all descendants in the current Plan are i
 
 A BLOCKED Node returns to PENDING when its external condition is explicitly resolved. This is the only formal Node transition needed for unblock/resume; Task status is then re-derived by Orchestrator.
 
+Owner Stop after Plan publication is represented using this same mechanism: cancel the active Attempt and set the Node to BLOCKED with an Owner-stopped reason. Continue returns the same Node to PENDING and creates a later Attempt through normal scheduling.
+
+Manual Runtime / Runner / Model / Thinking switching does not change Node state or Plan structure. It ends one Attempt and starts another while the Node remains RUNNING.
 ## Attempt
 
 Attempt is generic Runtime execution infrastructure, not a Node-only object.
@@ -87,6 +90,10 @@ CANCELLED
 ~~~
 
 Specific causes live in `end_reason`.
+
+`Attempt.QUEUED` is the normal runtime-capacity waiting state after work has been selected for execution but before a Runtime slot actually starts it. It does not imply Task PLANNING, Task BLOCKED, or an error.
+
+A RUNNING Task may therefore have queued Planner/Node Attempts. Task state and Attempt scheduling state are intentionally different layers.
 
 For Node-owned Attempts, Attempt failure does not imply Node failure. For Planner-owned Attempts, failure does not create a new Task state; the surrounding Task/Todo remains in its existing formal state while fallback/retry/attention is handled.
 
