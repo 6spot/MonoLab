@@ -176,3 +176,7 @@ Attempt state stays small: QUEUED, RUNNING, SUCCEEDED, FAILED, CANCELLED.
 Specific causes belong in `end_reason`.
 
 Attempt failure does not mean Node failure.
+
+Client state never participates in Attempt lifecycle. Browser close, mobile disconnect, UI navigation, or client network loss are irrelevant because execution is owned by the backend Runner.
+
+Attempt continuity is determined only by server-side Runtime execution continuity. If the same Runtime execution process/invocation remains alive, it is the same Attempt. If that execution ends and MonoLab must start or resume a Runtime execution again, that is a new Attempt.
