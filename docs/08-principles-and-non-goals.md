@@ -13,6 +13,7 @@ This document prevents architectural drift.
 7. Prefer the smallest sufficient abstraction.
 8. Build developer-first UX while keeping lower-level execution concepts reasonably generic.
 9. Use mature systems such as Multica as implementation references, not as product-model templates.
+10. Design extension points at provider boundaries, but keep V1 intentionally narrow and GitHub-first.
 
 ## Explicitly removed / rejected concepts
 
@@ -37,7 +38,9 @@ Do not reintroduce without a new, explicit architectural decision:
 - a user-facing DAG as normal product UI;
 - an Activity page that duplicates/replaces Execution Board;
 - a large Current Task State semantic summary;
-- operation logs inside Task/Timeline.
+- operation logs inside Task/Timeline;
+- Local Directory as a V1 Project resource;
+- GitHub-specific repository semantics leaking into core Workspace/Task/Node models.
 
 ## Important invariants
 
@@ -54,6 +57,8 @@ Do not derive Todo status from Execution Task runtime state.
 Project Context provides repositories/resources directly.
 
 Tasks do not duplicate or bind Project resources.
+
+The core repository abstraction is Git-based, not GitHub-specific. V1 UX may be GitHub-first through a provider integration and repository picker.
 
 Agents use `open_workspace(resource_id)` when they actually need a repository.
 
