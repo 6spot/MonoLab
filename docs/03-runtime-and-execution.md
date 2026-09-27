@@ -12,6 +12,8 @@ It is responsible for deterministic runtime infrastructure: discover installed A
 
 Clients do not own execution. Web/Mobile may disconnect without affecting running work.
 
+V1 may operate with a single Runner, but placement must not be hard-coded to a single-machine architecture. When placement is Auto, the system should prefer to keep an Execution Task on the Runner where its Task Workspace has already been created. This task-level stickiness avoids unnecessary Workspace migration. Explicit Runner pinning overrides Auto placement.
+
 ## Runtime
 
 Runtime is a concrete Agent CLI available on a Runner, for example Codex, Claude Code, or OpenCode.
@@ -51,12 +53,20 @@ Each target is complete:
 ~~~text
 ExecutionTarget
 - runtime_id
+- runner_id?          # null = Auto placement; set = hard pin to one Runner
 - model_id?
 - thinking_level?
 - runtime_options?
 ~~~
 
 Every fallback is its own Execution Target, not merely a runtime ID.
+
+Runner selection is optional:
+
+- `runner_id = null` means Auto placement. The system selects a compatible online Runner that provides the requested Runtime.
+- a concrete `runner_id` is a hard placement constraint: that target may run only on the specified Runner.
+- if the pinned Runner is unavailable, the target is unavailable. The system must not silently move that same target to another Runner.
+- a later fallback target may explicitly name another Runner or return to Auto placement.
 
 Model and thinking level may be absent, meaning "use the Runtime/CLI default".
 
