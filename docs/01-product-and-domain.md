@@ -146,4 +146,8 @@ It does not contain runtime state, Plan state, resource bindings, Workspace stat
 
 Discussion may continue after an Execution Task is created and may later produce another independent Execution Task.
 
+Execution Task creation is a hard semantic/module boundary. After creation, planning, execution, replan, review, and delivery belong to the Execution Task and do not depend on the Todo Planner Session, Todo Discussion, or Working Requirement State.
+
+The Todo remains independently discussable. A later Execution Task created from the same Todo starts another independent execution chain.
+
 A new Execution Task under the same Todo does not automatically ingest semantic history from older Execution Tasks. The current Project/repository reality naturally carries forward already-delivered code.
