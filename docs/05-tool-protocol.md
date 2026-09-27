@@ -59,7 +59,9 @@ Full Role instructions are not Planner selection context. Planner sees only comp
 
 ## Node context assembly
 
-Node context is assembled deterministically from Task, Project, Node, Role, formal upstream outputs, and optional Rework context.
+Node context is assembled deterministically from Task, Project, Node, the current Role configuration, formal upstream outputs, and optional Rework context.
+
+Role instructions are resolved when a new execution / Attempt starts. Do not create Role snapshots or Role revisions for Plan immutability. An already-running Attempt keeps the context it started with; later executions use the latest Role instructions.
 
 A useful conceptual boundary is:
 
