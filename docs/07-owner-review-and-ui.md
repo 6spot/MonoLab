@@ -519,9 +519,19 @@ No Git:
 - Accept → COMPLETED.
 
 Git:
-- Accept → deterministic Git Delivery;
+- entering REVIEW automatically prepares the delivery branch and creates/updates the GitHub PR;
+- Review shows the prepared PR, diff summary, checks/CI, and mergeability;
+- Accept & Merge → deterministic Git Delivery;
 - delivery success → COMPLETED;
 - delivery failure → remain REVIEW.
+
+There is no normal Owner-facing "Prepare PR" action.
+
+If checks are still running, Review may show them in progress. Accept & Merge may wait for required checks rather than introducing another Task state.
+
+Request Changes keeps the Task in the same delivery lineage: work resumes, the same delivery branch / PR is updated, checks rerun, and the Task later returns to REVIEW.
+
+For multi-repository Tasks, Review may show multiple delivery items/PRs under one Task-level delivery while retaining one Owner-level Accept & Merge action.
 
 Git Delivery has its own operation state. Do not expand Task states with MERGING/MERGED/etc.
 
