@@ -204,14 +204,14 @@ Specification
 Project
 Morie / Unassigned
 
-[Cancel] [Continue discussing] [Confirm & Start]
+[Cancel] [Continue discussing] [Create Task]
 ~~~
 
 The Owner can reread the exact title/specification that will become immutable.
 
 The preview is not a persisted Draft Task and should not introduce another domain lifecycle. It is temporary UI state.
 
-After confirmation, the system creates the immutable Execution Task and replaces/inserts the preview with a confirmed inline card in the Discussion flow.
+After confirmation, the system creates the immutable Execution Task in PLANNING and replaces/inserts the preview with a confirmed inline card in the Discussion flow. Creation does not start Planner or execution automatically.
 
 A confirmed Execution Task card may show:
 
@@ -219,7 +219,8 @@ A confirmed Execution Task card may show:
 - created time;
 - current execution state;
 - View Task;
-- Run/Review status appropriate to the current Task state.
+- a Start action while the Task is still in PLANNING;
+- Run/Review status appropriate to later Task states.
 
 The card anchors the moment in the Discussion when that formal execution was created, while full execution detail remains in Execution Task Detail / Execution Board.
 
@@ -332,7 +333,7 @@ Board columns are user-facing organization, not a 1:1 copy of internal Task stat
 V1:
 
 ~~~text
-Queued
+Planning
 Running
 Review
 Done
@@ -341,8 +342,8 @@ Done
 Suggested mapping:
 
 ~~~text
-QUEUED
-→ Queued
+PLANNING
+→ Planning
 
 RUNNING / BLOCKED / REPLAN_REQUIRED
 → Running
