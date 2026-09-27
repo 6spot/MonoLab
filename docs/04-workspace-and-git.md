@@ -149,6 +149,47 @@ If the collaboration structure itself is no longer sufficient, the Agent may req
 
 Owner Review for Git tasks always reviews the integrated Task Workspace, never an arbitrary Node Worktree.
 
-Agents do not directly merge the final branch.
+Agents do not directly push the final delivery branch, create the final PR, or merge the final branch.
 
-Final delivery happens only after Owner acceptance through the system delivery path.
+## Git delivery
+
+Formal remote delivery is owned by MonoLab, not by the execution Agent.
+
+For GitHub-backed resources, when all required work is integrated and the Task is ready to enter REVIEW, MonoLab automatically prepares delivery:
+
+1. finalize the Task Workspace;
+2. create or reuse a Task delivery branch;
+3. push that branch through the configured Git provider credentials;
+4. create or update the GitHub pull request automatically;
+5. read GitHub checks / CI status;
+6. read mergeability;
+7. expose the prepared delivery in Owner Review.
+
+There is no separate Owner-facing "Prepare PR" step in V1.
+
+The PR is infrastructure for Review/Delivery, not a separate business decision.
+
+A Task should normally have one delivery branch / PR per modified repository. A multi-repository Task may therefore have multiple delivery items under one Task-level Git delivery.
+
+Request Changes keeps the same Task and normally reuses the same delivery branch / PR. New work is pushed to the existing PR and checks run again.
+
+Owner acceptance triggers the deterministic delivery operation. For GitHub this may refresh checks/mergeability and merge the PR. Only successful final delivery moves the Task to COMPLETED.
+
+If delivery cannot complete because checks fail, mergeability changes, branch protection blocks the merge, provider access fails, or a similar objective condition occurs, the Task remains in REVIEW.
+
+Task state must not be expanded with Git-specific states such as MERGING or MERGED. Delivery operation state belongs to the Git delivery subsystem.
+
+Core delivery remains provider-neutral:
+
+~~~text
+Git Delivery
+├─ prepare branch
+├─ push branch
+└─ provider capabilities
+   ├─ create/update review request
+   ├─ read checks
+   ├─ read mergeability
+   └─ merge
+~~~
+
+GitHub is the V1 provider. Future providers may map those capabilities to Merge Requests, pipelines, and equivalent operations.
