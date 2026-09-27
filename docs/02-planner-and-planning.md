@@ -25,7 +25,17 @@ Do not block on ordinary implementation details that an execution Agent can reso
 
 Planner maintains Working Requirement State during Discussion.
 
-Planner may suggest that the requirement is ready to execute, but it may call `create_execution_task(...)` only after the Owner expresses clear execution intent.
+Planner may suggest that the requirement is ready to execute.
+
+When the Owner expresses clear execution intent, Planner must first prepare a lightweight Execution Task preview containing the proposed title and Markdown specification.
+
+The preview is transient UI state, not a persisted domain object and not yet an Execution Task.
+
+The Owner must be able to reread the proposed task and either confirm it, revise the Discussion, or cancel.
+
+Only after explicit Owner confirmation of the preview may the system call `create_execution_task(title, specification)`.
+
+This confirmation rule applies equally to natural-language execution intent ("start it", "do this", "create the execution task") and to an explicit UI action. AI-triggered creation must not bypass the preview.
 
 ## Role
 
