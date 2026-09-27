@@ -30,7 +30,7 @@ Projects
 → long-lived Project context/resources
 ~~~
 
-Planner/Runtime configuration belongs to settings/infrastructure areas, while Project Roles belong to Project configuration.
+Planner, reusable Role, and Runtime configuration belong to settings/infrastructure areas. Projects select which reusable Roles are available to Planner.
 
 Do not introduce a separate Activity page to replace the Execution Board.
 
@@ -232,26 +232,23 @@ A Project overview may show:
 
 - Project name and Owner-authored Context;
 - linked Resources and their default refs;
-- Project Roles;
+- selected reusable Roles;
 - a compact summary of active Todos;
 - a compact summary of current Execution Tasks;
-- actions to edit Project Context / Resources / Roles.
+- actions to edit Project Context / Resources / selected Roles.
 
 Project-scoped Todos and Execution Tasks should still use the canonical Todo Workspace and Execution Board.
 
-Project Roles are created and maintained directly inside the Project. The Project view/configuration should provide an explicit Roles section with a clear creation entry point:
+Roles are created and maintained in a global reusable Role library:
 
 ~~~text
-Project
-├─ Context
-├─ Resources
+Settings
 └─ Roles
    ├─ General Coding
    ├─ Swift / macOS
+   ├─ Debug
    └─ + New Role
 ~~~
-
-There is no separate global Role library in V1. Creating a Role always creates it for the current Project.
 
 A Role editor may include:
 
@@ -260,6 +257,22 @@ A Role editor may include:
 - instructions;
 - optional expected outputs;
 - optional custom Execution Policy, otherwise use the applicable default policy.
+
+Each Project has a lightweight Roles section that selects from this library:
+
+~~~text
+Project
+├─ Context
+├─ Resources
+└─ Available Roles
+   ├─ ✓ General Coding
+   ├─ ✓ Swift / macOS
+   └─ + Add Role
+~~~
+
+`Add Role` opens the reusable Role picker. It may also offer `Create New Role`, which creates a global reusable Role and selects it for the current Project.
+
+Do not add a Team/Blueprint layer between the global Role library and Project.
 
 For example:
 
