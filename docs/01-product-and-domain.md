@@ -34,6 +34,8 @@ This supports the primary capture case: the Owner has an idea and records it imm
 
 A Todo may remain open for a long time and can produce multiple independent Execution Tasks over time.
 
+Keep Todo lifecycle minimal. V1 only needs active vs archived behavior; do not introduce task-board style Todo states such as Backlog, Doing, Waiting, or Done. Active Todos are the normal working set. Archived Todos are removed from the default working set but remain recoverable.
+
 ~~~text
 Todo
 ├─ Discussion
