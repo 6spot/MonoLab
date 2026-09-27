@@ -361,6 +361,10 @@ CANCELLED
 
 Attention may be shown as a filter/section inside the Board.
 
+For a RUNNING Task with no published Plan yet (`current_plan_id = null`), the UI should present initial planning rather than Node progress. If Planner execution cannot proceed, show the Planner failure/availability reason and actions such as Retry, Stop, or Cancel Task.
+
+Stopping during this pre-Plan RUNNING phase returns the Task to PLANNING. Once a Plan exists, stopping execution must not reuse PLANNING because the Task has already begun formal execution.
+
 Todo cards do not show Execution Task runtime state. Todo and Execution Task are separate concepts.
 
 ## Task Overview
