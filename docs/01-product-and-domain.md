@@ -28,6 +28,10 @@ Project Context is injected directly when Planner or an execution Agent works. E
 
 A Todo is a long-lived thing the Owner wants to think about or handle. It is not an execution state.
 
+Todo capture must be fast and low-friction. A Todo does not need to belong to a Project when it is created. Project association is optional at capture time and may be added or changed later.
+
+This supports the primary capture case: the Owner has an idea and records it immediately without first choosing metadata or navigating project structure.
+
 A Todo may remain open for a long time and can produce multiple independent Execution Tasks over time.
 
 ~~~text
@@ -40,6 +44,8 @@ Todo
 ~~~
 
 Do not formalize V1/V2/V3 labels. Execution Tasks have their own IDs and creation times.
+
+When a Todo is not yet associated with a Project, Discussion may still continue normally. Project Context is injected only when a Project association exists. The UI should make later Project assignment easy without making it a prerequisite for capture.
 
 ## Discussion
 
