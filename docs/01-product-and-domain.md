@@ -39,6 +39,13 @@ A Todo may be assigned to a Project after capture and may later be moved to anot
 
 Existing Execution Tasks never migrate when their parent Todo is moved. Each immutable Execution Task keeps the Project association it had when it was created; later Tasks created from the Todo use the Todo's current Project.
 
+Project lifecycle should remain simple:
+
+- Active Projects are available for normal selection and execution.
+- Archived Projects keep Context, Resources, Todo associations, and historical Execution Tasks intact, but are removed from normal active pickers/views.
+- Permanent deletion is allowed only when there are no references, unless the Owner explicitly chooses a destructive cascade delete.
+- Cascade delete must clearly state that related Todos, Execution Tasks, Artifacts, logs, and other Project-owned historical data will also be permanently removed. It is never the default deletion behavior.
+
 ## Todo
 
 A Todo is a long-lived thing the Owner wants to think about or handle. It is not an execution state.
