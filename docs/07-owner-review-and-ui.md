@@ -255,7 +255,6 @@ A Role editor may include:
 - name;
 - description;
 - instructions;
-- optional expected outputs;
 - optional custom Execution Policy, otherwise use the applicable default policy.
 
 Each Project has a lightweight Roles section that selects from this library:
@@ -318,7 +317,13 @@ Selecting a concrete Runner means "run this target only on that Runner", not mer
 
 V1 may expose only one concrete Runner plus Auto, but the UI and data model should already support multiple Runner instances later without introducing different Runner types.
 
-Model, Thinking, and runtime-specific options should be discovered dynamically from the selected Runtime when possible. Manual model entry remains available for new or provider-specific model identifiers that discovery does not yet return.
+Model and Thinking are MonoLab-defined common fields. The selected Runtime Adapter reports whether each field is supported and which values are discoverable; unsupported fields are hidden.
+
+Do not let Runtime Adapters dynamically add arbitrary provider-specific form controls. MonoLab owns the fixed settings surface and only renders common fields it explicitly understands.
+
+Manual model entry remains available for new or provider-specific model identifiers that discovery does not yet return.
+
+MonoLab does not install coding tools and does not manage their login credentials. Runtime setup/authentication stays with the tool on the Runner machine.
 
 ## Execution Board
 
