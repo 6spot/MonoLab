@@ -57,6 +57,25 @@ Do not inject full Timeline, full Execution Logs, full repository history, all o
 
 Full Role instructions are not Planner selection context. Planner sees only compact Role descriptors; Role instructions are injected when the selected Role executes a Node.
 
+## Node context assembly
+
+Node context is assembled deterministically from Task, Project, Node, Role, formal upstream outputs, and optional Rework context.
+
+A useful conceptual boundary is:
+
+~~~text
+Fixed Agent Protocol
++ Role Instructions
++ Execution Task Specification
++ Project Context
++ Node Goal / requirements
++ relevant upstream outputs
++ Project resource map
++ optional Rework context
+~~~
+
+Do not preload complete upstream transcripts or repository contents. Agents retrieve additional formal history through read/search tools and inspect code through the Workspace.
+
 ## Workspace tools
 
 ~~~text
