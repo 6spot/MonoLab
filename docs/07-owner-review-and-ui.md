@@ -135,6 +135,57 @@ Runtime failover, session resume, heartbeat, Workspace creation, and raw command
 
 Multiple low-level Events may be grouped into one human-readable Timeline entry.
 
+Timeline is semantic history: it explains what formally happened and what was produced.
+
+## Execution Flow
+
+Below Timeline, show a separate lightweight execution-flow block.
+
+This is not another semantic Timeline and it is not the Plan DAG.
+
+Its purpose is to let the Owner visually see how work moved through the Task by showing when each Node/work item was triggered and when it reached its current or terminal state.
+
+A compact row may show:
+
+~~~text
+Analyze current lifecycle
+Triggered 18:32
+Completed 18:47
+
+Refactor window management
+Triggered 18:47
+Completed 19:06
+
+Verify memory release
+Triggered 19:06
+Running
+
+Final regression check
+Waiting
+~~~
+
+Recommended fields:
+
+- human-readable Node goal;
+- trigger/start time;
+- current Node state;
+- completion/block/cancel time when applicable;
+- duration may be derived for display.
+
+Do not show percentage progress.
+
+Do not show the DAG or dependency edges.
+
+Do not show Runtime, Session, Attempt IDs, Worktree details, or raw logs in this block.
+
+Sort primarily by actual trigger time so the Owner can read the execution sequence directly.
+
+A Node that has never been triggered may appear as Waiting without a trigger time.
+
+If a Node is reactivated by Rework, keep the same Node identity and show its additional activation in a compact way rather than inventing a new Node. The full historical reason for the Rework remains in Timeline.
+
+This block is a deterministic projection of Node lifecycle timestamps/states, not a new persisted object and not model-generated content.
+
 ## Execution Details
 
 Execution Details is the diagnostic layer.
