@@ -29,7 +29,7 @@ Planner Runtime execution uses the same generic Attempt infrastructure as Node A
 Planner Execution Policy may define ordered fallback targets. Planner failure therefore affects only work that currently requires Planner:
 
 - Todo Discussion/materialization waits or falls back;
-- a QUEUED Task without a Plan waits or falls back during initial planning;
+- a RUNNING Task that has just been started may wait or fall back during initial planning;
 - a REPLAN_REQUIRED Task waits or falls back during Replan;
 - an already-published Plan continues normal Orchestrator scheduling without Planner.
 
@@ -113,11 +113,11 @@ This phase produces only the proposed title/specification for the mandatory Exec
 
 Owner confirmation creates the immutable Execution Task, but does not immediately materialize an Execution Plan.
 
-A newly created Task enters QUEUED with no current Plan. Initial planning begins only when the backend actually admits that Task for execution.
+A newly created Task enters PLANNING with no current Plan. In this state the Task is a formal, ready-to-run item in the Owner's execution library, but MonoLab does not yet invoke the Execution Task Planner.
 
-At that moment MonoLab starts a separate Execution Task Planner Session. This is not a continuation of the Todo Planner Session.
+Initial planning begins only when the Owner explicitly starts the Task. Starting moves the Task to RUNNING immediately, then MonoLab starts a separate Execution Task Planner Session. This is not a continuation of the Todo Planner Session.
 
-Deferring initial planning until execution admission is intentional: the Planner should use the current Project Context, current Project Resources, and the current set of Project-selected Roles at the time execution really begins. Changes made while the Task waits in QUEUED therefore naturally affect the initial Plan without mutating the frozen Task Specification.
+Deferring initial planning until Owner Start is intentional: the Planner should use the current Project Context, current Project Resources, and the current set of Project-selected Roles at the moment execution really begins. Changes made while the Task remains in PLANNING therefore naturally affect the initial Plan without mutating the frozen Task Specification.
 
 Default context should include:
 
