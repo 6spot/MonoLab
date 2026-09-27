@@ -159,6 +159,22 @@ Concrete operation logs do not belong in Execution Task, Current Task State, Tas
 
 Full logs are retained, but default Agent context should use only a small recent tail or a reference. Agents may read/search more on demand.
 
+## Git delivery operation
+
+Git delivery is a separate deterministic operation owned by the system.
+
+It may have provider-specific internal states such as preparing, pushing, waiting for checks, mergeable, merging, succeeded, or failed, but those must not expand the Execution Task state machine.
+
+For Git tasks:
+
+- readiness for review causes automatic delivery preparation / PR creation;
+- Task remains REVIEW while the Owner reviews and while delivery prerequisites are being evaluated;
+- Owner Accept starts/continues the final delivery operation;
+- successful merge/delivery causes TASK_COMPLETED;
+- delivery failure leaves the Task in REVIEW.
+
+Git delivery state is not Current Task State and should not be duplicated there beyond an attention/reference pointer when Owner action is required.
+
 ## Current Task State
 
 Current Task State is a small, rebuildable materialized projection.
