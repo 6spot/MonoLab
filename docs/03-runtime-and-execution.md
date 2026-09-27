@@ -108,6 +108,27 @@ Auto/Policy execution may move through ordered fallbacks when the current Runtim
 
 Do not score runtimes dynamically by model intelligence, estimated speed, cost, or predicted quota.
 
+## Execution admission and initial planning
+
+Creating an Execution Task does not immediately create its Plan.
+
+A newly created Task remains QUEUED with `current_plan_id = null` until the backend actually admits it for execution.
+
+Execution admission starts the Execution Task Planner using the latest current configuration:
+
+- immutable Execution Task Specification;
+- current Project Context;
+- current Project Resources;
+- current Project-selected Role descriptors;
+- current Planner Guidance and Execution Policy.
+
+This allows a Task that waited in QUEUED to benefit from Roles or Project configuration added/changed before execution actually starts.
+
+Initial planning is a system control operation, not a Node Attempt. Attempt remains reserved for concrete Node execution.
+
+After a valid Plan is published, Orchestrator derives runnable Nodes and normal Node scheduling begins.
+
+
 ## Orchestrator scheduling
 
 Orchestrator owns deterministic scheduling. Planner defines Plan structure; Agents perform Node work; neither decides the day-to-day runnable set.
