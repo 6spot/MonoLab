@@ -118,6 +118,12 @@ If all Planner targets are unavailable during initial planning, the Task remains
 
 Runtime scheduling may prioritize control work (Todo Planner, initial Plan, Replan) over queued ordinary Node Attempts when capacity becomes available, but must not preempt already-running Runtime executions merely to do so.
 
+Runtime capacity waiting is represented at Attempt level, not Task level. A Task may already be RUNNING while its current Planner or Node Attempt remains QUEUED waiting for an execution slot / compatible Runner capacity.
+
+Do not reintroduce a Task-level QUEUED state for this condition. Attempt QUEUED is an execution scheduling fact; Task RUNNING means the Owner has already started the Task.
+
+Capacity waiting is normal and should not by itself create Owner attention or BLOCKED state. If at least one Attempt is queued but none is currently running, UI may project a lightweight `Queued` / `Waiting for capacity` badge inside the Running surface. If some Attempts are running while others are queued, show normal Running state with an optional queued count/details.
+
 ## Owner start and initial planning
 
 Creating an Execution Task does not immediately create its Plan or start any Runtime work.
@@ -332,3 +338,33 @@ Attempt failure does not mean Node failure.
 Client state never participates in Attempt lifecycle. Browser close, mobile disconnect, UI navigation, or client network loss are irrelevant because execution is owned by the backend Runner.
 
 Attempt continuity is determined only by server-side Runtime execution continuity. If the same Runtime execution process/invocation remains alive, it is the same Attempt. If that execution ends and MonoLab must start or resume a Runtime execution again, that is a new Attempt.
+
+## Owner execution controls after Plan publication
+
+Once `current_plan_id != null`, Task-level PLANNING is no longer reusable because formal execution has already begun.
+
+### Cancel Task
+
+Cancel Task is the Task-level terminal action. Stop all active Attempts, prevent new Node scheduling, transition unfinished Nodes to CANCELLED as appropriate, and transition the Task to CANCELLED. Preserve completed Attempts, Logs, Artifacts, Events, and Workspace/Git history.
+
+### Stop Node
+
+Stop is Node-scoped after a Plan exists. Stopping a running Node cancels its active Attempt with an objective Owner-stopped end reason and moves the Node to BLOCKED so Orchestrator does not immediately restart it.
+
+Other independent Nodes continue normally. Task becomes BLOCKED only if no other running/runnable work remains and the stopped Node (or another required Node) prevents further progress.
+
+Owner Continue resolves this manual blocker by moving the same Node BLOCKED → PENDING. Normal dependency scheduling then starts a new Attempt. Do not add PAUSED / STOPPED / SUSPENDED Node states.
+
+V1 does not need a separate whole-Task pause lifecycle. If whole-Task pause is later required, model it explicitly rather than overloading PLANNING or BLOCKED.
+
+### Switch execution target
+
+Switch Runtime / Runner / Model / Thinking is Node-scoped and keeps the same Node and Plan.
+
+End the current Attempt (for example CANCELLED with `OWNER_SWITCHED_RUNTIME`) and immediately create a new Attempt using the explicit target. Node remains RUNNING throughout the handoff.
+
+Any change to Runtime, Runner, Model, or Thinking creates a new Attempt so each Attempt has one stable concrete execution target.
+
+Switching Runtime creates a fresh Runtime Session. Do not transfer an opaque provider Session across runtimes. Preserve the same Node Workspace state so the new Runtime can continue from the actual code/files already produced.
+
+Automatic fallback and manual switching share the same execution path after target selection: new Attempt, current formal context, existing Node Workspace, Runtime Adapter start/resume rules.
