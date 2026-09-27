@@ -42,6 +42,7 @@ Keep Todo lifecycle minimal. V1 only needs active vs archived behavior; do not i
 
 ~~~text
 Todo
+├─ Original Capture
 ├─ Discussion
 ├─ Working Requirement State
 ├─ Execution Task A
@@ -53,7 +54,17 @@ Do not formalize V1/V2/V3 labels. Execution Tasks have their own IDs and creatio
 
 When a Todo is not yet associated with a Project, Discussion may still continue normally. Project Context is injected only when a Project association exists. The UI should make later Project assignment easy without making it a prerequisite for capture.
 
+## Original Capture
+
+Original Capture is the Owner-authored content recorded when the Todo is created.
+
+It is not a Discussion message and must not imply that Planner was invoked at capture time.
+
+Original Capture remains intact as the historical record of what the Owner first wanted to remember. It may later be used as context when Discussion begins.
+
 ## Discussion
+
+Discussion begins only when the Owner explicitly starts interacting with Planner for that Todo, normally by sending the first Discussion message.
 
 Discussion is the long-lived conversation between Owner and Planner. It may contain incomplete ideas, rejected ideas, corrections, reversals, and exploration.
 
