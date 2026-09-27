@@ -43,23 +43,37 @@ Creating a Todo should require only the idea itself. Project selection is option
 
 On desktop/web, selecting a Todo should not navigate away from the Todo list into a completely separate page.
 
-Prefer a split workspace:
+The application already has a global primary navigation sidebar. Do not add a separate third scope column inside Todo, because that would create an unnecessarily deep four-column desktop layout.
+
+Prefer a two-column Todo workspace inside the main content area:
 
 ~~~text
-Todo workspace
+Global navigation | Todo workspace
 
-┌──────────────────────┬─────────────────────────────────────┐
-│ Todo list            │ Selected Todo                       │
-│                      │                                     │
-│ Todo A               │ Discussion with Planner             │
-│ Todo B  ← selected   │                                     │
-│ Todo C               │ Execution Task preview/cards        │
-│ Todo D               │                                     │
-│                      │ Message composer                    │
-└──────────────────────┴─────────────────────────────────────┘
+┌───────────────┬──────────────────────┬─────────────────────────────────────┐
+│ App menu      │ Todo list            │ Selected Todo                       │
+│               │                      │                                     │
+│ Todos         │ [scope/filter ▼]     │ Discussion with Planner             │
+│ Execution     │ [search]             │                                     │
+│ Projects      │                      │ Execution Task preview/cards        │
+│ Settings      │ Todo A               │                                     │
+│               │ Todo B ← selected    │ Message composer                    │
+│               │ Todo C               │                                     │
+└───────────────┴──────────────────────┴─────────────────────────────────────┘
 ~~~
 
-The left Todo list remains visible while the Owner discusses the selected Todo on the right.
+Scope/filter controls belong at the top of the Todo list column rather than in a separate column.
+
+Useful scopes are intentionally small:
+
+- Active — default working set;
+- Inbox — active Todos with no Project;
+- Project — filter active Todos by one Project;
+- Archived — explicit secondary view.
+
+Project filters may use a compact dropdown/menu rather than permanently listing every Project.
+
+The Todo list remains visible while the Owner discusses the selected Todo on the right.
 
 This reduces context drift when several Todos are active: the Owner can always see which Todo is selected and can switch directly without leaving the workspace.
 
@@ -73,6 +87,20 @@ The selected Todo workspace contains:
 - transient Execution Task preview when proposed;
 - inline cards for confirmed Execution Tasks created from this Todo;
 - message composer.
+
+### Todo list behavior
+
+Default ordering is by recent Discussion activity, not by manual priority.
+
+Discussion activity includes Owner messages, Planner replies, and creation of a confirmed Execution Task from that Todo. Background execution state changes must not reorder the Todo list.
+
+A lightweight unread/new-reply dot may appear beside a Todo when Planner activity completed while the Owner was viewing another Todo. Do not show Execution Task states such as Running, Review, Agent count, or Node progress on Todo rows.
+
+Each Todo keeps its own composer draft. Switching from Todo A to Todo B and back must restore A's unfinished draft instead of sharing one global draft buffer.
+
+Planner work is independent per Todo. The Owner may switch to Todo B while Planner is still responding in Todo A. A may complete in the background and surface a lightweight unread indicator without stealing focus or blocking work in B.
+
+Todo conversation context, Working Requirement State, draft text, and unread state are isolated per Todo to prevent cross-Todo context leakage.
 
 ### Execution Task preview
 
