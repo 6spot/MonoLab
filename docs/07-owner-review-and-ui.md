@@ -96,6 +96,29 @@ Discussion activity includes Owner messages, Planner replies, and creation of a 
 
 A lightweight unread/new-reply dot may appear beside a Todo when Planner activity completed while the Owner was viewing another Todo. Do not show Execution Task states such as Running, Review, Agent count, or Node progress on Todo rows.
 
+Todo rows should remain compact and recognizable rather than becoming mini task cards.
+
+Recommended row content:
+
+~~~text
+● Runtime fallback handling           MonoLab
+  Codex quota exhausted; switch Claude        12m
+~~~
+
+Use:
+
+- first line: Todo title;
+- second line: most recent meaningful Owner/Planner Discussion text, truncated to one line;
+- trailing time: recent Discussion activity;
+- optional unread/new-reply dot;
+- optional lightweight Project label only in cross-Project views such as Active.
+
+Do not create or persist a separate AI-generated Todo summary only for list rendering. Prefer deterministic use of recent meaningful Discussion text. If the latest message is trivial or empty, the UI may walk backward to the most recent useful text.
+
+When the current scope is already a specific Project, omit the repeated Project label from every Todo row.
+
+Do not add priority, labels, due date, board status, Agent count, progress, or other project-management metadata to the Todo row.
+
 Each Todo keeps its own composer draft. Switching from Todo A to Todo B and back must restore A's unfinished draft instead of sharing one global draft buffer.
 
 Planner work is independent per Todo. The Owner may switch to Todo B while Planner is still responding in Todo A. A may complete in the background and surface a lightweight unread indicator without stealing focus or blocking work in B.
