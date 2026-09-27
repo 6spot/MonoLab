@@ -56,7 +56,6 @@ ExecutionTarget
 - runner_id?          # null = Auto placement; set = hard pin to one Runner
 - model_id?
 - thinking_level?
-- runtime_options?
 ~~~
 
 Every fallback is its own Execution Target, not merely a runtime ID.
@@ -70,15 +69,30 @@ Runner selection is optional:
 
 Model and thinking level may be absent, meaning "use the Runtime/CLI default".
 
-Runtime Adapter/Registry should expose supported models, thinking levels, and runtime-specific options when discoverable. UI should load these capabilities dynamically from the connected Runtime rather than hard-coding provider catalogs into MonoLab core.
+MonoLab defines a fixed set of common execution configuration fields. Runtime Adapters report which of those common fields they support and the currently discoverable values.
 
-This mirrors the useful Multica behavior: the available model list comes from the selected Runtime/tool, and some tools may report that model selection is runtime-managed.
+V1 common fields are intentionally small:
+
+- Runtime;
+- Runner;
+- Model;
+- Thinking level.
+
+The UI shows only MonoLab-defined fields that the selected Adapter supports. An Adapter must not inject arbitrary provider-specific configuration controls into the general UI.
+
+This mirrors the useful Multica behavior where model/thinking choices come from the selected tool, while keeping MonoLab's product surface controlled and consistent.
 
 The UI should also allow an Owner to enter a model identifier manually when needed, so unknown/new/provider-specific models do not require a MonoLab release.
 
 A manually entered model is an explicit override. MonoLab may validate format/basic compatibility where possible, but it should not require the model to already exist in a cached discovery list.
 
+If a future option becomes broadly useful, add it deliberately to MonoLab's common schema rather than dynamically exposing every CLI/provider flag.
+
 Do not introduce a separate Runtime Profile layer unless future reuse proves it necessary.
+
+MonoLab never installs Codex, Claude Code, OpenCode, or other coding tools for the Owner. The Runner only discovers and invokes tools that already exist on that machine.
+
+MonoLab also does not own or manage authentication for those coding tools. Login state and credentials remain under the tool/runtime on the Runner machine. MonoLab may report objective availability/startability facts, but it does not store or provision those runtime credentials.
 
 Resolution priority:
 
