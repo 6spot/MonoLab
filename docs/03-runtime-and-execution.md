@@ -124,6 +124,67 @@ Do not reintroduce a Task-level QUEUED state for this condition. Attempt QUEUED 
 
 Capacity waiting is normal and should not by itself create Owner attention or BLOCKED state. If at least one Attempt is queued but none is currently running, UI may project a lightweight `Queued` / `Waiting for capacity` badge inside the Running surface. If some Attempts are running while others are queued, show normal Running state with an optional queued count/details.
 
+## Runtime capacity and concurrency
+
+Runner capacity stays intentionally simple.
+
+~~~text
+Runner
+- max_concurrent_attempts
+~~~
+
+Current utilization is derived from Attempts actually RUNNING on that Runner. Do not persist separate authoritative `active_attempts` or `available_slots` counters when they can be rebuilt from Attempt facts.
+
+V1 treats one RUNNING Attempt as one execution slot. Do not introduce CPU/memory/model-weight scoring or predicted work cost.
+
+Planner and Node Attempts share the same Runner capacity. Do not create separate Planner pools, reserved Planner machines, or reserved control-plane slots.
+
+Control work may receive the next free slot before ordinary Node work:
+
+- Todo Planner;
+- initial Execution Task Planner;
+- Replan Planner;
+
+then ordinary Node Attempts.
+
+Within the same class, use oldest eligible work first. This priority affects only which QUEUED Attempt receives the next free slot; it must not preempt already-running Attempts.
+
+### Capacity waiting versus fallback
+
+A compatible Runtime being busy is not runtime failure.
+
+If the requested Runtime/Runner is healthy and executable but all compatible slots are occupied, keep the Attempt QUEUED and wait. Do not fall back merely because capacity is full.
+
+Fallback is for an objectively unavailable/failed target such as missing Runtime, unavailable pinned Runner, auth/quota/runtime/process failure, or other normalized inability to continue.
+
+~~~text
+capacity full
+→ wait in Attempt.QUEUED
+
+target unavailable / execution failed
+→ evaluate ordered fallback
+~~~
+
+### Auto Runner placement
+
+For `runner_id = null` (Auto), Runner placement is resolved when the Attempt can actually be dispatched rather than permanently binding a queued Attempt too early.
+
+Candidate selection is deterministic:
+
+1. Runner is online;
+2. requested Runtime is available there;
+3. Workspace Manager confirms required Task/Node workspace state can be safely provided there;
+4. Runner has an available execution slot.
+
+Prefer the Runner that already owns the Task Workspace when it remains a valid candidate. If another compatible Runner can safely provide the required workspace state and becomes available first, Auto placement may use it.
+
+If the workspace cannot safely move/materialize elsewhere, other Runners are not valid candidates and the Attempt waits for the compatible Runner rather than silently changing execution semantics.
+
+For Auto placement, a QUEUED Attempt may keep `runner_id = null` until dispatch. At dispatch, set the concrete Runner and keep that Runner fixed for the lifetime of that Attempt.
+
+For an explicitly pinned target, the queued Attempt is bound to that Runner and waits only for that Runner. Switching Runner always ends the current Attempt and creates another.
+
+
 ## Owner start and initial planning
 
 Creating an Execution Task does not immediately create its Plan or start any Runtime work.
