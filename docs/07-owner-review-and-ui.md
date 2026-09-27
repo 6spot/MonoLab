@@ -107,13 +107,13 @@ Recommended row content:
 
 Use:
 
-- first line: Todo title;
+- first line: Owner-controlled title when one exists; otherwise a deterministic display excerpt from the original capture text;
 - second line: most recent meaningful Owner/Planner Discussion text, truncated to one line;
 - trailing time: recent Discussion activity;
 - optional unread/new-reply dot;
 - optional lightweight Project label only in cross-Project views such as Active.
 
-Do not create or persist a separate AI-generated Todo summary only for list rendering. Prefer deterministic use of recent meaningful Discussion text. If the latest message is trivial or empty, the UI may walk backward to the most recent useful text.
+Do not auto-generate or silently replace the Todo title with AI, and do not create or persist a separate AI-generated Todo summary only for list rendering. Prefer deterministic use of recent meaningful Discussion text. If the latest message is trivial or empty, the UI may walk backward to the most recent useful text.
 
 When the current scope is already a specific Project, omit the repeated Project label from every Todo row.
 
@@ -124,6 +124,21 @@ Each Todo keeps its own composer draft. Switching from Todo A to Todo B and back
 Planner work is independent per Todo. The Owner may switch to Todo B while Planner is still responding in Todo A. A may complete in the background and surface a lightweight unread indicator without stealing focus or blocking work in B.
 
 Todo conversation context, Working Requirement State, draft text, and unread state are isolated per Todo to prevent cross-Todo context leakage.
+
+### Planner activation
+
+Todo capture is passive. Creating a Todo does not automatically start Planner work.
+
+Simply selecting/opening a Todo also does not invoke Planner. The Owner may review, organize, or archive captured ideas without spending model work or creating unsolicited replies.
+
+Planner is invoked only after an explicit discussion action, such as:
+
+- the Owner sends a message in that Todo's Discussion composer; or
+- the Owner explicitly chooses a "Discuss / Ask Planner" action.
+
+The original capture text remains available as context for the first Planner turn, but Planner does not respond to it until the Owner explicitly starts Discussion.
+
+This allows the Owner to rapidly capture many ideas and leave some untouched indefinitely.
 
 ### Execution Task preview
 
