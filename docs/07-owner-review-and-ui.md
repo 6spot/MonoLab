@@ -224,6 +224,41 @@ A confirmed Execution Task card may show:
 The card anchors the moment in the Discussion when that formal execution was created, while full execution detail remains in Execution Task Detail / Execution Board.
 
 
+## Project overview
+
+Project UI should remain a light overview and scope lens, not become another project-management dashboard.
+
+A Project overview may show:
+
+- Project name and Owner-authored Context;
+- linked Resources and their default refs;
+- a compact summary of active Todos;
+- a compact summary of current Execution Tasks;
+- actions to edit Project Context / Resources.
+
+Project-scoped Todos and Execution Tasks should still use the canonical Todo Workspace and Execution Board.
+
+For example:
+
+~~~text
+Project: MonoLab
+
+Context
+...
+
+Resources
+6spot/MonoLab · main
+
+Active Todos        8   [View in Todos]
+Current Executions  3   [View in Execution]
+~~~
+
+Selecting `View in Todos` opens the Todo Workspace with the Project filter applied.
+
+Selecting `View in Execution` opens the Execution Board filtered to the Project.
+
+Avoid duplicating a full Todo list, full Execution Board, or another task state model inside Project Overview.
+
 ## Execution Board
 
 Board columns are user-facing organization, not a 1:1 copy of internal Task states.
