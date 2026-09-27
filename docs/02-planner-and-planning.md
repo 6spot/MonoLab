@@ -25,6 +25,8 @@ Do not block on ordinary implementation details that an execution Agent can reso
 
 Planner maintains Working Requirement State during Discussion.
 
+On the first Planner turn for a Todo, context may include the immutable Original Capture, Project Context when assigned, and the Owner's first Discussion message. Original Capture is context only; it must not be represented as if Planner had already participated at Todo creation time.
+
 Planner may suggest that the requirement is ready to execute.
 
 When the Owner expresses clear execution intent, Planner must first prepare a lightweight Execution Task preview containing the proposed title and Markdown specification.
