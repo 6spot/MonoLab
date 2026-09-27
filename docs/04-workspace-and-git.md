@@ -12,6 +12,10 @@ Core models should not depend on Git Worktree semantics.
 
 Project Context already contains its repositories/resources.
 
+A repository resource may define an optional default `ref` (branch, tag, or commit) used as the normal checkout/base for future work. If no ref is configured, the system may use the repository's default branch.
+
+This follows the useful separation seen in Multica: the resource owns its default ref; the Task does not need to repeat it.
+
 Execution Task does not bind or copy a resource list.
 
 Planner does not need to preselect which repository a Task will use.
