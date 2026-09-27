@@ -82,7 +82,8 @@ The right side is the Todo working surface, not a modal that hides the surroundi
 The selected Todo workspace contains:
 
 - Todo title and optional Project association;
-- optional expandable Current Understanding;
+- Original Capture;
+- optional expandable Current Understanding after Discussion has begun;
 - long-lived Discussion;
 - transient Execution Task preview when proposed;
 - inline cards for confirmed Execution Tasks created from this Todo;
@@ -139,6 +140,29 @@ Planner is invoked only after an explicit discussion action, such as:
 The original capture text remains available as context for the first Planner turn, but Planner does not respond to it until the Owner explicitly starts Discussion.
 
 This allows the Owner to rapidly capture many ideas and leave some untouched indefinitely.
+
+### Original Capture presentation
+
+Do not render the Todo's creation content as if it were the first chat message sent to Planner.
+
+Show it as a lightweight, distinct Original Capture block above Discussion, for example:
+
+~~~text
+Original Capture
+
+Runtime fallback should not replan the Node when Codex quota is exhausted...
+
+Captured Sep 27, 20:42
+~~~
+
+Below that block, Discussion begins only after the Owner sends the first message to Planner.
+
+On the first Planner request, provide Original Capture + Project Context when assigned + the Owner's first Discussion message as context.
+
+This preserves the semantic distinction:
+
+- Original Capture = what the Owner wanted to remember;
+- Discussion = when the Owner decided to actively work through it with Planner.
 
 ### Execution Task preview
 
