@@ -102,9 +102,13 @@ This phase produces only the proposed title/specification for the mandatory Exec
 
 ### PLAN EXECUTION
 
-After Owner confirmation creates the immutable Execution Task, MonoLab starts a separate Execution Task Planner Session.
+Owner confirmation creates the immutable Execution Task, but does not immediately materialize an Execution Plan.
 
-This is not a continuation of the Todo Planner Session.
+A newly created Task enters QUEUED with no current Plan. Initial planning begins only when the backend actually admits that Task for execution.
+
+At that moment MonoLab starts a separate Execution Task Planner Session. This is not a continuation of the Todo Planner Session.
+
+Deferring initial planning until execution admission is intentional: the Planner should use the current Project Context, current Project Resources, and the current set of Project-selected Roles at the time execution really begins. Changes made while the Task waits in QUEUED therefore naturally affect the initial Plan without mutating the frozen Task Specification.
 
 Default context should include:
 
