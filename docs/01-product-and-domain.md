@@ -20,9 +20,24 @@ The UX is developer-first. The lower-level execution model should remain generic
 
 A Project is the long-lived context and resource boundary.
 
-Project Context may include project description and instructions, long-lived constraints, repositories/resources, default refs, and other stable information needed by Planner and execution agents.
+V1 Project creation should stay small:
+
+~~~text
+Project
+- name
+- context / description
+- resources[]
+~~~
+
+Project Context is Owner-authored. It may include the project description, long-lived constraints, delivery conventions, and other stable information needed by Planner and execution agents. Do not require AI to generate or own the canonical Project Context.
+
+Resources are the repositories or other execution resources that belong to the Project. Resource-specific default refs belong to the resource configuration rather than the Execution Task.
 
 Project Context is injected directly when Planner or an execution Agent works. Execution Tasks do not duplicate or bind Project resources.
+
+A Todo may be assigned to a Project after capture and may later be moved to another Project. Historical Discussion remains unchanged. Future Planner turns use the Todo's current Project Context.
+
+Existing Execution Tasks never migrate when their parent Todo is moved. Each immutable Execution Task keeps the Project association it had when it was created; later Tasks created from the Todo use the Todo's current Project.
 
 ## Todo
 
