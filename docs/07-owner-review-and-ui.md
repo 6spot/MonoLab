@@ -30,7 +30,7 @@ Projects
 → long-lived Project context/resources
 ~~~
 
-Planner/Role/Runtime configuration belongs to settings/infrastructure areas, not the primary daily workflow.
+Planner/Runtime configuration belongs to settings/infrastructure areas, while Project Roles belong to Project configuration.
 
 Do not introduce a separate Activity page to replace the Execution Board.
 
@@ -232,9 +232,10 @@ A Project overview may show:
 
 - Project name and Owner-authored Context;
 - linked Resources and their default refs;
+- Project Roles;
 - a compact summary of active Todos;
 - a compact summary of current Execution Tasks;
-- actions to edit Project Context / Resources.
+- actions to edit Project Context / Resources / Roles.
 
 Project-scoped Todos and Execution Tasks should still use the canonical Todo Workspace and Execution Board.
 
@@ -248,6 +249,9 @@ Context
 
 Resources
 6spot/MonoLab · main
+
+Roles
+General Coding · Swift/macOS · Debug
 
 Active Todos        8   [View in Todos]
 Current Executions  3   [View in Execution]
