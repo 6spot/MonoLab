@@ -298,6 +298,28 @@ Selecting `View in Execution` opens the Execution Board filtered to the Project.
 
 Avoid duplicating a full Todo list, full Execution Board, or another task state model inside Project Overview.
 
+## Runtime and Runner configuration
+
+Runner selection is optional wherever an Execution Target is configured or explicitly overridden.
+
+Use a simple selector:
+
+~~~text
+Runner
+[ Auto ▼ ]
+
+Auto
+monolab-01
+~~~
+
+Default is `Auto`. The Owner is never required to choose a Runner.
+
+Selecting a concrete Runner means "run this target only on that Runner", not merely "prefer this Runner".
+
+V1 may expose only one concrete Runner plus Auto, but the UI and data model should already support multiple Runner instances later without introducing different Runner types.
+
+Model, Thinking, and runtime-specific options should be discovered dynamically from the selected Runtime when possible. Manual model entry remains available for new or provider-specific model identifiers that discovery does not yet return.
+
 ## Execution Board
 
 Board columns are user-facing organization, not a 1:1 copy of internal Task states.
