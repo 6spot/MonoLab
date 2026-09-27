@@ -36,6 +36,8 @@ Task state is derived from formal execution facts rather than manually advanced 
 
 - PLANNING after formal Task creation and before the Owner starts execution; no Plan or Runtime work is created automatically in this state;
 - RUNNING immediately after Owner Start and throughout initial Plan generation and normal execution while work is active/runnable;
+  - `RUNNING + current_plan_id = null` means initial planning is still incomplete;
+  - `RUNNING + current_plan_id != null` means a Plan has been published and normal Plan execution may proceed;
 - BLOCKED only when no running/runnable work remains and at least one required Node is BLOCKED;
 - REPLAN_REQUIRED while an unresolved Replan request freezes new scheduling;
 - REVIEW when every required Node in the current effective Plan is COMPLETED and deterministic review/delivery preparation has completed sufficiently to present the result.
