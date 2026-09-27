@@ -21,7 +21,7 @@ Keep these responsibilities separate.
 Use a small state set:
 
 ~~~text
-QUEUED
+PLANNING
 RUNNING
 BLOCKED
 REPLAN_REQUIRED
@@ -34,8 +34,8 @@ Do not encode every reason as a new Task state.
 
 Task state is derived from formal execution facts rather than manually advanced by Agents:
 
-- QUEUED after formal Task creation and while waiting for execution admission / initial Plan publication;
-- RUNNING while a published Plan has work running or runnable;
+- PLANNING after formal Task creation and before the Owner starts execution; no Plan or Runtime work is created automatically in this state;
+- RUNNING immediately after Owner Start and throughout initial Plan generation and normal execution while work is active/runnable;
 - BLOCKED only when no running/runnable work remains and at least one required Node is BLOCKED;
 - REPLAN_REQUIRED while an unresolved Replan request freezes new scheduling;
 - REVIEW when every required Node in the current effective Plan is COMPLETED and deterministic review/delivery preparation has completed sufficiently to present the result.
