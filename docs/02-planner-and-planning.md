@@ -4,14 +4,23 @@
 
 Planner is a system control role.
 
-It is not part of the reusable Role library and is not a separate user-visible "discussion agent" plus "planning agent". The same configured Planner performs different phases:
+It is not part of the reusable Role library.
+
+MonoLab may reuse the same Planner configuration and Execution Policy across modules, but Todo planning and Execution Task planning are separate session/context domains.
 
 ~~~text
+Todo Planner
 DISCUSSION
 → MATERIALIZE TASK
-→ PLAN EXECUTION
+→ create Execution Task
+→ stop participating in that execution chain
+
+Execution Task Planner
+PLAN EXECUTION
 → REPLAN
 ~~~
+
+Creating an Execution Task is a hard module boundary. The Todo Planner Session is not resumed or inherited inside the Execution Task.
 
 Planner itself runs on a configured Runtime through its own Execution Policy.
 
@@ -30,9 +39,36 @@ Owner Planner Guidance is user-editable and controls collaboration style, prefer
 
 Do not expose the raw Fixed System Protocol as an editable prompt. UI may show a read-only summary of managed system behavior.
 
+## Planner session boundaries
+
+Do not use one ever-growing universal Planner conversation.
+
+Each Todo may maintain its own Todo Planner Session for continuous Discussion and Task materialization. Normal Owner messages within that Todo should resume that Todo's Planner Session when possible.
+
+Once the Owner confirms and the Execution Task is created, all execution-side Planner activity belongs to a new Execution Task Planner Session. It must not inherit or resume the Todo Planner Session.
+
+The Todo may continue its own Discussion independently and may later create other Execution Tasks, each with its own independent execution-side Planner Session.
+
+Session continuity therefore follows the module boundary:
+
+~~~text
+Todo A
+└─ Todo Planner Session
+   ├─ Discussion
+   ├─ Working Requirement State
+   └─ Task Preview / creation
+
+Execution Task 101
+└─ Execution Task Planner Session
+   ├─ Plan
+   └─ Replan
+~~~
+
+The only semantic handoff from Todo into Execution Task is the immutable Execution Task itself (plus its Project association). Todo Discussion, Working Requirement State, and Todo Planner Session are not execution-planning context.
+
 ## Phase-specific Planner context
 
-Do not use one ever-growing universal Planner prompt. The same Planner is reused across phases, but Context Builder assembles different context for each phase.
+Context Builder assembles different context for Todo-side and Execution Task-side Planner work.
 
 ### DISCUSSION
 
@@ -66,7 +102,9 @@ This phase produces only the proposed title/specification for the mandatory Exec
 
 ### PLAN EXECUTION
 
-After Owner confirmation creates the immutable Execution Task, planning switches from the Discussion world to the formal execution world.
+After Owner confirmation creates the immutable Execution Task, MonoLab starts a separate Execution Task Planner Session.
+
+This is not a continuation of the Todo Planner Session.
 
 Default context should include:
 
@@ -78,11 +116,13 @@ Default context should include:
 - selected reusable Role descriptors (role_id, name, description);
 - only the formal/current facts needed to build the Plan.
 
-Do not inject the full Todo Discussion by default after the Task has been frozen. Rejected ideas, reversals, and exploratory conversation should not continue to pollute execution planning when the effective requirement is already captured by the Specification.
+Do not inject Todo Discussion, Todo Working Requirement State, or Todo Planner Session history into execution planning. The frozen Execution Task Specification is the semantic handoff across the module boundary.
 
 Planner does not need full Role instructions in order to choose a Role. Full Role instructions are injected later when that Role actually executes a Node.
 
 ### REPLAN
+
+Replan remains inside the Execution Task's own Planner Session/context domain.
 
 Default Replan context should include:
 
@@ -96,7 +136,7 @@ Default Replan context should include:
 - current Project Context;
 - selected reusable Role descriptors.
 
-Do not return to the full Todo Discussion unless an explicit read is needed to resolve a concrete ambiguity.
+Do not return to Todo Discussion as part of execution planning. If the frozen Specification is insufficient, surface that as an execution/task issue rather than silently reaching back into the Todo Planner conversation.
 
 ## Context precedence
 
