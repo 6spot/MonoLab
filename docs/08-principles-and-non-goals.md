@@ -42,7 +42,9 @@ Do not reintroduce without a new, explicit architectural decision:
 - Local Directory as a V1 Project resource;
 - GitHub-specific repository semantics leaking into core Workspace/Task/Node models;
 - Team Blueprint / reusable team-management layer in V1;
-- product-level Runner type taxonomy such as Cloud/Tokyo/US/Personal-Mac runners.
+- product-level Runner type taxonomy such as Cloud/Tokyo/US/Personal-Mac runners;
+- arbitrary Adapter-defined settings UI / exposing every CLI flag;
+- installing or authenticating coding Runtimes on behalf of the Owner.
 
 ## Important invariants
 
