@@ -158,6 +158,37 @@ Once accepted as an unresolved Replan request:
 
 After Owner confirmation and publication of a new immutable Plan revision, `current_plan_id` changes and Orchestrator recalculates runnable work from that new Plan.
 
+### Blocked recovery
+
+A blocked condition is resumed at Node scope, not Task scope.
+
+When the blocking condition has been resolved, the system/Owner changes the affected Node from BLOCKED back to PENDING. Orchestrator then recalculates runnable work normally. If dependencies are satisfied, the Node starts through a new Attempt.
+
+Do not add a separate Resume Task / Restart Task lifecycle.
+
+Task BLOCKED is only a projection meaning that the current effective Plan has no running/runnable work and at least one required Node is BLOCKED. When a blocked Node returns to runnable work, Task status naturally derives back to RUNNING.
+
+The unblock action is a deterministic system/Owner operation, not an Agent tool call. A stopped Agent cannot unblock itself.
+
+Keep blocker semantics lightweight. `block_node(reason)` carries a human-readable reason; do not introduce a large blocker-type taxonomy merely to model every possible external condition.
+
+### Replan recovery
+
+REPLAN_REQUIRED is cleared by publishing a new confirmed Plan revision. Do not add a separate Resume Task action.
+
+The recovery path is:
+
+~~~text
+request_replan(reason)
+→ Task REPLAN_REQUIRED
+→ Owner confirms Replan
+→ Execution Task Planner publishes new Plan revision
+→ current_plan_id changes
+→ Orchestrator recalculates runnable Nodes
+~~~
+
+If the Owner does not want to proceed with a requested Replan, the system must not silently clear the request and continue the old Plan as though it were still valid. The Owner may cancel the Task or provide further direction that results in a new planning decision.
+
 
 ## Session boundaries
 
