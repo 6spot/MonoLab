@@ -24,6 +24,15 @@ Creating an Execution Task is a hard module boundary. The Todo Planner Session i
 
 Planner itself runs on a configured Runtime through its own Execution Policy.
 
+Planner Runtime execution uses the same generic Attempt infrastructure as Node Agents. It does not require a separate PlannerInvocation model and does not turn Planner into an Execution Plan Node.
+
+Planner Execution Policy may define ordered fallback targets. Planner failure therefore affects only work that currently requires Planner:
+
+- Todo Discussion/materialization waits or falls back;
+- a QUEUED Task without a Plan waits or falls back during initial planning;
+- a REPLAN_REQUIRED Task waits or falls back during Replan;
+- an already-published Plan continues normal Orchestrator scheduling without Planner.
+
 ## Planner instruction layers
 
 Planner behavior is assembled from two different instruction layers:
