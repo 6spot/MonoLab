@@ -4,7 +4,7 @@
 
 Planner is a system control role.
 
-It is not part of Team Blueprint and is not a separate user-visible "discussion agent" plus "planning agent". The same configured Planner performs different phases:
+It is not part of Project Roles and is not a separate user-visible "discussion agent" plus "planning agent". The same configured Planner performs different phases:
 
 ~~~text
 DISCUSSION
@@ -43,18 +43,22 @@ This confirmation rule applies equally to natural-language execution intent ("st
 
 Role is a logical behavioral profile, not a runtime.
 
+In V1, Roles belong directly to a Project. There is no Team or Team Blueprint abstraction.
+
 ~~~text
-RoleProfile
+ProjectRole
 - id
+- project_id
 - name
 - description
 - instructions
 - expected_outputs?   # optional soft guidance
+- execution_policy?
 ~~~
 
-Do not add role_type, capabilities taxonomy, Developer/Tester/Reviewer system types, or Role Resolver.
+Do not add role_type, capabilities taxonomy, Developer/Tester/Reviewer system types, Role Resolver, or a separate reusable Team layer.
 
-Planner sees allowed roles using only a small descriptor:
+Planner receives the current Project's Roles using only a small descriptor:
 
 ~~~text
 role_id
@@ -64,15 +68,9 @@ description
 
 and directly selects a concrete `role_id`.
 
-## Team Blueprint
+Role configuration is expected to change infrequently, so keeping it scoped to the Project is simpler than maintaining a separate global team-management model.
 
-Team Blueprint is only the allowed Role pool available to Planner.
-
-It is not a workflow graph, hierarchy, company, team-management system, or fixed execution template.
-
-Dynamic multi-Agent orchestration requires Planner.
-
-Without Planner, a Direct mode may run one selected Role, but selecting a Team Blueprint alone must not imply a fixed workflow.
+Dynamic multi-Agent orchestration still requires Planner. Planner may select one or more Project Roles only when the work actually benefits from multiple Nodes.
 
 ## Execution Plan
 
