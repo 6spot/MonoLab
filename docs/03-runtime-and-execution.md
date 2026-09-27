@@ -108,6 +108,16 @@ Auto/Policy execution may move through ordered fallbacks when the current Runtim
 
 Do not score runtimes dynamically by model intelligence, estimated speed, cost, or predicted quota.
 
+Planner work uses the same Execution Policy resolver and ordered fallback behavior as Node execution. If a Planner Runtime actually starts and fails with an objective reason such as quota exhaustion, that Attempt ends accordingly and the next configured fallback may be tried.
+
+An unavailable target discovered before execution starts does not create an Attempt; the resolver simply evaluates the next target.
+
+Planner availability must not become a dependency of ordinary scheduling after a Plan has been published. Orchestrator continues to unlock and schedule Nodes from an existing Plan without consulting Planner. Planner is required again only for new initial planning or Replan.
+
+If all Planner targets are unavailable during initial planning, the Task remains QUEUED with no Plan and Owner-facing attention. If all Planner targets are unavailable during Replan, the Task remains REPLAN_REQUIRED. Do not add PLANNER_FAILED or PLANNER_RETRYING Task states.
+
+Runtime scheduling may prioritize control work (Todo Planner, initial Plan, Replan) over queued ordinary Node Attempts when capacity becomes available, but must not preempt already-running Runtime executions merely to do so.
+
 ## Execution admission and initial planning
 
 Creating an Execution Task does not immediately create its Plan.
@@ -124,7 +134,9 @@ Execution admission starts the Execution Task Planner using the latest current c
 
 This allows a Task that waited in QUEUED to benefit from Roles or Project configuration added/changed before execution actually starts.
 
-Initial planning is a system control operation, not a Node Attempt. Attempt remains reserved for concrete Node execution.
+Initial planning is a system control operation rather than an Execution Plan Node.
+
+Planner and Node Agents reuse the same generic Attempt / Runtime execution machinery. Planner execution therefore creates Attempts too, but those Attempts are owned by the Planner scope rather than by a Plan Node.
 
 After a valid Plan is published, Orchestrator derives runnable Nodes and normal Node scheduling begins.
 
@@ -247,9 +259,40 @@ Session loss must never make a Node unrecoverable. MonoLab must be able to start
 
 ## Node and Attempt
 
-Node is the durable work unit.
+Node is the durable work unit inside an Execution Plan.
 
-Attempt is one concrete Runtime/Session execution of a Node.
+Attempt is one concrete Runtime execution in MonoLab. It is shared infrastructure for both Planner work and Node Agent work.
+
+An Attempt has exactly one execution owner. The owner identifies the scope whose Runtime work is being performed:
+
+~~~text
+AttemptOwner
+- NODE
+- TODO_PLANNER
+- EXECUTION_TASK_PLANNER
+~~~
+
+Conceptually:
+
+~~~text
+Attempt
+- id
+- owner_type
+- owner_id
+- runtime_id
+- runner_id
+- model_id?
+- thinking_level?
+- session_id?
+- status
+- end_reason?
+- started_at
+- ended_at
+~~~
+
+`owner_id` refers to the Node, Todo, or Execution Task appropriate to `owner_type`. Do not allow arbitrary combinations of nullable owner IDs.
+
+Node-specific orchestration semantics still belong to Node. Planner Attempts do not become Plan Nodes and do not receive Node state.
 
 A Node may have multiple Attempts:
 
@@ -260,19 +303,6 @@ Node
 ~~~
 
 Runtime switching does not change Node identity and does not require Replan.
-
-Attempt fields may include:
-
-~~~text
-attempt_id
-node_id
-runtime_id
-session_id?
-status
-end_reason?
-started_at
-ended_at
-~~~
 
 Attempt state stays small: QUEUED, RUNNING, SUCCEEDED, FAILED, CANCELLED.
 
