@@ -188,18 +188,84 @@ This block is a deterministic projection of Node lifecycle timestamps/states, no
 
 ## Execution Details
 
-Execution Details is the diagnostic layer.
+Execution Details is the diagnostic layer, but the UI should remain flat.
 
-It may expose:
+Node is the primary visible execution unit. Attempt remains an important backend model for fallback, recovery, Session ownership, and log attribution, but it should not become a required navigation level.
 
-- Nodes;
-- Attempts;
-- Runtime used;
-- Session identifiers;
-- Workspace/Git details;
-- Execution Logs.
+Do not force the Owner through:
 
-This is intentionally below Overview and Timeline.
+~~~text
+Node
+→ Attempt
+→ Log
+~~~
+
+Instead, select a Node and show its current/latest execution information directly in the same view:
+
+~~~text
+Node Detail
+
+Status / trigger time / completion time
+
+Current execution
+- Runtime
+- Model
+- Thinking
+- start time
+- last activity / end time
+- end reason when relevant
+
+Execution Log
+
+Workspace / Git
+- workspace/repository
+- start/completion revision
+- changed files
+- diff
+
+Previous executions   # only when more than one Attempt exists
+~~~
+
+The term `Attempt` does not need to appear in normal UI.
+
+If a Node has only one execution, show it directly.
+
+If fallback, retry, or manual Runtime switching creates additional Attempts, expose them as a compact `Previous executions` or `Execution history` section inside the same Node detail view.
+
+For example:
+
+~~~text
+Current execution
+Claude Code · Succeeded
+19:06 → 19:38
+
+Previous executions (1)
+Codex · Quota exhausted
+18:47 → 19:06
+~~~
+
+Selecting a previous execution may switch the visible Execution Log without navigating to another page.
+
+Runtime, Model, Thinking, status, timestamps, and end reason are useful diagnostic information here.
+
+Session ID, Runner ID, Runtime version, raw runtime payloads, and similar infrastructure data should be hidden under an advanced/debug affordance.
+
+For a running Node, execution controls such as Stop or Switch Runtime belong here. These actions affect execution of the same Node; they do not create a new Node or require Replan.
+
+Workspace/Git information belongs in the same Node detail view but remains visually distinct from the Execution Log:
+
+- Execution Log answers how the Agent worked.
+- Workspace/Git answers what code state the Node produced.
+
+The backend remains precise:
+
+~~~text
+Node
+└─ Attempt 1
+└─ Attempt 2
+~~~
+
+The product UI does not have to mirror that storage hierarchy.
 
 ## Owner Review
 
