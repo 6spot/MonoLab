@@ -46,12 +46,16 @@ Context Builder should provide a useful map by default and let the Agent progres
 
 Context assembly is deterministic system behavior. Planner/Agent may request additional context, but they do not decide the entire default database payload for themselves.
 
-Planner context must be phase-specific. In particular:
+Planner context is split by module/session boundary:
 
-- Discussion uses Working Requirement State + recent Discussion rather than full chat history;
-- Task materialization stays focused on the current requirement;
-- execution planning starts from the immutable Execution Task Specification rather than full Todo Discussion;
-- Replan starts from Task + current Plan + formal execution facts + replan reason.
+- Todo Planner Session handles Discussion and Task materialization;
+- Execution Task creation ends that Planner's participation in the execution chain;
+- a new Execution Task Planner Session handles Plan and Replan;
+- Todo Planner Session state is never inherited by the Execution Task Planner Session.
+
+Within the Todo module, Discussion uses Working Requirement State + recent Discussion rather than full chat history.
+
+Within the Execution Task module, planning starts from the immutable Execution Task Specification + Project/formal execution state. Replan starts from Task + current Plan + formal execution facts + replan reason.
 
 Do not inject full Timeline, full Execution Logs, full repository history, all old sessions, all Todo Discussion, or all Git diffs by default.
 
