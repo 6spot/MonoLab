@@ -161,6 +161,12 @@ If multiple upstream candidates exist, explicit target is required.
 
 Rework reactivates the same Node. Do not create `node_v2`.
 
+The deterministic invalidation boundary is the target Node plus all of its descendants in the current Plan. Those Nodes return to PENDING. Historical Attempts, Logs, Artifacts, summaries, and Events remain intact.
+
+Independent Nodes outside that descendant subgraph are not reset.
+
+If an invalidated descendant is currently executing, its current Attempt is cancelled by Orchestrator and the Node returns to PENDING.
+
 ## request_replan
 
 Use when:
@@ -175,5 +181,7 @@ Typical reasons:
 - future serial/parallel structure must change.
 
 Replan creates a new immutable Plan revision after Owner confirmation in V1.
+
+An unresolved Replan request freezes scheduling of new Nodes from the current Plan. Already-running independent Nodes are not automatically killed; their results may still be preserved and provided to the Execution Task Planner.
 
 Runtime failures do not use `block_node`, `request_rework`, or `request_replan`. Runtime/Adapter reports Attempt facts and Runtime Resolver handles fallback.
