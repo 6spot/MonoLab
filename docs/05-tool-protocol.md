@@ -1,0 +1,143 @@
+# Tool Protocol
+
+## Core invariant
+
+> Agent expresses intent through system tools. Program performs deterministic execution.
+
+A natural-language statement is never a formal state transition.
+
+The system protocol is fixed, small, and cannot be overridden by Role instructions.
+
+## Boundary
+
+Inside a Workspace, an Agent may use the Runtime's native coding capabilities:
+
+- read/write files;
+- shell;
+- build;
+- test;
+- search;
+- patch;
+- other normal coding tools.
+
+Outside the Workspace, formal system state is controlled by MonoLab Tool Protocol.
+
+An Agent must not directly manage:
+
+- Task or Node state;
+- Execution Plan state;
+- system Workspace isolation;
+- Artifact registration;
+- final delivery/merge;
+- other formal orchestration state.
+
+## Context / read tools
+
+Current baseline:
+
+~~~text
+read_context(...)
+read_artifact(artifact_id)
+search_task_events(...)
+read_execution_log(...)
+~~~
+
+Context Builder should provide a useful map by default and let the Agent progressively retrieve more information.
+
+Do not inject full Timeline, full Execution Logs, full repository history, all old sessions, or all Git diffs by default.
+
+## Workspace tools
+
+~~~text
+open_workspace(resource_id)
+read_git_state(workspace_id)
+read_git_diff(workspace_id)
+~~~
+
+`open_workspace()` converts a Project resource into a safe Node-usable workspace and hides clone/fetch/checkout/worktree/reuse details.
+
+Do not rebuild generic file/shell tools that Codex, Claude Code, OpenCode, and similar runtimes already provide well.
+
+## Output / lifecycle tools
+
+~~~text
+publish_artifact(...)
+complete_node(summary)
+block_node(reason)
+request_rework(target_node_id?, reason)
+request_replan(reason)
+~~~
+
+Planner formal tools include:
+
+~~~text
+create_execution_task(title, specification)
+publish_execution_plan(...)
+update_working_requirement_state(...)
+~~~
+
+## complete_node
+
+`complete_node(summary)` is the main boundary from Agent execution into formal orchestration.
+
+The summary is required.
+
+On success the system should, as one reliable boundary:
+
+1. finalize Node workspace state;
+2. persist any required completion snapshot;
+3. write the formal completion event;
+4. transition the Node to COMPLETED;
+5. update Current Task State;
+6. unlock downstream Nodes whose dependencies are satisfied.
+
+The operation should be idempotent.
+
+If workspace finalization fails, Node must not already be marked COMPLETED.
+
+`complete_node()` does not judge whether work is semantically correct.
+
+Node Completed is not Owner Accepted.
+
+Artifacts are optional. Missing Artifact must not make `complete_node()` fail.
+
+## block_node
+
+Use when:
+
+> The current Plan and Node are still valid, but an external condition prevents progress.
+
+Examples include missing Owner decision, credential, permission, external result, or unavailable service.
+
+The same Node resumes later through a new Attempt.
+
+## request_rework
+
+Use when:
+
+> An existing upstream Node's work must be redone, but the collaboration structure is still valid.
+
+The system mechanically validates that the target exists in the current Plan and is upstream.
+
+If there is exactly one direct upstream, `target_node_id` may be omitted.
+
+If multiple upstream candidates exist, explicit target is required.
+
+Rework reactivates the same Node. Do not create `node_v2`.
+
+## request_replan
+
+Use when:
+
+> The current collaboration graph itself is no longer sufficient.
+
+Typical reasons:
+
+- a new collaboration Node is needed;
+- a future Node should be removed;
+- dependencies must change;
+- future serial/parallel structure must change.
+
+Replan creates a new immutable Plan revision after Owner confirmation in V1.
+
+Runtime failures do not use `block_node`, `request_rework`, or `request_replan`. Runtime/Adapter reports Attempt facts and Runtime Resolver handles fallback.
