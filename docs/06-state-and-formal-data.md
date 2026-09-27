@@ -6,7 +6,7 @@
 Execution Task    = what should be done
 Execution Plan    = how work collaborates
 Node              = durable collaboration/work unit
-Attempt           = one concrete runtime execution
+Attempt           = one concrete runtime execution for a Planner or Node owner
 Execution Log     = raw execution process
 Artifact          = formal semantic output
 Task Event        = formal lifecycle history
@@ -60,6 +60,20 @@ When a Node is reworked, that Node and all descendants in the current Plan are i
 
 A BLOCKED Node returns to PENDING when its external condition is explicitly resolved. This is the only formal Node transition needed for unblock/resume; Task status is then re-derived by Orchestrator.
 
+## Attempt
+
+Attempt is generic Runtime execution infrastructure, not a Node-only object.
+
+Each Attempt has exactly one owner:
+
+- a Node for execution Agent work;
+- a Todo Planner scope for Todo Discussion/materialization;
+- an Execution Task Planner scope for initial Plan/Replan.
+
+Planner Attempts reuse Runtime selection, Runner placement, model/thinking selection, Session handling, fallback, logs, status, and end reasons without introducing a separate PlannerInvocation object.
+
+Planner Attempts do not receive Node state and do not become members of an Execution Plan.
+
 ## Attempt state
 
 ~~~text
@@ -72,7 +86,7 @@ CANCELLED
 
 Specific causes live in `end_reason`.
 
-Attempt failure does not imply Node failure.
+For Node-owned Attempts, Attempt failure does not imply Node failure. For Planner-owned Attempts, failure does not create a new Task state; the surrounding Task/Todo remains in its existing formal state while fallback/retry/attention is handled.
 
 ## State authority
 
