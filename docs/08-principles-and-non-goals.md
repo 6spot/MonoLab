@@ -40,7 +40,9 @@ Do not reintroduce without a new, explicit architectural decision:
 - a large Current Task State semantic summary;
 - operation logs inside Task/Timeline;
 - Local Directory as a V1 Project resource;
-- GitHub-specific repository semantics leaking into core Workspace/Task/Node models.
+- GitHub-specific repository semantics leaking into core Workspace/Task/Node models;
+- Team Blueprint / reusable team-management layer in V1;
+- product-level Runner type taxonomy such as Cloud/Tokyo/US/Personal-Mac runners.
 
 ## Important invariants
 
@@ -64,9 +66,11 @@ Agents use `open_workspace(resource_id)` when they actually need a repository.
 
 ### Role is not Runtime
 
-Role describes behavior.
+Role describes behavior and is configured directly on its Project in V1.
 
 Execution Policy selects Runtime/model/thinking/fallbacks.
+
+Do not add a Team layer merely to group Project Roles.
 
 ### Node is not Attempt
 
