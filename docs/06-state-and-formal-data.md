@@ -34,7 +34,8 @@ Do not encode every reason as a new Task state.
 
 Task state is derived from formal execution facts rather than manually advanced by Agents:
 
-- RUNNING while work is running or runnable;
+- QUEUED after formal Task creation and while waiting for execution admission / initial Plan publication;
+- RUNNING while a published Plan has work running or runnable;
 - BLOCKED only when no running/runnable work remains and at least one required Node is BLOCKED;
 - REPLAN_REQUIRED while an unresolved Replan request freezes new scheduling;
 - REVIEW when every required Node in the current effective Plan is COMPLETED and deterministic review/delivery preparation has completed sufficiently to present the result.
