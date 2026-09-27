@@ -167,6 +167,48 @@ and directly selects a concrete `role_id`.
 
 Dynamic multi-Agent orchestration still requires Planner. Planner may select one or more Project Roles only when the work actually benefits from multiple Nodes.
 
+## Node execution context
+
+When a Node starts, the execution Agent receives a compact, execution-focused context rather than the full Todo/Planner history.
+
+Default Node context should include:
+
+- Fixed Agent Protocol / MonoLab Tool Protocol boundaries;
+- full instructions for the selected Role;
+- immutable Execution Task Specification;
+- current Project Context;
+- current Node goal and objective requirements;
+- relevant upstream completion summaries;
+- explicitly consumed Artifacts / formal outputs when applicable;
+- a lightweight Project resource map;
+- optional Rework context when the same Node is reactivated.
+
+Do not inject by default:
+
+- full Todo Discussion;
+- Working Requirement State;
+- Owner Planner Guidance;
+- instructions for other Roles;
+- full Timeline;
+- full Execution Logs;
+- full repository history;
+- complete transcripts from upstream Attempts.
+
+Execution Task Specification is the semantic source of truth for execution. Earlier exploratory Discussion should not leak into Node execution unless an explicit read is required.
+
+Project Context and Role instructions serve different purposes:
+
+- Project Context describes the project reality and long-lived constraints;
+- Role instructions describe how the selected execution Agent should behave.
+
+For upstream dependencies, completion summaries and Artifact references/content are preferred over raw Attempt transcripts. The Agent can read/search additional logs or history on demand.
+
+The optional Node `consumes` field is a lightweight hint for initial context, not a mandatory data-flow contract. It may cause referenced Artifacts to be injected initially, while ordinary dependency context can remain a completion summary plus Artifact map.
+
+Workspace contents are not serialized into the prompt. The Agent uses `open_workspace(resource_id)` and the Runtime's native file/search/shell/build/test capabilities to inspect the repository directly.
+
+When a Node is reactivated by Rework, keep the same Node and Role. A new Attempt may additionally receive the rework reason, relevant Owner/review feedback, and the previous completion summary. Do not introduce a separate Rework/Fix Agent type.
+
 ## Execution Plan
 
 Execution Task describes WHAT.
