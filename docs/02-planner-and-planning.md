@@ -134,6 +134,10 @@ This confirmation rule applies equally to natural-language execution intent ("st
 
 Role is a globally reusable logical behavioral profile, not a runtime.
 
+Role describes execution behavior: how the Agent should work, communicate, inspect the codebase, structure its completion summary, and present human-readable output. Project-specific technical constraints such as dependency policy, technology choices, repository conventions, or delivery rules belong in Project Context rather than Role.
+
+System-required protocol/output requirements are injected by MonoLab's fixed Agent Protocol and do not need to be duplicated in every Role.
+
 There is no Team or Team Blueprint abstraction.
 
 ~~~text
@@ -142,7 +146,6 @@ RoleProfile
 - name
 - description
 - instructions
-- expected_outputs?   # optional soft guidance
 - execution_policy?
 ~~~
 
@@ -239,6 +242,10 @@ Node
 ~~~
 
 Do not place Runtime, model, thinking level, Session, workspace path, Git branch/path, or business-specific role types in Plan.
+
+Node stores only `role_id`; do not snapshot or version Role instructions into the Plan. Role configuration is mutable operational guidance outside the immutable Plan structure.
+
+When a new Node execution / Attempt starts, Context Builder resolves the current Role instructions and injects them into that execution context. Editing a Role does not affect an already-running Attempt because its context has already been assembled. Later executions use the latest Role configuration.
 
 Parallelism is expressed by `depends_on[]`. No `parallel_group`, `flow_id`, or `edge_id` is required.
 
