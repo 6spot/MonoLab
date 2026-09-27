@@ -4,7 +4,7 @@
 
 Planner is a system control role.
 
-It is not part of Project Roles and is not a separate user-visible "discussion agent" plus "planning agent". The same configured Planner performs different phases:
+It is not part of the reusable Role library and is not a separate user-visible "discussion agent" plus "planning agent". The same configured Planner performs different phases:
 
 ~~~text
 DISCUSSION
@@ -41,14 +41,13 @@ This confirmation rule applies equally to natural-language execution intent ("st
 
 ## Role
 
-Role is a logical behavioral profile, not a runtime.
+Role is a globally reusable logical behavioral profile, not a runtime.
 
-In V1, Roles belong directly to a Project. There is no Team or Team Blueprint abstraction.
+There is no Team or Team Blueprint abstraction.
 
 ~~~text
-ProjectRole
+RoleProfile
 - id
-- project_id
 - name
 - description
 - instructions
@@ -56,9 +55,16 @@ ProjectRole
 - execution_policy?
 ~~~
 
-Do not add role_type, capabilities taxonomy, Developer/Tester/Reviewer system types, Role Resolver, or a separate reusable Team layer.
+A Project directly selects the reusable Roles that Planner may use:
 
-Planner receives the current Project's Roles using only a small descriptor:
+~~~text
+Project
+- role_ids[]
+~~~
+
+Do not add role_type, capabilities taxonomy, Developer/Tester/Reviewer system types, Role Resolver, or a Team layer.
+
+Planner receives only the Roles selected by the current Project, using a small descriptor:
 
 ~~~text
 role_id
@@ -67,8 +73,6 @@ description
 ~~~
 
 and directly selects a concrete `role_id`.
-
-Role configuration is expected to change infrequently, so keeping it scoped to the Project is simpler than maintaining a separate global team-management model.
 
 Dynamic multi-Agent orchestration still requires Planner. Planner may select one or more Project Roles only when the work actually benefits from multiple Nodes.
 
