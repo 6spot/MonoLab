@@ -108,6 +108,57 @@ Auto/Policy execution may move through ordered fallbacks when the current Runtim
 
 Do not score runtimes dynamically by model intelligence, estimated speed, cost, or predicted quota.
 
+## Orchestrator scheduling
+
+Orchestrator owns deterministic scheduling. Planner defines Plan structure; Agents perform Node work; neither decides the day-to-day runnable set.
+
+A Node is runnable when:
+
+~~~text
+node.status == PENDING
+AND every depends_on Node is COMPLETED
+AND the Task is not in a scheduling-frozen condition such as REPLAN_REQUIRED
+~~~
+
+Runnable state is derived and must not be persisted as another Node state or as a `runnable_nodes[]` field.
+
+When formal state changes, Orchestrator recalculates runnable Nodes and starts all runnable Nodes allowed by available execution capacity. Independent Nodes may run in parallel.
+
+Task status is derived from the effective Plan:
+
+- if any Node is RUNNING, or runnable work exists, Task is RUNNING;
+- if no Node is running/runnable and at least one required Node is BLOCKED, Task is BLOCKED;
+- if an unresolved Replan request exists, Task is REPLAN_REQUIRED and no new Nodes are scheduled;
+- if all required Nodes in the current effective Plan are COMPLETED, execution work is finished and the system prepares delivery/review.
+
+When all required Nodes are complete, Planner is not asked whether the Task is done. The system deterministically finalizes the Task Workspace, prepares delivery where applicable, and moves the Task to REVIEW.
+
+### Rework invalidation
+
+`request_rework(target_node_id, reason)` keeps the current Plan structure but invalidates the target Node and every descendant of that Node in the current Plan.
+
+The target and descendants return to PENDING. Their historical Attempts, Logs, Artifacts, summaries, and Events remain immutable history and are not deleted.
+
+Independent Nodes outside that descendant subgraph are unaffected.
+
+If an invalidated descendant currently has a running Attempt, Orchestrator stops that Attempt, records it as CANCELLED with an objective rework-invalidation reason, and returns the Node to PENDING.
+
+After invalidation, normal dependency scheduling resumes from the target Node. Do not ask AI to decide which descendants are semantically affected; graph descendants are the deterministic invalidation boundary.
+
+### Replan scheduling freeze
+
+`request_replan(reason)` means the collaboration graph itself is insufficient.
+
+Once accepted as an unresolved Replan request:
+
+- do not start any new Nodes from the current Plan;
+- do not automatically kill already-running independent Nodes merely because Replan was requested;
+- allow already-running work to reach a formal outcome where practical;
+- preserve completed work, Artifacts, Events, Logs, and Workspace/Git state.
+
+After Owner confirmation and publication of a new immutable Plan revision, `current_plan_id` changes and Orchestrator recalculates runnable work from that new Plan.
+
+
 ## Session boundaries
 
 Runtime Session is an opaque continuation handle owned by the Runtime Adapter. It is infrastructure, not a top-level domain object and not a source of truth.
