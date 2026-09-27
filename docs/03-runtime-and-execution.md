@@ -140,6 +140,26 @@ Deferring initial Plan creation until Owner Start allows a Task to use Roles and
 
 Initial planning is a system control operation rather than an Execution Plan Node. Planner and Node Agents reuse the same generic Attempt / Runtime execution machinery.
 
+### Initial planning completion and failure
+
+While `status = RUNNING` and `current_plan_id = null`, the Task is in initial planning.
+
+Initial planning is complete only when `publish_execution_plan()` succeeds and `current_plan_id` is set. A Planner Attempt ending successfully at the Runtime/process level is not sufficient by itself.
+
+Planner Runtime fallback is automatic according to Planner Execution Policy. A target discovered unavailable before Runtime execution starts is skipped without creating an Attempt. If a Runtime actually starts and then fails, record that Attempt and continue through configured fallbacks when allowed.
+
+If all Planner targets fail or are unavailable, keep the Task RUNNING with `current_plan_id = null` and surface Owner-facing attention. Do not add planner-specific Task states.
+
+Retry does not change Task state. It re-resolves the latest Planner Execution Policy, Runtime availability, Project Context, Project Resources, and Project-selected Roles, then starts a new Planner Attempt.
+
+If the Owner stops the Task before any Plan has been published (`current_plan_id = null`), cancel the active Planner Attempt if present and return the Task to PLANNING. No execution Plan or Node work exists yet, so this is a true return to the pre-start task library state.
+
+Cancel Task is different: cancel any active Planner Attempt and transition the Task to CANCELLED.
+
+Plan validation errors are not Runtime failures. Return deterministic validation errors to the same Planner Session/Attempt so the Planner can correct and republish. Do not trigger Runtime fallback merely because a proposed Plan is structurally invalid.
+
+If a Planner Attempt ends without successfully publishing a Plan, the Task remains RUNNING with no current Plan and surfaces attention/retry rather than advancing execution.
+
 ## Orchestrator scheduling
 
 Orchestrator owns deterministic scheduling. Planner defines Plan structure; Agents perform Node work; neither decides the day-to-day runnable set.
