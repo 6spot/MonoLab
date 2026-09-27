@@ -326,6 +326,20 @@ Manual model entry remains available for new or provider-specific model identifi
 
 MonoLab does not install coding tools and does not manage their login credentials. Runtime setup/authentication stays with the tool on the Runner machine.
 
+## Runner capacity UI
+
+Runner configuration may expose one simple capacity control:
+
+~~~text
+Max concurrent executions
+[ 4 ]
+~~~
+
+Do not expose smart scheduling weights, CPU cost scores, model cost scores, or user-facing priority numbers in V1.
+
+Runner status may show factual active usage such as `3 / 4 running`. Do not attribute centrally queued Auto Attempts to a specific Runner before placement is resolved. Only work explicitly pinned to a Runner can truthfully be shown as waiting specifically for that Runner.
+
+
 ## Execution Board
 
 Board columns are user-facing organization, not a 1:1 copy of internal Task states.
