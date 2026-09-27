@@ -97,6 +97,21 @@ A RUNNING Task may therefore have queued Planner/Node Attempts. Task state and A
 
 For Node-owned Attempts, Attempt failure does not imply Node failure. For Planner-owned Attempts, failure does not create a new Task state; the surrounding Task/Todo remains in its existing formal state while fallback/retry/attention is handled.
 
+## Runtime capacity projection
+
+Runner execution capacity is configuration plus derived Attempt facts, not another domain state machine.
+
+~~~text
+Runner
+- max_concurrent_attempts
+~~~
+
+Running utilization is derived from RUNNING Attempts assigned to that Runner.
+
+`Attempt.QUEUED` may mean healthy compatible capacity is currently full. This is normal waiting, not BLOCKED and not a reason to change Task state.
+
+For Auto placement, `runner_id` may remain null while the Attempt is QUEUED and become concrete only when dispatch occurs. Once an Attempt starts, its concrete Runner does not change.
+
 ## State authority
 
 ~~~text
