@@ -44,7 +44,18 @@ read_execution_log(...)
 
 Context Builder should provide a useful map by default and let the Agent progressively retrieve more information.
 
-Do not inject full Timeline, full Execution Logs, full repository history, all old sessions, or all Git diffs by default.
+Context assembly is deterministic system behavior. Planner/Agent may request additional context, but they do not decide the entire default database payload for themselves.
+
+Planner context must be phase-specific. In particular:
+
+- Discussion uses Working Requirement State + recent Discussion rather than full chat history;
+- Task materialization stays focused on the current requirement;
+- execution planning starts from the immutable Execution Task Specification rather than full Todo Discussion;
+- Replan starts from Task + current Plan + formal execution facts + replan reason.
+
+Do not inject full Timeline, full Execution Logs, full repository history, all old sessions, all Todo Discussion, or all Git diffs by default.
+
+Full Role instructions are not Planner selection context. Planner sees only compact Role descriptors; Role instructions are injected when the selected Role executes a Node.
 
 ## Workspace tools
 
