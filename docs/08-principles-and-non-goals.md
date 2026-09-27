@@ -66,11 +66,13 @@ Agents use `open_workspace(resource_id)` when they actually need a repository.
 
 ### Role is not Runtime
 
-Role describes behavior and is globally reusable.
+Role describes reusable execution behavior. Project-specific technical constraints belong in Project Context.
 
 Projects directly select which reusable Roles Planner may use.
 
 Execution Policy selects Runtime/model/thinking/fallbacks.
+
+Plans reference Role IDs but do not snapshot Role instructions. New executions use the latest Role configuration; already-running executions keep their already-injected context.
 
 Do not add a Team layer merely to group Roles before assigning them to Projects.
 
