@@ -108,6 +108,40 @@ Auto/Policy execution may move through ordered fallbacks when the current Runtim
 
 Do not score runtimes dynamically by model intelligence, estimated speed, cost, or predicted quota.
 
+## Session boundaries
+
+Runtime Session is an opaque continuation handle owned by the Runtime Adapter. It is infrastructure, not a top-level domain object and not a source of truth.
+
+Session ownership follows the smallest long-lived scope that owns the conversation/execution:
+
+~~~text
+Todo
+→ Todo Planner Session
+
+Execution Task
+→ Execution Task Planner Session
+
+Node
+→ execution Agent Session
+~~~
+
+Sessions never cross Todo / Execution Task / Node boundaries.
+
+A Todo Planner Session may be resumed across normal Owner messages in that Todo. If it cannot be resumed, MonoLab rebuilds the Planner context from Todo formal data such as Original Capture, Working Requirement State, recent Discussion, and Project Context.
+
+Creating an Execution Task ends the Todo Planner's participation in that execution chain. Planning/Replan uses a separate Execution Task Planner Session and never resumes the Todo Planner Session.
+
+Each Node has its own execution-session continuity. Different Nodes do not share a Runtime Session, even when they use the same Runtime.
+
+For the same Node, a later Attempt may resume the previous Runtime Session when all of the following remain compatible: same Runtime, same execution lineage, resumable session, and no intervening work that makes the old hidden context stale.
+
+If execution switches Runtime, the new Runtime starts a fresh Session. If work then continues under that different Runtime, switching back later should start a fresh Session rather than reviving a stale earlier session.
+
+Rework of the same Node may resume its previous Session when the Runtime is unchanged and the session remains valid. The new Attempt still receives current formal context, current Role instructions, and the Rework reason.
+
+Session loss must never make a Node unrecoverable. MonoLab must be able to start a fresh Session from Task / Project / Node / Role / Artifact / Workspace state.
+
+
 ## Node and Attempt
 
 Node is the durable work unit.
