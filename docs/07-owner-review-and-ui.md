@@ -365,6 +365,10 @@ For a RUNNING Task with no published Plan yet (`current_plan_id = null`), the UI
 
 Stopping during this pre-Plan RUNNING phase returns the Task to PLANNING. Once a Plan exists, stopping execution must not reuse PLANNING because the Task has already begun formal execution.
 
+A RUNNING Task may be waiting for execution capacity. Do not create another Board column for this. When no Attempt is currently running but one or more Planner/Node Attempts are QUEUED, show a lightweight `Queued` / `Waiting for capacity` badge on the card within Running.
+
+If some work is actively running and additional Attempts are queued, keep the primary visual state as Running and optionally show a small queued count/detail. Runtime-capacity queueing is normal scheduling, not Needs Attention.
+
 Todo cards do not show Execution Task runtime state. Todo and Execution Task are separate concepts.
 
 ## Task Overview
@@ -548,6 +552,14 @@ Session ID, Runner ID, Runtime version, raw runtime payloads, and similar infras
 
 For a running Node, execution controls such as Stop or Switch Runtime belong here. These actions affect execution of the same Node; they do not create a new Node or require Replan.
 
+After Plan publication:
+
+- Stop cancels the current Attempt and blocks that Node until the Owner continues it;
+- Continue reactivates the same Node and normal scheduling creates a new Attempt;
+- Switch Runtime / Runner / Model / Thinking ends the current Attempt and immediately starts another for the same Node;
+- Cancel Task remains a separate Task-level terminal action.
+
+Do not expose a V1 whole-Task Pause control unless a real pause lifecycle is introduced later.
 Workspace/Git information belongs in the same Node detail view but remains visually distinct from the Execution Log:
 
 - Execution Log answers how the Agent worked.
