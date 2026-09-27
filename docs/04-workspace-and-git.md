@@ -12,9 +12,36 @@ Core models should not depend on Git Worktree semantics.
 
 Project Context already contains its repositories/resources.
 
+MonoLab core is Git-first, while V1 product UX is intentionally GitHub-first.
+
+The core resource model must not be named or designed as a GitHub-only object. A repository resource should represent a Git repository with provider metadata layered on top:
+
+~~~text
+GitRepositoryResource
+- id
+- remote_url
+- provider?          # e.g. github
+- provider_repo_id?  # opaque provider identifier
+- default_ref?
+- default_branch?
+~~~
+
 A repository resource may define an optional default `ref` (branch, tag, or commit) used as the normal checkout/base for future work. If no ref is configured, the system may use the repository's default branch.
 
-This follows the useful separation seen in Multica: the resource owns its default ref; the Task does not need to repeat it.
+V1 should strongly prefer GitHub integration:
+
+- connect GitHub through a GitHub App / provider integration;
+- let the Owner pick authorized repositories directly;
+- fetch repository metadata and default branch from GitHub;
+- keep room for later PR, CI/check, mergeability, and delivery integration.
+
+Also keep a secondary arbitrary Git URL path so the architecture is not provider-locked.
+
+V1 explicitly does not support Local Directory resources. Cloud execution should start from repository resources that a Runner can clone/fetch rather than machine-local paths.
+
+Future providers such as GitLab, Gitea, Forgejo, or self-hosted Git should be able to implement the same Git repository abstraction without changing Workspace, Task, or Node semantics.
+
+The resource owns its default ref; the Task does not need to repeat it.
 
 Execution Task does not bind or copy a resource list.
 
