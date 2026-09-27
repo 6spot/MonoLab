@@ -1,0 +1,116 @@
+# Planner & Planning
+
+## Planner
+
+Planner is a system control role.
+
+It is not part of Team Blueprint and is not a separate user-visible "discussion agent" plus "planning agent". The same configured Planner performs different phases:
+
+~~~text
+DISCUSSION
+→ MATERIALIZE TASK
+→ PLAN EXECUTION
+→ REPLAN
+~~~
+
+Planner itself runs on a configured Runtime through its own Execution Policy.
+
+## Discussion behavior
+
+Planner should advance Owner intent rather than interrogate for formal completeness.
+
+Ask a question only when the missing answer would materially change the core goal, scope, or an important irreversible direction.
+
+Do not block on ordinary implementation details that an execution Agent can resolve from the Project.
+
+Planner maintains Working Requirement State during Discussion.
+
+Planner may suggest that the requirement is ready to execute, but it may call `create_execution_task(...)` only after the Owner expresses clear execution intent.
+
+## Role
+
+Role is a logical behavioral profile, not a runtime.
+
+~~~text
+RoleProfile
+- id
+- name
+- description
+- instructions
+- expected_outputs?   # optional soft guidance
+~~~
+
+Do not add role_type, capabilities taxonomy, Developer/Tester/Reviewer system types, or Role Resolver.
+
+Planner sees allowed roles using only a small descriptor:
+
+~~~text
+role_id
+name
+description
+~~~
+
+and directly selects a concrete `role_id`.
+
+## Team Blueprint
+
+Team Blueprint is only the allowed Role pool available to Planner.
+
+It is not a workflow graph, hierarchy, company, team-management system, or fixed execution template.
+
+Dynamic multi-Agent orchestration requires Planner.
+
+Without Planner, a Direct mode may run one selected Role, but selecting a Team Blueprint alone must not imply a fixed workflow.
+
+## Execution Plan
+
+Execution Task describes WHAT.
+
+Execution Plan describes only HOW WORK COLLABORATES.
+
+Use the smallest sufficient graph:
+
+~~~text
+ExecutionPlan
+- id
+- execution_task_id
+- revision
+- nodes[]
+~~~
+
+Node:
+
+~~~text
+Node
+- id
+- goal
+- role_id
+- depends_on[]
+- hard_requirements?   # optional objective prerequisites
+- consumes?            # optional recommended initial formal context
+- expected_outputs?    # optional soft guidance
+~~~
+
+Do not place Runtime, model, thinking level, Session, workspace path, Git branch/path, or business-specific role types in Plan.
+
+Parallelism is expressed by `depends_on[]`. No `parallel_group`, `flow_id`, or `edge_id` is required.
+
+Planner should not create extra Nodes merely because more Roles are available. A single Node is preferred when one Agent can sufficiently complete the work.
+
+The real DAG is an internal scheduling/debugging structure. It is not normal Owner-facing UI.
+
+## Replan
+
+Plans are immutable.
+
+A Replan creates a new complete Plan revision and switches `current_plan_id`. Old plans remain as history.
+
+Replan is required when collaboration structure changes, for example adding a Node, removing a not-yet-started Node, changing dependencies, turning future work from serial to parallel, or replacing future Role assignments.
+
+Completed Nodes, Artifacts, Events, Execution Logs, and Workspace/Git state remain.
+
+Runtime switching is not Replan. Rework of an existing Node is not Replan.
+
+Replan should preserve valid existing work and change only what is necessary for the future, even though the stored result is a complete new immutable Plan revision.
+
+V1 requires Owner confirmation before a requested Replan is published.
