@@ -114,32 +114,31 @@ An unavailable target discovered before execution starts does not create an Atte
 
 Planner availability must not become a dependency of ordinary scheduling after a Plan has been published. Orchestrator continues to unlock and schedule Nodes from an existing Plan without consulting Planner. Planner is required again only for new initial planning or Replan.
 
-If all Planner targets are unavailable during initial planning, the Task remains QUEUED with no Plan and Owner-facing attention. If all Planner targets are unavailable during Replan, the Task remains REPLAN_REQUIRED. Do not add PLANNER_FAILED or PLANNER_RETRYING Task states.
+If all Planner targets are unavailable during initial planning, the Task remains RUNNING with no Plan and Owner-facing attention. If all Planner targets are unavailable during Replan, the Task remains REPLAN_REQUIRED. Do not add PLANNER_FAILED or PLANNER_RETRYING Task states.
 
 Runtime scheduling may prioritize control work (Todo Planner, initial Plan, Replan) over queued ordinary Node Attempts when capacity becomes available, but must not preempt already-running Runtime executions merely to do so.
 
-## Execution admission and initial planning
+## Owner start and initial planning
 
-Creating an Execution Task does not immediately create its Plan.
+Creating an Execution Task does not immediately create its Plan or start any Runtime work.
 
-A newly created Task remains QUEUED with `current_plan_id = null` until the backend actually admits it for execution.
+A newly created Task enters PLANNING with `current_plan_id = null`. PLANNING is the Owner-controlled pre-start task library state.
 
-Execution admission starts the Execution Task Planner using the latest current configuration:
+MonoLab must not automatically admit or start a PLANNING Task.
 
-- immutable Execution Task Specification;
-- current Project Context;
-- current Project Resources;
-- current Project-selected Role descriptors;
-- current Planner Guidance and Execution Policy.
+When the Owner explicitly starts the Task:
 
-This allows a Task that waited in QUEUED to benefit from Roles or Project configuration added/changed before execution actually starts.
+1. Task transitions PLANNING → RUNNING;
+2. MonoLab reads the latest current Project Context, Project Resources, Project-selected Role descriptors, Planner Guidance, and Planner Execution Policy;
+3. MonoLab starts the Execution Task Planner through the shared Attempt / Runtime machinery;
+4. Planner publishes the initial Plan;
+5. Orchestrator derives runnable Nodes and begins normal Node scheduling.
 
-Initial planning is a system control operation rather than an Execution Plan Node.
+The Task remains RUNNING while its initial Planner is generating the Plan. Do not add a second active `PLANNING` meaning for this runtime phase; PLANNING is reserved for the not-yet-started task state.
 
-Planner and Node Agents reuse the same generic Attempt / Runtime execution machinery. Planner execution therefore creates Attempts too, but those Attempts are owned by the Planner scope rather than by a Plan Node.
+Deferring initial Plan creation until Owner Start allows a Task to use Roles and Project configuration added or changed while it was waiting in PLANNING.
 
-After a valid Plan is published, Orchestrator derives runnable Nodes and normal Node scheduling begins.
-
+Initial planning is a system control operation rather than an Execution Plan Node. Planner and Node Agents reuse the same generic Attempt / Runtime execution machinery.
 
 ## Orchestrator scheduling
 
