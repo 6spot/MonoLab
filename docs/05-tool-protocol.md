@@ -147,6 +147,8 @@ Examples include missing Owner decision, credential, permission, external result
 
 The same Node resumes later through a new Attempt.
 
+Unblocking is not an Agent tool. Once the external condition is resolved, a deterministic system/Owner action moves the Node from BLOCKED back to PENDING and normal Orchestrator scheduling resumes. Do not add a separate Task-level resume lifecycle.
+
 ## request_rework
 
 Use when:
