@@ -32,6 +32,10 @@ Todo capture must be fast and low-friction. A Todo does not need to belong to a 
 
 This supports the primary capture case: the Owner has an idea and records it immediately without first choosing metadata or navigating project structure.
 
+Todo creation is a pure capture/storage action. It must not automatically invoke Planner or any AI model.
+
+The Owner's original capture text is canonical and must not be silently rewritten or renamed by AI. The UI may derive a display label deterministically from the first meaningful line / leading characters, but that is presentation only. If explicit renaming is supported, it is Owner-controlled.
+
 A Todo may remain open for a long time and can produce multiple independent Execution Tasks over time.
 
 Keep Todo lifecycle minimal. V1 only needs active vs archived behavior; do not introduce task-board style Todo states such as Backlog, Doing, Waiting, or Done. Active Todos are the normal working set. Archived Todos are removed from the default working set but remain recoverable.
