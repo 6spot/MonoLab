@@ -4,6 +4,10 @@
 
 A Runner Daemon is the persistent execution process on a machine.
 
+Every Runner is the same kind of process. Do not create product-level Runner types such as Cloud Runner, Tokyo Runner, US Runner, or Personal Mac Runner.
+
+Multiple Runners are simply multiple instances of the same daemon running on different machines/locations. Differences such as name, region/location, machine metadata, installed CLIs, current availability, and capacity are instance facts, not separate abstractions.
+
 It is responsible for deterministic runtime infrastructure: discover installed Agent CLIs, maintain Runtime Registry, heartbeat, start/stop execution processes, create/resume runtime sessions, collect execution events/logs, and normalize objective runtime errors.
 
 Clients do not own execution. Web/Mobile may disconnect without affecting running work.
@@ -56,7 +60,13 @@ Every fallback is its own Execution Target, not merely a runtime ID.
 
 Model and thinking level may be absent, meaning "use the Runtime/CLI default".
 
-Runtime Adapter/Registry should expose supported models, thinking levels, and runtime-specific options when discoverable. UI should render capabilities dynamically rather than hard-coding all provider parameters into the core.
+Runtime Adapter/Registry should expose supported models, thinking levels, and runtime-specific options when discoverable. UI should load these capabilities dynamically from the connected Runtime rather than hard-coding provider catalogs into MonoLab core.
+
+This mirrors the useful Multica behavior: the available model list comes from the selected Runtime/tool, and some tools may report that model selection is runtime-managed.
+
+The UI should also allow an Owner to enter a model identifier manually when needed, so unknown/new/provider-specific models do not require a MonoLab release.
+
+A manually entered model is an explicit override. MonoLab may validate format/basic compatibility where possible, but it should not require the model to already exist in a cached discovery list.
 
 Do not introduce a separate Runtime Profile layer unless future reuse proves it necessary.
 
