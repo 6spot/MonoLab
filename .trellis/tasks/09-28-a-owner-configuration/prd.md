@@ -22,7 +22,14 @@ These are completion/evidence gates, not automatic scheduler dependencies. Paren
 
 ## Child tasks
 
-Child decomposition is deferred until upstream evidence is available. Before implementation, split this package into independently verifiable behavior slices; do not start the entire package as one implementation task.
+Sequential leaves after the verified command foundation:
+
+1. [Owner login/session lifecycle](../09-29-owner-login-sessions/prd.md).
+2. [Project and Role configuration](../09-29-project-role-configuration/prd.md).
+3. [Runtime and provider configuration](../09-29-runtime-provider-configuration/prd.md).
+4. [Protected configuration UI](../09-29-owner-configuration-ui/prd.md).
+
+The Owner authorized autonomous sequencing and decisions on 2026-09-29; no sub-agents.
 
 ## Acceptance criteria
 

@@ -4,7 +4,7 @@
 
 Use for Owner session authentication, immutable proposal preparation and exact
 authorization consumption. Implementation: `apps/server/src/owner-commands.ts`;
-storage: `0004_owner_commands.sql`. Public login and domain execution are separate.
+storage: `0004_owner_commands.sql`. Public password login is implemented by [Owner access](owner-access.md); domain execution is separate.
 
 ## 2. Signatures
 

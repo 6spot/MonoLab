@@ -244,7 +244,8 @@
             "unmet_precondition",
             "unsupported_version",
             "control_unavailable",
-            "internal_error"
+            "internal_error",
+            "rate_limited"
           ]
         },
         "message": {
@@ -1348,6 +1349,73 @@
           "type": "boolean"
         }
       }
+    },
+    "OwnerLogin": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "password"
+      ],
+      "properties": {
+        "schema_version": {
+          "type": "integer",
+          "const": 1
+        },
+        "password": {
+          "type": "string",
+          "minLength": 12,
+          "maxLength": 1024
+        }
+      }
+    },
+    "OwnerSessionStatus": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "authenticated"
+      ],
+      "properties": {
+        "schema_version": {
+          "type": "integer",
+          "const": 1
+        },
+        "authenticated": {
+          "type": "boolean"
+        },
+        "expires_at": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "authenticated": {
+                "const": true
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "expires_at"
+            ],
+            "properties": {
+              "expires_at": {
+                "type": "string"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "expires_at": false
+            }
+          }
+        }
+      ]
     }
   }
 }

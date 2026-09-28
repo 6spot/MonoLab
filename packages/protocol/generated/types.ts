@@ -50,7 +50,7 @@ export interface ErrorInfo {
     message:                  string;
 }
 
-export type Code = "invalid_input" | "denied_scope" | "unauthorized" | "stale_execution" | "version_conflict" | "payload_conflict" | "unmet_precondition" | "unsupported_version" | "control_unavailable" | "internal_error";
+export type Code = "invalid_input" | "denied_scope" | "unauthorized" | "stale_execution" | "version_conflict" | "payload_conflict" | "unmet_precondition" | "unsupported_version" | "control_unavailable" | "internal_error" | "rate_limited";
 
 export interface EffectResult {
     git_commit?:       string;
@@ -237,4 +237,15 @@ export interface FormalTaskEvent {
     kind:          string;
     operation_id?: string;
     sequence:      number;
+}
+
+export interface OwnerLogin {
+    password:       string;
+    schema_version: number;
+}
+
+export interface OwnerSessionStatus {
+    authenticated:  boolean;
+    expires_at?:    string;
+    schema_version: number;
 }

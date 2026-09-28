@@ -16,9 +16,13 @@ function lifetime(milliseconds: number) {
 
 // Internal login/bootstrap primitive. No public unauthenticated issuer exists.
 export async function issueOwnerSession(db: Database, ttl = 8 * 60 * 60 * 1000) {
+  return transaction(db, (tx) => issueOwnerSessionInTransaction(tx, ttl));
+}
+
+export async function issueOwnerSessionInTransaction(tx: Transaction, ttl = 8 * 60 * 60 * 1000) {
   const expires = lifetime(ttl); const sessionId = randomUUID();
   const token = `owner.v1.${randomBytes(32).toString('hex')}`;
-  await db.pool.query('INSERT INTO owner_sessions(id,token_digest,expires_at) VALUES($1,$2,$3)', [sessionId, digest(token), expires]);
+  await tx.query('INSERT INTO owner_sessions(id,token_digest,expires_at) VALUES($1,$2,$3)', [sessionId, digest(token), expires]);
   return { token, session_id: sessionId, expires_at: expires.toISOString() };
 }
 

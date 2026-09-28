@@ -18,7 +18,12 @@
   "commit": null,
   "pr_url": null,
   "subtasks": [],
-  "children": [],
+  "children": [
+    "09-29-owner-login-sessions",
+    "09-29-project-role-configuration",
+    "09-29-runtime-provider-configuration",
+    "09-29-owner-configuration-ui"
+  ],
   "parent": "09-28-stage-a-product-loop",
   "relatedFiles": [],
   "notes": "",

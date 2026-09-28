@@ -7,12 +7,30 @@ import type { CommandResult, Frame, InventoryQuery } from '../../../packages/pro
 import type { BoundaryService } from './service.ts';
 import { OwnerCommands } from './owner-commands.ts';
 import { OwnerReads } from './owner-reads.ts';
+import { OwnerAccess } from './owner-access.ts';
 
 function bearer(request: { headers: { authorization?: string } }): string {
   const match = /^Bearer ([^\s]+)$/.exec(request.headers.authorization ?? '');
   if (!match) throw new CommandError('unauthorized', 'Bearer authentication required');
   return match[1]!;
 }
+
+function sameOrigin(request: FastifyRequest): void {
+  let expected: string;
+  try { expected = new URL(`${request.protocol}://${request.headers.host}`).origin; }
+  catch { throw new CommandError('denied_scope', 'Same-origin request required'); }
+  if (request.headers.origin !== expected) throw new CommandError('denied_scope', 'Same-origin request required');
+}
+
+function ownerCredential(request: FastifyRequest): string {
+  if (request.headers.authorization !== undefined) return bearer(request);
+  const cookies = (request.headers.cookie ?? '').split(';').map((item) => item.trim()).filter((item) => item.startsWith('__Host-monolab='));
+  if (cookies.length !== 1) throw new CommandError('unauthorized', 'Owner session required');
+  if (!['GET', 'HEAD'].includes(request.method)) sameOrigin(request);
+  return cookies[0]!.slice('__Host-monolab='.length);
+}
+
+const sessionCookie = (token: string, maxAge: number) => `__Host-monolab=${token}; Path=/; Secure; HttpOnly; SameSite=Strict; Max-Age=${maxAge}`;
 
 function errorResult(error: unknown): CommandResult {
   if (error instanceof ProtocolVersionError) return { schema_version: 1, status: 'error', error: { code: 'unsupported_version', message: 'Unsupported protocol version' } };
@@ -26,18 +44,35 @@ export function createApp(service: BoundaryService, tls?: { key: Buffer; cert: B
   app.setErrorHandler((error: unknown, _request: FastifyRequest, reply: FastifyReply) => {
     const result = errorResult(error);
     const code = result.error!.code;
-    void reply.code(code === 'unauthorized' ? 401 : code === 'denied_scope' ? 403 : code === 'internal_error' ? 500 : 409).send(result);
+    if (code === 'rate_limited') void reply.header('Retry-After', '60');
+    void reply.code(code === 'unauthorized' ? 401 : code === 'denied_scope' ? 403 : code === 'rate_limited' ? 429 : code === 'internal_error' ? 500 : 409).send(result);
   });
+  app.addHook('onRequest', async (request, reply) => { if (request.url.startsWith('/v1/owner/')) void reply.header('Cache-Control', 'no-store'); });
   app.get('/health', async () => { await service.db.pool.query('SELECT 1'); return { schema_version: 1, database: 'ready', probe: true }; });
   const owner = new OwnerCommands(service.db);
   const reads = new OwnerReads(service.db);
-  app.get<{ Params: { task_id: string } }>('/v1/owner/tasks/:task_id', async (request) => reads.overview(bearer(request), request.params.task_id));
+  const access = new OwnerAccess(service.db);
+  app.post('/v1/owner/login', { bodyLimit: 4096 }, async (request, reply) => {
+    sameOrigin(request);
+    const body = validate<{ schema_version: 1; password: string }>('OwnerLogin', request.body);
+    const session = await access.login(body.password);
+    void reply.header('Set-Cookie', sessionCookie(session.token, Math.max(0, Math.floor((Date.parse(session.expires_at) - Date.now()) / 1000))));
+    return validate('OwnerSessionStatus', { schema_version: 1, authenticated: true, expires_at: session.expires_at });
+  });
+  app.get('/v1/owner/session', async (request) => validate('OwnerSessionStatus', await access.session(ownerCredential(request))));
+  app.post('/v1/owner/logout', async (request, reply) => {
+    if (request.body !== undefined) throw new CommandError('invalid_input', 'Logout does not accept a payload');
+    await access.logout(ownerCredential(request));
+    void reply.header('Set-Cookie', sessionCookie('', 0));
+    return { schema_version: 1, authenticated: false };
+  });
+  app.get<{ Params: { task_id: string } }>('/v1/owner/tasks/:task_id', async (request) => reads.overview(ownerCredential(request), request.params.task_id));
   app.get<{ Params: { task_id: string }; Querystring: { cursor?: string } }>('/v1/owner/tasks/:task_id/events', async (request) => {
     validate('TaskEventsQuery', request.query);
-    return reads.events(bearer(request), request.params.task_id, request.query.cursor);
+    return reads.events(ownerCredential(request), request.params.task_id, request.query.cursor);
   });
-  app.post('/v1/owner/commands', async (request) => owner.confirm(bearer(request), request.body));
-  app.get<{ Params: { scope_id: string; request_id: string } }>('/v1/owner/scopes/:scope_id/commands/:request_id', async (request) => owner.status(bearer(request), request.params.scope_id, request.params.request_id));
+  app.post('/v1/owner/commands', async (request) => owner.confirm(ownerCredential(request), request.body));
+  app.get<{ Params: { scope_id: string; request_id: string } }>('/v1/owner/scopes/:scope_id/commands/:request_id', async (request) => owner.status(ownerCredential(request), request.params.scope_id, request.params.request_id));
   app.post('/v1/commands', async (request) => service.admit(bearer(request), request.body));
   app.get<{ Params: { request_id: string } }>('/v1/commands/:request_id', async (request) => service.commandStatus(bearer(request), validate<string>('Id', request.params.request_id)));
   app.get<{ Querystring: InventoryQuery }>('/v1/runner/inventory', async (request) => {

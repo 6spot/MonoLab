@@ -375,5 +375,24 @@
       "kind": "node_completed",
       "body": {}
     }
+  },
+  {
+    "name": "Owner login accepts versioned password payload",
+    "schema": "OwnerLogin",
+    "valid": true,
+    "value": {
+      "schema_version": 1,
+      "password": "synthetic-test-password"
+    }
+  },
+  {
+    "name": "Owner login rejects claimed principal",
+    "schema": "OwnerLogin",
+    "valid": false,
+    "value": {
+      "schema_version": 1,
+      "password": "synthetic-test-password",
+      "owner": true
+    }
   }
 ]

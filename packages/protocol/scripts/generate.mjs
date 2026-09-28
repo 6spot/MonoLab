@@ -27,13 +27,17 @@ const responses = (name) => ({
   200: { description: 'Authenticated response; admission is distinct from completed effects.', content: { 'application/json': { schema: reference(name) } } },
   default: { description: 'Deterministic protocol error.', content: { 'application/json': { schema: reference('CommandResult') } } },
 });
-const get = (name, auth, parameters = []) => ({ security: [{ [auth]: [] }], parameters: parameters.map((name) => ({ name, in: 'path', required: true, schema: reference('Id') })), responses: responses(name) });
+const security = (auth) => auth === 'OwnerAuth' ? [{ OwnerAuth: [] }, { OwnerCookie: [] }] : [{ [auth]: [] }];
+const get = (name, auth, parameters = []) => ({ security: security(auth), parameters: parameters.map((name) => ({ name, in: 'path', required: true, schema: reference('Id') })), responses: responses(name) });
 artifacts.set('generated/openapi.json', `${JSON.stringify({
   openapi: '3.1.0', info: { title: 'MonoLab boundary probe', version: '1.0.0' },
   paths: {
+    '/v1/owner/login': { post: { description: 'Same-origin password login; sets Secure HttpOnly __Host-monolab cookie.', requestBody: { required: true, content: { 'application/json': { schema: reference('OwnerLogin') } } }, responses: responses('OwnerSessionStatus') } },
+    '/v1/owner/session': { get: get('OwnerSessionStatus', 'OwnerAuth') },
+    '/v1/owner/logout': { post: { security: security('OwnerAuth'), description: 'Revokes current session and clears its cookie; cookie writes require same Origin.', responses: responses('OwnerSessionStatus') } },
     '/v1/owner/tasks/{task_id}': { get: get('TaskOverview', 'OwnerAuth', ['task_id']) },
     '/v1/owner/tasks/{task_id}/events': { get: { ...get('TaskEventPage', 'OwnerAuth', ['task_id']), parameters: [...get('TaskEventPage', 'OwnerAuth', ['task_id']).parameters, { name: 'cursor', in: 'query', required: false, schema: reference('TaskEventCursor') }] } },
-    '/v1/owner/commands': { post: { security: [{ OwnerAuth: [] }], requestBody: { required: true, content: { 'application/json': { schema: reference('OwnerCommand') } } }, responses: responses('OwnerCommandResult') } },
+    '/v1/owner/commands': { post: { security: security('OwnerAuth'), requestBody: { required: true, content: { 'application/json': { schema: reference('OwnerCommand') } } }, responses: responses('OwnerCommandResult') } },
     '/v1/owner/scopes/{scope_id}/commands/{request_id}': { get: get('OwnerCommandResult', 'OwnerAuth', ['scope_id', 'request_id']) },
     '/v1/commands': { post: { security: [{ AttemptAuth: [] }], requestBody: { required: true, content: { 'application/json': { schema: reference('CommandSubmission') } } }, responses: responses('CommandResult') } },
     '/v1/commands/{request_id}': { get: get('CommandResult', 'AttemptAuth', ['request_id']) },
@@ -41,7 +45,7 @@ artifacts.set('generated/openapi.json', `${JSON.stringify({
     '/v1/recovery/attempts/{attempt_id}/commands/{request_id}': { get: get('CommandResult', 'RunnerAuth', ['attempt_id', 'request_id']) },
     '/v1/recovery/operations/{operation_id}': { get: get('Operation', 'RunnerAuth', ['operation_id']) },
   },
-  components: { schemas: JSON.parse(JSON.stringify(schema.definitions).replaceAll('#/definitions/', '#/components/schemas/')), securitySchemes: { OwnerAuth: { type: 'http', scheme: 'bearer', description: 'Opaque Owner session; neither Runner nor Attempt credentials are accepted.' }, AttemptAuth: { type: 'http', scheme: 'bearer', description: 'Attempt-scoped credential; never a Runner token.' }, RunnerAuth: { type: 'http', scheme: 'bearer', description: 'Service-private enrolled Runner identity.' } } },
+  components: { schemas: JSON.parse(JSON.stringify(schema.definitions).replaceAll('#/definitions/', '#/components/schemas/')), securitySchemes: { OwnerCookie: { type: 'apiKey', in: 'cookie', name: '__Host-monolab', description: 'Secure HttpOnly Owner session; state-changing requests require same Origin.' }, OwnerAuth: { type: 'http', scheme: 'bearer', description: 'Opaque Owner session; neither Runner nor Attempt credentials are accepted.' }, AttemptAuth: { type: 'http', scheme: 'bearer', description: 'Attempt-scoped credential; never a Runner token.' }, RunnerAuth: { type: 'http', scheme: 'bearer', description: 'Service-private enrolled Runner identity.' } } },
 }, null, 2)}\n`);
 for (const [relative, content] of artifacts) {
   const path = new URL(relative, base);

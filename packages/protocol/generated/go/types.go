@@ -209,6 +209,17 @@ type FormalTaskEvent struct {
 	Sequence    int64                  `json:"sequence"`
 }
 
+type OwnerLogin struct {
+	Password      string `json:"password"`
+	SchemaVersion int64  `json:"schema_version"`
+}
+
+type OwnerSessionStatus struct {
+	Authenticated bool    `json:"authenticated"`
+	ExpiresAt     *string `json:"expires_at,omitempty"`
+	SchemaVersion int64   `json:"schema_version"`
+}
+
 type CommandEnvelopeName string
 
 const (
@@ -232,6 +243,7 @@ const (
 	InternalError      Code = "internal_error"
 	InvalidInput       Code = "invalid_input"
 	PayloadConflict    Code = "payload_conflict"
+	RateLimited        Code = "rate_limited"
 	StaleExecution     Code = "stale_execution"
 	Unauthorized       Code = "unauthorized"
 	UnmetPrecondition  Code = "unmet_precondition"

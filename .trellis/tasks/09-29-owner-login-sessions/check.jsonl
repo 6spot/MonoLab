@@ -1,0 +1,4 @@
+{"file": ".trellis/spec/backend/owner-commands.md", "reason": "Owner session identity and lock order"}
+{"file": ".trellis/spec/backend/database-guidelines.md", "reason": "Atomic credentials and sessions"}
+{"file": ".trellis/spec/protocol/schema-generation.md", "reason": "Shared API schemas"}
+{"file": ".trellis/spec/backend/directory-structure.md", "reason": "Native TypeScript constraints"}

@@ -5,11 +5,121 @@
     "version": "1.0.0"
   },
   "paths": {
+    "/v1/owner/login": {
+      "post": {
+        "description": "Same-origin password login; sets Secure HttpOnly __Host-monolab cookie.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OwnerLogin"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Authenticated response; admission is distinct from completed effects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OwnerSessionStatus"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Deterministic protocol error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/owner/session": {
+      "get": {
+        "security": [
+          {
+            "OwnerAuth": []
+          },
+          {
+            "OwnerCookie": []
+          }
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Authenticated response; admission is distinct from completed effects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OwnerSessionStatus"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Deterministic protocol error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/owner/logout": {
+      "post": {
+        "security": [
+          {
+            "OwnerAuth": []
+          },
+          {
+            "OwnerCookie": []
+          }
+        ],
+        "description": "Revokes current session and clears its cookie; cookie writes require same Origin.",
+        "responses": {
+          "200": {
+            "description": "Authenticated response; admission is distinct from completed effects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OwnerSessionStatus"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Deterministic protocol error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/owner/tasks/{task_id}": {
       "get": {
         "security": [
           {
             "OwnerAuth": []
+          },
+          {
+            "OwnerCookie": []
           }
         ],
         "parameters": [
@@ -51,6 +161,9 @@
         "security": [
           {
             "OwnerAuth": []
+          },
+          {
+            "OwnerCookie": []
           }
         ],
         "parameters": [
@@ -100,6 +213,9 @@
         "security": [
           {
             "OwnerAuth": []
+          },
+          {
+            "OwnerCookie": []
           }
         ],
         "requestBody": {
@@ -141,6 +257,9 @@
         "security": [
           {
             "OwnerAuth": []
+          },
+          {
+            "OwnerCookie": []
           }
         ],
         "parameters": [
@@ -653,7 +772,8 @@
               "unmet_precondition",
               "unsupported_version",
               "control_unavailable",
-              "internal_error"
+              "internal_error",
+              "rate_limited"
             ]
           },
           "message": {
@@ -1757,9 +1877,82 @@
             "type": "boolean"
           }
         }
+      },
+      "OwnerLogin": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "schema_version",
+          "password"
+        ],
+        "properties": {
+          "schema_version": {
+            "type": "integer",
+            "const": 1
+          },
+          "password": {
+            "type": "string",
+            "minLength": 12,
+            "maxLength": 1024
+          }
+        }
+      },
+      "OwnerSessionStatus": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "schema_version",
+          "authenticated"
+        ],
+        "properties": {
+          "schema_version": {
+            "type": "integer",
+            "const": 1
+          },
+          "authenticated": {
+            "type": "boolean"
+          },
+          "expires_at": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          }
+        },
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "authenticated": {
+                  "const": true
+                }
+              }
+            },
+            "then": {
+              "required": [
+                "expires_at"
+              ],
+              "properties": {
+                "expires_at": {
+                  "type": "string"
+                }
+              }
+            },
+            "else": {
+              "properties": {
+                "expires_at": false
+              }
+            }
+          }
+        ]
       }
     },
     "securitySchemes": {
+      "OwnerCookie": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "__Host-monolab",
+        "description": "Secure HttpOnly Owner session; state-changing requests require same Origin."
+      },
       "OwnerAuth": {
         "type": "http",
         "scheme": "bearer",
