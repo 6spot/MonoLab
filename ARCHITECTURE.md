@@ -92,6 +92,56 @@ Projects
 
 The Execution Plan DAG is an internal execution/debugging structure, not normal user-facing UI.
 
+## Code ownership
+
+V1 may run as one application/service with one primary database. These are code/module ownership boundaries, not microservice boundaries.
+
+```text
+Project
+├─ Project Context / Resources
+└─ selected Role IDs
+
+Role Library
+└─ reusable Role profiles / execution policy
+
+Todo
+├─ Original Capture
+├─ Discussion
+└─ Working Requirement State
+        │
+        └─ materializes immutable Execution Task
+
+Execution Task
+├─ immutable Specification
+├─ Execution Plan revisions
+├─ Nodes
+├─ Artifacts / Task Events
+└─ Current Task State projection
+
+Planner
+└─ semantic control for Discussion / initial Plan / Replan
+
+Orchestrator
+└─ deterministic Task / Node transitions and scheduling
+
+Runtime
+├─ Runner / Runtime registry
+├─ Attempts / Sessions / Execution Logs
+└─ Runtime adapters / fallback
+
+Workspace
+├─ Task Workspace / Node worktrees
+└─ Git finalization / integration / cleanup
+
+Delivery
+└─ provider-neutral Git delivery + GitHub V1 adapter
+```
+
+Planner does not own execution state. Runtime does not own Task/Node semantics. Workspace does not decide orchestration. Orchestrator does not perform semantic planning.
+
+UI reads canonical records plus rebuildable projections; it must not become another source of lifecycle truth.
+
+
 ## Modules
 
 - [01 Product & Domain](docs/01-product-and-domain.md)
