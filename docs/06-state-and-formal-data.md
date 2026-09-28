@@ -16,6 +16,83 @@ Timeline          = UI projection
 
 Keep these responsibilities separate.
 
+## Persistence map
+
+V1 may use one relational database. The names below are conceptual table/record boundaries; exact ORM naming is an implementation detail.
+
+### Canonical product/domain records
+
+```text
+projects
+project_resources
+roles
+project_roles
+
+todos
+todo_discussion_messages
+todo_working_requirement_state
+
+execution_tasks
+execution_plans
+nodes
+artifacts
+task_events
+```
+
+`Original Capture` belongs to Todo itself unless implementation needs a separate immutable record. Do not create a separate table merely because the UI renders it as a distinct block.
+
+`ExecutionTask.specification` is immutable after creation. Execution Plan revisions are immutable. Nodes belong to a concrete Plan revision.
+
+Discussion messages are append-only conversation history. Working Requirement State is mutable/rebuildable semantic state and may be stored as one current record per Todo.
+
+### Runtime / infrastructure records
+
+```text
+runners
+runtime_registry
+attempts
+runtime_sessions?       # only if adapter/session recovery needs persistence
+execution_logs
+workspace_records?      # local Workspace Manager metadata, not product state
+git_delivery_operations
+```
+
+Do not force every infrastructure concept into a first-class table. For example, Runtime Registry may be persisted or reconstructed from Runner discovery depending on implementation needs, and Workspace paths/worktree bookkeeping may live in Workspace Manager storage.
+
+Attempt is the durable attribution boundary for Runtime execution. Execution Log belongs to Attempt. Runtime Session is opaque adapter infrastructure and should be persisted only when needed for recovery/resume.
+
+### Rebuildable projections / derived data
+
+```text
+current_task_state
+Todo unread / recent-activity projections
+Board counts / filters
+Timeline
+Node progress groups
+Runner utilization
+runnable Nodes
+```
+
+`current_task_state` may be materialized for efficient reads, but it is rebuildable from canonical execution data and formal events.
+
+Timeline is never a canonical table. Runnable Nodes are never persisted as lifecycle state. Runner utilization is derived from Attempts.
+
+### Ownership rule
+
+A record has one owning module even when other modules read it:
+
+- Project owns Project / Resource association;
+- Role Library owns Role profiles;
+- Todo owns capture, Discussion, and Working Requirement State;
+- Execution Task owns immutable Task / Plan / Node / Artifact / Event records;
+- Orchestrator owns deterministic lifecycle mutations and Current Task State projection updates;
+- Runtime owns Runner / Runtime / Attempt / Session / Execution Log infrastructure;
+- Workspace Manager owns local workspace/worktree/Git bookkeeping;
+- Delivery owns Git delivery operation state.
+
+Cross-module code should call the owning module's API/service boundary instead of directly mutating another module's records.
+
+
 ## Task state
 
 Use a small state set:
