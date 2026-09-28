@@ -259,7 +259,7 @@ Multiple repositories are not an atomic transaction. Before the first merge, val
 
 For arbitrary Git URLs without PR/merge capabilities, V1 prepares and pushes a Task delivery branch, exposes its exact commit/diff, and offers `Accept delivered branch`. Successful branch delivery plus Owner acceptance completes the Task; merging into the target branch is manual and explicitly outside this delivery mode. Missing write credentials remain a REVIEW delivery error. Agent runtimes never receive delivery credentials.
 
-Request Changes serializes with delivery dispatch: revoke acceptance and cancel pending merge dispatch before routing feedback. If a merge request is already in flight, reconcile its outcome first and apply the partial-delivery rules if it succeeded. Likewise, old PR-preparation workers may not push after a newer result version is prepared; delivery operations serialize per item and validate the current result version before remote mutation.
+Request Changes serializes with delivery dispatch: revoke acceptance and cancel pending merge dispatch before routing feedback. While that routing operation is unresolved, Task remains REVIEW but the backend rejects new acceptance and merge admission, even if all Nodes are still COMPLETED and all checks pass. Finishing PR preparation or refreshing checks cannot clear this guard. If a merge request is already in flight, reconcile its outcome first and apply the partial-delivery rules if it succeeded. Likewise, old PR-preparation workers may not push after a newer result version is prepared; delivery operations serialize per item and validate the current result version before remote mutation.
 
 ## Location-independent workspace identity
 

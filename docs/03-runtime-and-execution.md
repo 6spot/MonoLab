@@ -116,7 +116,7 @@ A target found unavailable during initial policy resolution is skipped without c
 
 Planner availability must not become a dependency of ordinary scheduling after a Plan has been published. Orchestrator continues to unlock and schedule Nodes from an existing Plan without consulting Planner. Planner is required again only for new initial planning, Replan, or Owner review-feedback routing.
 
-If all Planner targets are unavailable during initial planning, the Task remains RUNNING with no Plan and Owner-facing attention. If all Planner targets are unavailable during Replan, the Task remains REPLAN_REQUIRED. Do not add PLANNER_FAILED or PLANNER_RETRYING Task states.
+If all Planner targets are unavailable during initial planning, the Task remains RUNNING with no Plan and Owner-facing attention. If all Planner targets are unavailable during Replan, the Task remains REPLAN_REQUIRED. During review-feedback routing, it remains REVIEW with operation attention and acceptance disabled until feedback is resolved. Do not add PLANNER_FAILED or PLANNER_RETRYING Task states.
 
 Runtime scheduling may prioritize control work (Todo Planner, initial Plan, Replan) over queued ordinary Node Attempts when capacity becomes available, but must not preempt already-running Runtime executions merely to do so.
 
@@ -279,7 +279,7 @@ Task status is derived from the effective Plan:
 
 - if any Node is RUNNING, or runnable work exists, Task is RUNNING;
 - if no Node is running/runnable and at least one required Node is BLOCKED, Task is BLOCKED;
-- if an unresolved Replan request or review-feedback routing freeze exists, Task is REPLAN_REQUIRED and no new Nodes are scheduled; this takes precedence over ordinary RUNNING/BLOCKED derivation;
+- if an unresolved Replan request identifies an insufficient collaboration graph, Task is REPLAN_REQUIRED and no new Nodes are scheduled; this takes precedence over ordinary RUNNING/BLOCKED derivation;
 - if all required Nodes in the current effective Plan are COMPLETED and local workspace operations have settled, execution work is finished and Task enters REVIEW while remote preparation proceeds.
 
 When all required Nodes are complete and workspace operations have settled, Planner is not asked whether the Task is done. The system moves the Task to REVIEW with the integrated local result and starts delivery preparation where applicable. Remote preparation failure leaves the Task in REVIEW with an actionable delivery error.
@@ -325,7 +325,7 @@ Keep blocker semantics lightweight. `block_node(reason)` carries a human-readabl
 
 ### Replan recovery
 
-An Agent-requested REPLAN_REQUIRED is cleared by publishing a new confirmed Plan revision. A review-feedback routing freeze may also be cleared by authorized Rework as defined in Planner & Planning. Do not add a separate Resume Task action.
+REPLAN_REQUIRED is cleared by publishing a new confirmed Plan revision. Review-feedback routing is an internal operation while Task remains REVIEW; it is never a temporary use of REPLAN_REQUIRED, and Rework does not clear an actual Replan request. Do not add a separate Resume Task action.
 
 The recovery path is:
 
@@ -503,7 +503,7 @@ A Runtime session is an optimization over canonical context. Same Runtime and ow
 
 Resume only if the Adapter can inject the current authoritative context without retaining conflicting old instructions or stale workspace assumptions. If a fingerprint change cannot be reconciled by a documented Adapter capability, start a fresh session. Project reassignment, Runtime switching after intervening work, and incompatible workspace lineage always start fresh sessions. A fresh session must not lose committed Discussion replies, review feedback, blocker answers, or current completion evidence.
 
-Planner Attempts that commit Discussion, publish the initial Plan, prepare a Replan proposal, or apply review Rework have achieved their phase-specific formal outcome. Persist that outcome before releasing their owner claim. A subsequent process exit cannot schedule fallback for an already-committed phase. If exit occurs without the phase's outcome, leave the enclosing turn/Task operation retryable with attention; never infer an outcome from text.
+Planner Attempts that commit Discussion, publish the initial Plan, prepare a Replan proposal, apply review Rework, or resolve review routing into a formal Replan request have achieved their phase-specific formal outcome. Persist that outcome before releasing their owner claim. A subsequent process exit cannot schedule fallback for an already-committed phase. If exit occurs without the phase's outcome, leave the enclosing turn/Task operation retryable with attention; never infer an outcome from text.
 
 Runner directly starts the Owner-installed host CLI under its configured execution account, using existing CLI authentication. Runtime processes start in assigned scratch space before a repository is opened. `open_workspace` lazily materializes and returns the assigned host directory or Git worktree; it does not migrate or restart the Runtime process. Native permission/sandbox settings, where supported, must permit those assigned paths. Scratch files are not formal outputs unless published or included in finalized workspace results. Container execution and execution images are not V1 requirements.
 

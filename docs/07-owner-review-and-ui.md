@@ -626,7 +626,7 @@ There is no normal Owner-facing "Prepare PR" action.
 
 If checks are still running, Review may show them in progress. Accept & Merge may wait for required checks for the exact accepted head; changed code requires renewed acceptance rather than silently applying the old decision.
 
-Request Changes keeps the Task in the same delivery lineage: work resumes, the same delivery branch / PR is updated, checks rerun, and the Task later returns to REVIEW.
+Request Changes keeps the Task in REVIEW while Planner processes the feedback, shown as an internal operation status on the Review card (for example `Processing requested changes`). Disable Accept / Merge while that operation is unresolved; queueing or failure is shown there with Retry/attention rather than moving the card to Running. When Rework is applied, work resumes under the same delivery branch / PR and later returns to REVIEW. Move to REPLAN_REQUIRED only after a formal decision that the graph is insufficient.
 
 For multi-repository Tasks, Review may show multiple delivery items/PRs under one Task-level delivery while retaining one Owner-level Accept & Merge action.
 

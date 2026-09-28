@@ -31,6 +31,7 @@ Planner Execution Policy may define ordered fallback targets. Planner failure th
 - Todo Discussion/materialization waits or falls back;
 - a RUNNING Task that has just been started may wait or fall back during initial planning;
 - a REPLAN_REQUIRED Task waits or falls back during Replan;
+- a REVIEW Task with pending feedback routing remains REVIEW and waits, falls back, or surfaces operation attention;
 - an already-published Plan continues normal Orchestrator scheduling without Planner.
 
 ## Planner instruction layers
@@ -334,11 +335,16 @@ Validate before publication: a nonempty acyclic graph, unique Node IDs, all depe
 
 ### Review feedback planning
 
-Request Changes records Owner feedback and revokes any pending delivery acceptance. The Task enters REPLAN_REQUIRED as a temporary scheduling freeze while the Execution Task Planner routes feedback; this does not itself require a new Plan revision.
+Request Changes records Owner feedback, revokes pending delivery acceptance, and creates a durable internal feedback-routing operation. The Task remains REVIEW while the Execution Task Planner determines how to address that feedback. Pending feedback blocks new acceptance and merge dispatch through operation guards; it does not itself invalidate completed Nodes, change the Plan, or create a Replan request.
 
-The Planner may propose either Rework of existing Node(s), or a changed Plan. For Rework, the Owner's Request Changes authorizes applying the proposed existing-Node targets through the system command boundary; this clears the review-routing freeze and resumes normal scheduling. For a changed Plan, use the proposal confirmation and publication contract above. A normal Agent-requested Replan can only be cleared by confirmed Plan publication, not by this review-feedback exception.
+The Planner makes the routing decision through formal tools, not prose:
 
-Planner has a task-scoped Rework command for review routing. The Node Agent's upstream-only `request_rework` rule remains unchanged. Feedback and any blocker answer are persisted as Task-scoped Owner decisions and included in the next relevant Attempt; they must not rely on Todo Discussion or opaque Runtime session memory.
+- If the existing graph is sufficient, `apply_review_rework` atomically resolves the routing operation and invalidates the selected existing Nodes and descendants. Normal scheduling derives RUNNING from the resulting runnable work; REVIEW never passes through REPLAN_REQUIRED. The Owner's Request Changes authorizes this Rework within the immutable Specification.
+- Only if the graph itself is insufficient, `request_replan` atomically resolves routing into a formal Replan request and transitions REVIEW → REPLAN_REQUIRED. The new graph still requires the normal proposal confirmation and publication contract. Rework never clears REPLAN_REQUIRED.
+
+Planner queueing, failure, missing information, or exit without a committed routing decision leaves the Task in REVIEW with an operation status/attention and retry or clarification action. No fallback path invents a structural planning decision. Feedback outside the immutable Specification requires Owner direction toward a new Task rather than silently widening this one; unresolved feedback continues to block acceptance.
+
+The routing operation records its feedback ID and reviewed Plan/result basis. Both outcome commands validate that basis, current Task control version and Planner Attempt ownership, and only one may resolve the operation. A repeated command returns its recorded result; a stale or competing decision cannot apply another outcome. Planner has a task-scoped Rework command for review routing. The Node Agent's upstream-only `request_rework` rule remains unchanged. Feedback and any blocker answer are persisted as Task-scoped Owner decisions and included in the next relevant Attempt; they must not rely on Todo Discussion or opaque Runtime session memory.
 
 ## Discussion turns and durable semantic output
 

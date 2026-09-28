@@ -13,8 +13,8 @@ Capture (no AI)
 → Task Planner publishes one Node
 → Node opens repository, edits/tests, completes through Tool Protocol
 → system finalizes result and prepares PR
-→ Owner Request Changes
-→ Task Planner routes feedback to Rework of the same Node
+→ Owner Request Changes (Task remains REVIEW; acceptance blocked)
+→ Task Planner routes feedback to Rework of the same Node (Task becomes RUNNING)
 → new activation updates the same PR
 → Owner accepts the exact result
 → expected-head merge succeeds
@@ -81,7 +81,7 @@ Demonstrate the full flow against an Owner-designated test repository and one re
 | Stop execution with a background child process | No successor writes until the old writers are terminated/isolated |
 | End Runtime without `complete_node` | BLOCKED with Retry; no false completion |
 | Simulate lost PR-create or merge response | Query remote truth before retry; no duplicate PR or invented failure |
-| Request Changes after REVIEW | Same Task/Node/PR, new activation; obsolete outputs not current evidence |
+| Request Changes after REVIEW | REVIEW while routing, then RUNNING on Rework with no REPLAN_REQUIRED; same Task/Node/PR, new activation; obsolete outputs not current evidence |
 | Change PR head after acceptance | Old acceptance cannot merge the changed result |
 | Break provider access or required checks | Remain REVIEW with clear delivery failure and recovery action |
 | Remove opaque session state before Retry | Current formal data reconstructs a usable execution context |

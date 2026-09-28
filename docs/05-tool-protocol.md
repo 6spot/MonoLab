@@ -191,6 +191,8 @@ Typical reasons:
 - dependencies must change;
 - future serial/parallel structure must change.
 
+The Execution Task Planner may also call `request_replan(reason)` for its current feedback-routing operation, but only after determining that the graph is insufficient. That call is bound to the operation/feedback and its expected control version by authenticated execution context. It atomically records the Replan request and resolves routing; it does not perform Node-specific block/stop transitions because the caller is a Planner. Merely accepting Request Changes never calls this tool.
+
 Replan creates a new immutable Plan revision after Owner confirmation in V1.
 
 An unresolved Replan request freezes scheduling of new Nodes from the current Plan. Already-running independent Nodes are not automatically killed; their results may still be preserved and provided to the Execution Task Planner.
@@ -204,7 +206,7 @@ The Tool Protocol is the shared command boundary for Agent tools and authenticat
 | Caller | Allowed mutations |
 | --- | --- |
 | Todo Planner | Commit its Discussion reply/requirement state/proposal; rebuild its cache; create only with a matching Owner confirmation |
-| Execution Task Planner | Publish an initial Plan for its Task; prepare a Replan and publish only with its matching confirmation; route authorized review feedback to Rework; no final acceptance |
+| Execution Task Planner | Publish an initial Plan for its Task; prepare a Replan and publish only with its matching confirmation; resolve authorized review feedback through Rework or a formal Replan request; no final acceptance |
 | Node Agent | Open Project workspaces; publish its outputs; complete/block itself; request upstream Rework or Task Replan |
 | Owner | Confirm/create/start; stop/continue/retry/cancel; confirm Replan; submit feedback or blocker answers; accept delivery |
 | System services | Validated scheduling, recovery, integration, projection, and delivery operations within module ownership |

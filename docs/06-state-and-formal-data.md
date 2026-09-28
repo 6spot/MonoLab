@@ -116,8 +116,8 @@ Task state is derived from formal execution facts rather than manually advanced 
   - `RUNNING + current_plan_id = null` means initial planning is still incomplete;
   - `RUNNING + current_plan_id != null` means a Plan has been published and normal Plan execution may proceed;
 - BLOCKED only when no running/runnable work remains and at least one required Node is BLOCKED;
-- REPLAN_REQUIRED while an unresolved Replan request or review-feedback routing operation freezes new scheduling;
-- REVIEW when every Node in the current effective Plan is COMPLETED and local workspace operations have settled. The integrated result is visible while remote delivery preparation proceeds or fails.
+- REPLAN_REQUIRED only while a formal unresolved Replan request identifies an insufficient collaboration graph and freezes new scheduling;
+- REVIEW when every Node in the current effective Plan is COMPLETED and local workspace operations have settled. The integrated result is visible while remote delivery preparation proceeds or fails. Pending review-feedback routing also leaves the Task in REVIEW, with acceptance disabled until the operation resolves.
 - CANCELLED is terminal for scheduling but preserves historical execution/formal outputs; physical Workspace/log cleanup is a separate retention concern.
 
 ## Node state
@@ -357,7 +357,7 @@ Node lifecycle records carry an activation generation. Attempts, completion summ
 
 An Artifact is historical immediately upon publication. It becomes current completion evidence only when its source activation successfully completes and is still valid in the effective Plan. Default downstream context includes outputs selected by successful completion, not every Artifact a failed Attempt happened to publish. The successful Attempt's Artifacts are included by default. An optional `artifact_ids` argument to `complete_node(summary, artifact_ids?)` may explicitly select earlier Attempt outputs from the same activation; IDs from a different activation are rejected. An empty selection is valid. Immutable content and `supersedes` preserve provenance without making obsolete results current.
 
-Persist Owner authorization receipts, Task-scoped review feedback/blocker answers, and operation recovery records under their owning modules. They are not new user-facing lifecycles. Task event sequence plus durable control facts must reconstruct Start/Stop, unresolved Replan or review-routing freeze, effective Plan, invalidation, acceptance, and cancellation; do not infer them from log prose or timestamps alone.
+Persist Owner authorization receipts, Task-scoped review feedback/blocker answers, and operation recovery records under their owning modules. They are not new user-facing lifecycles. Task event sequence plus durable control facts must reconstruct Start/Stop, unresolved Replan and pending review-feedback operations, effective Plan, invalidation, acceptance, and cancellation; do not infer them from log prose or timestamps alone.
 
 ## Transition precedence and recovery
 
@@ -370,15 +370,17 @@ Persist Owner authorization receipts, Task-scoped review feedback/blocker answer
 | Node completion | Current activation/Attempt; integration committed | COMPLETED Node and current output references |
 | Exhausted execution | No allowed fallback or missing formal outcome | BLOCKED Node with recovery action |
 | Rework | Authorized target set | Invalidate target/descendants and pending acceptance; resume after writers stop |
-| Request Replan | Active Task and valid request | Freeze dispatch; settle running work |
+| Request Replan | Active Task and valid request identifying an insufficient graph | REPLAN_REQUIRED; freeze dispatch and settle running work |
 | Publish Replan | Quiescent work, confirmed graph, unchanged basis | Atomically replace effective Plan and clear freeze |
-| Request Changes | REVIEW, no partially merged result or unresolved merge | Revoke acceptance; review-routing freeze |
-| Review routing to Rework | Authorized feedback and unchanged basis | Apply Rework; clear routing freeze |
+| Request Changes | REVIEW, no partially merged result or unresolved merge | Remain REVIEW; revoke acceptance and create feedback-routing operation that blocks new acceptance/merge |
+| Review routing to Rework | REVIEW, current unresolved feedback operation, unchanged basis | Resolve operation and apply Rework atomically; derive RUNNING from runnable work, never REPLAN_REQUIRED |
+| Review routing to Replan | REVIEW, current unresolved feedback operation, unchanged basis, graph insufficient | Resolve operation and record formal Replan request atomically; REPLAN_REQUIRED |
+| Review routing waits/fails | Unresolved feedback operation | Remain REVIEW; operation status/attention and Retry, acceptance still blocked |
 | All work complete | No freeze or unsettled local operation | REVIEW; prepare remote delivery |
-| Accept | REVIEW, exact result receipt | Start/continue delivery; COMPLETED only after success |
+| Accept | REVIEW, no unresolved feedback operation, exact result receipt | Start/continue delivery; COMPLETED only after success |
 | Cancel | Nonterminal Task | Revoke execution/acceptance; CANCELLED; reconcile outstanding effects |
 
-CANCELLED and COMPLETED cannot be overwritten by late callbacks. An unresolved scheduling freeze takes precedence over ordinary RUNNING/BLOCKED derivation. Repeated callbacks are idempotent. A delivery failure cannot move REVIEW back to RUNNING. Remote success discovered after cancellation is recorded truthfully without undoing cancellation or pretending the merge was prevented.
+CANCELLED and COMPLETED cannot be overwritten by late callbacks. An unresolved Replan request takes precedence over ordinary RUNNING/BLOCKED/REVIEW derivation. A pending feedback-routing operation does not change Task status; it guards acceptance and merge while Task remains REVIEW. Repeated callbacks are idempotent. A delivery failure cannot move REVIEW back to RUNNING. Remote success discovered after cancellation is recorded truthfully without undoing cancellation or pretending the merge was prevented.
 
 All V1 Plan Nodes are required. QUEUED Attempts belong to admitted RUNNING Nodes, so capacity waiting cannot make a Task spuriously BLOCKED. Infrastructure recovery with no runnable process remains visible through attention/operation references until it settles; it does not invent new Task states.
 
@@ -399,6 +401,11 @@ These scenarios define the minimum verification surface for the first execution 
 | Rework races with completion | One serialized outcome; obsolete activation cannot publish current evidence |
 | Old process survives logical cancellation | Its commands are fenced and its writable workspace cannot be handed to a successor |
 | Replan proposal becomes stale before confirmation | Publication rejected; current Plan remains intact |
+| Request Changes resolves to Rework | REVIEW while routing, then RUNNING; no REPLAN_REQUIRED transition or Replan event |
+| Request Changes resolves to Replan | REVIEW until the formal graph-insufficiency request commits, then REPLAN_REQUIRED |
+| Planner fails or waits during feedback routing | REVIEW with operation attention; acceptance and merge remain blocked |
+| Accept races with Request Changes or successful CI refresh | Serialized admission honors pending feedback; CI refresh cannot re-enable acceptance |
+| Review-routing outcome is replayed or competes with another outcome | One committed routing decision; no duplicate invalidation or late Replan transition |
 | Runtime exits successfully without completing the Node | Node is blocked for Retry, never inferred complete from prose/exit code |
 | PR creation response is lost | Reconcile the existing PR; no duplicate PR |
 | PR head changes after acceptance | Old acceptance cannot merge new code |
@@ -415,7 +422,7 @@ These scenarios define the minimum verification surface for the first execution 
 | Task event sequence | One Task's formal history | A formal event is appended | An approval's exclusive compare-and-set token |
 | Todo message sequence / processed watermark | One Todo | Message append / successful turn commit | Task execution progress |
 
-The Task control record is canonical Orchestrator-owned state outside the immutable Specification. It holds the current Plan pointer, control version, start/terminal decisions, and references to active scheduling freezes and acceptance. `current_task_state` projects this record with Node/Attempt/delivery facts. Rebuilding that projection never invents a new control version. This is operational state, not a large semantic summary.
+The Task control record is canonical Orchestrator-owned state outside the immutable Specification. It holds the current Plan pointer, control version, start/terminal decisions, and references to active Replan scheduling freezes, pending review-feedback operations, and acceptance. `current_task_state` projects this record with Node/Attempt/delivery facts. Rebuilding that projection never invents a new control version. This is operational state, not a large semantic summary.
 
 Prepared Replan proposals use the Task control version, not the raw event sequence, as their compare-and-set basis. Recording a proposal or its confirmation must not make that proposal stale through its own bookkeeping. Unrelated log chunks, notification reads, and remote check refreshes do not change control version; effective result changes do. Acceptance additionally binds the result digest and delivery item versions.
 

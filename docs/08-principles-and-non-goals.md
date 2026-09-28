@@ -92,6 +92,8 @@ Rework repeats existing work.
 
 Replan changes collaboration structure.
 
+REPLAN_REQUIRED means the current collaboration graph is insufficient. Request Changes and pending Planner feedback routing are not evidence of that condition. Routing is an internal operation while Task remains REVIEW; apply Rework directly when the graph is sufficient, and create a formal Replan request only when it is not.
+
 ### Completed is not Accepted
 
 Node Completed means an Agent declared its work complete.
