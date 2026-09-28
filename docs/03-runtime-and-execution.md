@@ -438,7 +438,18 @@ Once `current_plan_id != null`, Task-level PLANNING is no longer reusable becaus
 
 ### Cancel Task
 
-Cancel Task is the Task-level terminal action. Stop all active Attempts, prevent new Node scheduling, transition unfinished Nodes to CANCELLED as appropriate, and transition the Task to CANCELLED. Preserve completed Attempts, Logs, Artifacts, Events, and Workspace/Git history.
+Cancel Task is the Task-level terminal action.
+
+On cancellation:
+
+- cancel active Planner/Node Attempts;
+- cancel queued Attempts for that Task;
+- stop new Node scheduling;
+- transition unfinished Nodes to CANCELLED as appropriate;
+- transition the Task to CANCELLED;
+- preserve completed Attempts, Logs, Artifacts, Events, and Workspace/Git history.
+
+Cancellation must not immediately destroy Task Workspace or Node worktree data as part of the state transition. Physical cleanup is a separate retention/infrastructure concern.
 
 ### Stop Node
 
