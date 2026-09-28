@@ -100,6 +100,9 @@ Attempt execution ownership is exclusive per owner. The scheduler atomically pro
 A RUNNING Attempt may record a monotonic fencing generation/token. This is infrastructure metadata used to reject stale mutations; it is not a user-facing lifecycle state.
 For Node-owned Attempts, Attempt failure does not imply Node failure. For Planner-owned Attempts, failure does not create a new Task state; the surrounding Task/Todo remains in its existing formal state while fallback/retry/attention is handled.
 
+Runner heartbeat loss alone does not transition an Attempt out of RUNNING. Attempt terminal state requires an objective execution outcome or a reliable fencing/reconciliation decision.
+
+Node COMPLETED carries a durability invariant: the formal completed result must be reconstructable without the Runner that executed it. Transient uncheckpointed edits from a non-completed Attempt are not formal state.
 ## Runtime capacity projection
 
 Runner execution capacity is configuration plus derived Attempt facts, not another domain state machine.
