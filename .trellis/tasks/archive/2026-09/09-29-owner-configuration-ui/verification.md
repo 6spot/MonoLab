@@ -15,7 +15,7 @@ the main session under Owner authorization; no sub-agents or permission prompts.
 | Protocol generation drift | Current |
 | Native TypeScript and compiled backend imports | Passed |
 | Real PostgreSQL test entrypoint on Linux | 74 passed across 10 files (72 DB + two pure cases) |
-| Playwright against actual backend + isolated PostgreSQL | 6 passed in 16.2 seconds |
+| Playwright against actual backend + isolated PostgreSQL | 6 passed; final cleanup-verification run 16.8 seconds |
 | Linux Go tests with race detector and vet | Passed |
 | Vite production build | JS 468.53 kB / 141.96 kB gzip; CSS 25.60 kB / 6.54 kB gzip |
 | Production Docker target | Built as monolab-owner-ui-validation |
@@ -65,3 +65,13 @@ deprecation is unchanged. No running production service or installed binary repl
 The earlier Owner-deferred real Runtime model/tool/Stop/reboot acceptance is still
 open. This leaf does not establish production policy resolution, enrollment UX,
 GitHub push/merge readiness, Capture/Discussion or the full Stage A/V1 product gate.
+
+
+## Fixture lifecycle follow-up
+
+Post-run inspection found six earlier fixture schemas retained because Playwright
+had used its default hard kill. Added explicit SIGTERM graceful shutdown with a
+15-second deadline. Verified each residual schema against the synthetic fixture
+password hash before dropping it; no other schema was touched. Re-ran all six
+browser cases successfully and confirmed zero remaining web_test schemas. Closed
+the task-owned SSH tunnel. Lint and Web typecheck passed for this correction.

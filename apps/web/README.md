@@ -27,7 +27,8 @@ Do not use the development server as production ingress.
 
 The browser fixture creates/migrates a unique `web_test_<uuid>` schema, uses synthetic
 Owner credentials, listens only on `127.0.0.1:18555`, and drops only its own schema
-on shutdown or startup failure. PostgreSQL must allow schema creation; ports 18555
+on graceful shutdown or startup failure. Playwright explicitly sends SIGTERM and
+allows up to 15 seconds for cleanup. PostgreSQL must allow schema creation; ports 18555
 and any chosen local DB tunnel must be available. Tests use real HTTP/backend/DB
 flows; only GitHub repository access is mocked. Chromium's loopback secure-context
 exception permits the Secure cookie in this test harness; production requires HTTPS.

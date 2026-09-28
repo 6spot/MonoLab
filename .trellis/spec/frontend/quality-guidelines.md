@@ -40,3 +40,11 @@ Use shadcn Base UI consistently. Check keyboard/focus, labels, error association
 ## Reporting
 
 Run affected lint/type/unit/browser checks after scaffolding makes them available. Distinguish mocked UI results from real CLI/GitHub evidence. Documentation-only changes use links, consistency and formatting checks.
+
+
+## Browser fixture shutdown
+
+Configure Playwright webServer.gracefulShutdown with SIGTERM and a bounded deadline.
+Without it Playwright kills the fixture directly and skips the schema cleanup handler.
+After fixture lifecycle changes, check that a full browser run leaves zero new test
+schemas. Never clean arbitrary prefix matches without proving fixture ownership.
