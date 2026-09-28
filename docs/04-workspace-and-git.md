@@ -80,7 +80,7 @@ Workspace Manager owns:
 
 Inside the returned workspace, the Runtime's native coding tools may freely read/write files, run shell commands, build, test, and search.
 
-Workspace access must respect current execution ownership. A superseded Attempt must not be allowed to finalize/integrate Workspace state after a successor Attempt has taken ownership. If Workspace storage is shared across Runners, fencing must also protect system-managed finalize/integration operations from stale writers.
+Workspace access must respect current execution ownership. A superseded Attempt must not be allowed to finalize/integrate Workspace state after a successor Attempt has taken ownership.
 ## Serial and parallel execution
 
 Serial Nodes normally share the Task Workspace.
@@ -103,46 +103,33 @@ A →  ├
 
 The system may isolate concurrent Nodes even when one later turns out to be read-only. Avoid adding a read/write taxonomy merely to optimize away a cheap Worktree.
 
-## Node completion and durable boundary
+## Node completion and Git boundaries
 
-`complete_node(summary)` is the durability boundary between transient Runner work and formal completed work.
+`complete_node(summary)` is the formal boundary from active Agent work to a completed Node.
 
-A Node must not become COMPLETED while its only authoritative code result still exists on one Runner's local filesystem.
+V1 uses one Runner, so Task Workspace and Node worktrees may remain local to that Runner. Do not require an external Workspace Store or cross-Runner checkpoint system.
 
-When completion begins, Workspace Manager must:
+When completion begins, Workspace Manager should:
 
 1. verify the current Attempt ownership / fencing generation;
-2. prevent that Attempt from continuing to mutate the workspace being finalized;
-3. freeze/finalize the Node workspace state;
-4. persist a durable checkpoint outside the disposable Runner execution environment;
-5. integrate that result into the Task Workspace when integration is required;
-6. persist the resulting durable Task Workspace state;
-7. only then allow the formal Node COMPLETED transition and downstream scheduling.
+2. stop/freeze further mutation of the workspace being finalized;
+3. finalize the Node workspace state;
+4. integrate the result into the local Task Workspace when required;
+5. record the resulting Git revisions / dirty-state snapshot needed for normal same-Runner recovery;
+6. only then allow Node COMPLETED and downstream scheduling.
 
-The exact checkpoint representation is infrastructure, not a new product/domain object. For Git work it may use durable Git objects/commits/bundles or equivalent backing storage managed by Workspace Manager. Do not require every Node completion to push a user-visible remote branch merely for durability.
-
-The invariant is:
-
-~~~text
-Node COMPLETED
-⇒ completed result can be reconstructed without the Runner that executed it
-~~~
-
-For a Git workspace, preserve enough information to reconstruct at least:
+For Git work, record at least:
 
 - start revision;
 - completion revision / finalized dirty changes;
-- the integrated Task Workspace revision after completion when applicable.
+- resulting Task Workspace revision when integration occurs.
 
-The Agent is not required to create commits itself. If it already committed during work, keep those commits. If dirty changes remain, Workspace Manager may create an internal completion commit/checkpoint.
+The Agent is not required to create commits itself. If it already committed, keep those commits. If dirty changes remain, Workspace Manager may create an internal completion commit/snapshot.
 
-The important boundary is the reproducible code state, not "exactly one commit per Node".
+If finalization or required integration fails, `complete_node()` fails and the Node must not be marked COMPLETED.
 
-If durable persistence or required integration fails, `complete_node()` fails and the Node must not be marked COMPLETED.
+V1 does not guarantee recovery from permanent loss of the Runner's local disk. Cross-Runner durability / external Workspace persistence is a future capability, not a V1 requirement.
 
-A failed/incomplete Attempt may lose uncheckpointed intermediate edits when its Runner is permanently lost. That is acceptable because those edits never crossed the formal completion boundary.
-
-A COMPLETED Node's result must never depend on that Runner remaining available.
 ## Parallel integration
 
 Parallel Node results are integrated into the Task Workspace by deterministic program logic.
