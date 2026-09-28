@@ -41,6 +41,7 @@ Task state is derived from formal execution facts rather than manually advanced 
 - BLOCKED only when no running/runnable work remains and at least one required Node is BLOCKED;
 - REPLAN_REQUIRED while an unresolved Replan request freezes new scheduling;
 - REVIEW when every required Node in the current effective Plan is COMPLETED and deterministic review/delivery preparation has completed sufficiently to present the result.
+- CANCELLED is terminal for scheduling but preserves historical execution/formal outputs; physical Workspace/log cleanup is a separate retention concern.
 
 ## Node state
 
