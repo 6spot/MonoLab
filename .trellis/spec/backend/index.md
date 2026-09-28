@@ -1,6 +1,6 @@
 # Backend Development
 
-Status: architecture-backed baseline; no product backend exists yet. See [root](../index.md) and [technology](../../../docs/11-technology-and-deployment.md).
+Status: Stage A boundary-probe backend is implemented in `apps/server` with PostgreSQL migrations and shared protocol packages. This is not the full Task/Plan/delivery product. See [root](../index.md), [quality evidence](quality-guidelines.md) and [technology](../../../docs/11-technology-and-deployment.md).
 
 ## Pre-Development Checklist
 

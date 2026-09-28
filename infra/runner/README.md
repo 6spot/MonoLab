@@ -1,0 +1,137 @@
+# Isolated Linux Runner installation
+
+The bootstrap installs only task-prefixed resources. Review it before running as
+root. It intentionally does not install/authenticate OpenCode, start the Runner,
+replace Owner configuration, publish Git repositories, or reboot the host.
+
+Prerequisites: Linux cgroup v2, systemd, `git`, Debian `sudo`, the existing `me`
+account, OpenCode 1.18.30 at `/home/linuxbrew/.linuxbrew/bin/opencode`, and the
+explicit zero-cost `opencode/mimo-v2.6-flash-free` model. Build needs Go 1.26+
+and a C compiler. A task-owned Docker Go build image can provide these without
+changing the host toolchain. SQLite is statically compiled by its Go driver.
+
+```sh
+# In a native Linux checkout (or task-owned Linux build container):
+sh infra/runner/build.sh /tmp/monolab-probe-binaries
+# After copying the root-owned binaries and reviewing path/account collisions:
+sh infra/runner/bootstrap.sh /tmp/monolab-probe-binaries --check
+sh infra/runner/bootstrap.sh /tmp/monolab-probe-binaries
+```
+
+Main-session host preparation must provision these files privately:
+
+- `/etc/monolab-probe/runner-token`: Runner credential matching the backend;
+  mode `0640`, owner `root`, group `monolab-probe-read` is **not sufficient**,
+  because `me` belongs to that read group. Use owner `monolab-probe`, mode `0600`.
+- `/etc/monolab-probe/ca.pem`: public task CA certificate, mode `0644`.
+- `/etc/monolab-probe/runner.json`: non-secret settings, mode `0640`, owner
+  `monolab-probe`; never put a bearer in JSON or an argv.
+
+```json
+{
+  "endpoint": "https://127.0.0.1:18443",
+  "ca_file": "/etc/monolab-probe/ca.pem",
+  "token_file": "/etc/monolab-probe/runner-token",
+  "runner_id": "runner-a",
+  "journal": "/var/lib/monolab-probe/service/journal.sqlite",
+  "socket": "/run/monolab-probe/command.sock",
+  "execution_uid": 1000
+}
+```
+
+Create a small initialized bare Git fixture as `monolab-probe` at
+`/var/lib/monolab-probe/cache/fixture.git`. Use umask `0027`; the shared read
+group makes it execution-readable, while service ownership excludes execution
+writes. Do not put credentials in the fixture. Start the unit only after CA,
+backend/database and fixture are ready:
+
+```sh
+systemctl start monolab-probe-runner.service
+```
+
+The no-argument sudo policy grants only `monolab-probe` the fixed root-owned
+helper. The helper rejects unknown JSON fields/actions, limits stdin to 1 MiB,
+derives units/paths and fixes the execution identity/properties. Unit control
+requires its root-owned retained manifest. The root helper never executes Git or
+OpenCode: systemd starts fixed workers as `me`. Ordinary shell commands and
+Node filesystem writes remain unrestricted by a product sandbox. Planner
+inspection is a service-owned snapshot protected with ordinary Unix ownership.
+This is the accepted non-hostile-Agent model; it is not hostile-code containment.
+
+The preflight rejects existing unrelated service/group names, task directories,
+unit names, symlinks, writable artifacts and invalid installation markers.
+An interrupted first installation is preserved and requires inspection before
+retry; the bootstrap never takes ownership of those ambiguous resources.
+Reinstallation requires stopped task services and reconciled/unloaded Attempt
+and operation units. New execution directories inherit the shared read group
+through setgid, while the group has no write access to snapshots or caches.
+
+For a binaries-only update on an existing installation, stop the task Runner
+after reconciling its Attempt/operation units and run the same `--check`
+preflight. Then install all four rebuilt executables into their existing fixed
+paths as root:root `0755`. The Runner and helper must be updated together.
+Credentials, launch records, SQLite and workspaces remain in place. An unchanged
+unit file does not need `daemon-reload`; start the Runner explicitly afterwards.
+
+Attempt parent directories are explicitly `root:root 0755` after creation;
+the service's `0027` umask must not remove execution-account traversal. Existing
+parents must already have that exact ownership/mode and are never silently
+repaired or reused after an ambiguous failure.
+
+OpenCode runs with `--auto`, native bash/external-directory access and normal
+writable HOME/XDG state. Planner's supplied snapshot is protected by service
+ownership; its edit-tool denial is supplemental. Interactive questions,
+unreviewed native subagents/skills and role switching are excluded from this
+single-runtime probe. Main, small, title, summary and compaction models are
+explicitly pinned to the selected free model; confirm resolved values on-host.
+Retained stdout/stderr have bounded payloads plus one fixed truncation marker
+when bytes are actually dropped; reaching the exact limit alone is not a loss.
+
+The first successful workspace opening records its original Git base in the
+root-owned operation result before returning the workspace. Duplicate opens
+reuse that base. Finalization receives the system-retained base and verifies
+both current HEAD and any retained finalization parent descend from it. Orphan
+history or a reset before the base produces `invalid_finalization`; missing
+objects and unavailable ownership records require recovery. Lost materialization
+records are never reconstructed from a convenient current HEAD.
+
+Git commands use a private `0600` temporary protected config for exact directory
+exceptions, including linked-worktree metadata. This preserves the scoped
+configuration across older Git's upload-pack subprocess without changing the
+Owner's global config. System Git requests `core.fsync=committed,reference` and
+`core.fsyncMethod=fsync`; controlled restart tests do not establish power-loss
+recovery guarantees.
+
+Preserve `/var/lib/monolab-probe` after any unresolved run. Cleanup first stops
+only units named in retained launch manifests, verifies whole-tree absence,
+then stops `monolab-probe-runner.service`. Do not delete journals/workspaces,
+remove CLI installations, change root's source config, or touch unrelated
+units. Removing the sudoers file and disabling the Runner unit removes future
+probe launch access; it does not establish that existing writers have stopped.
+
+Root-owned launch records include acknowledgement state; sibling Git operation
+cgroups have separate retained `*.operation.json` records. If the helper loses
+its systemd acknowledgement, status holds ownership even when a unit is not
+visible. A subsequent host boot proves the old process tree absent and permits
+the same idempotent operation to reconcile retained Git state. Automatic
+same-boot repair of an unacknowledged operation is deliberately not implemented:
+inspect the unit/job, cgroup and retained records before any operator repair.
+Do not delete that journal merely to make a retry proceed. Well-formed typed
+effect failures cross worker/helper JSON boundaries; `capture_hard_limit` is
+reserved for proven ENOSPC/EDQUOT during controlled finalization journal writes.
+
+A retained failed Attempt unit, including `200/CHDIR`, is reconciled through
+normal status/Stop using its manifest and systemd identity. An unacknowledged
+Stop result is replayed from the journal. Disconnecting the control channel
+cancels that connection's queued work; reconnect reconciles durable records
+before allowing new dispatch.
+
+A formally revoked dispatch that never launched may receive a durable root
+tombstone only after confirming no unit, pending job, cgroup or operation record
+exists. An existing launch record must use normal status/stop reconciliation.
+Tombstones permanently reject delayed Start and never replace a launch journal
+to manufacture writer absence.
+
+Real-host cgroup/account, syscall, OpenCode and restart tests remain separate
+acceptance evidence. Local Go tests do not establish those facts. A whole-host
+reboot requires the Owner's separately agreed window.

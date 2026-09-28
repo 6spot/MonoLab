@@ -1,0 +1,1304 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "MonoLab boundary probe",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/v1/commands": {
+      "post": {
+        "security": [
+          {
+            "AttemptAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CommandSubmission"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Authenticated response; admission is distinct from completed effects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandResult"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Deterministic protocol error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/commands/{request_id}": {
+      "get": {
+        "security": [
+          {
+            "AttemptAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "request_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Authenticated response; admission is distinct from completed effects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandResult"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Deterministic protocol error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/runner/inventory": {
+      "get": {
+        "security": [
+          {
+            "RunnerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "after",
+            "in": "query",
+            "required": false,
+            "description": "Cursor and snapshot_id must be supplied together; restart the entire scan on snapshot conflict.",
+            "schema": {
+              "$ref": "#/components/schemas/InventoryCursor"
+            }
+          },
+          {
+            "name": "snapshot_id",
+            "in": "query",
+            "required": false,
+            "description": "Cursor and snapshot_id must be supplied together; restart the entire scan on snapshot conflict.",
+            "schema": {
+              "$ref": "#/components/schemas/Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Authenticated response; admission is distinct from completed effects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunnerInventory"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Deterministic protocol error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/recovery/attempts/{attempt_id}/commands/{request_id}": {
+      "get": {
+        "security": [
+          {
+            "RunnerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "attempt_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Id"
+            }
+          },
+          {
+            "name": "request_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Authenticated response; admission is distinct from completed effects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandResult"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Deterministic protocol error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/recovery/operations/{operation_id}": {
+      "get": {
+        "security": [
+          {
+            "RunnerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "operation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Authenticated response; admission is distinct from completed effects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Operation"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Deterministic protocol error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Id": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 128,
+        "pattern": "^[A-Za-z0-9_-]+$"
+      },
+      "Counter": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 9007199254740991
+      },
+      "CommandEnvelope": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "schema_version",
+          "request_id",
+          "name",
+          "scope_id",
+          "expected_control_version",
+          "payload"
+        ],
+        "properties": {
+          "schema_version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "request_id": {
+            "$ref": "#/components/schemas/Id"
+          },
+          "name": {
+            "type": "string",
+            "enum": [
+              "open_workspace",
+              "inspect_repository",
+              "complete_node",
+              "commit_task_turn"
+            ]
+          },
+          "scope_id": {
+            "$ref": "#/components/schemas/Id"
+          },
+          "expected_control_version": {
+            "$ref": "#/components/schemas/Counter"
+          },
+          "payload": {
+            "$ref": "#/components/schemas/CommandPayload"
+          }
+        },
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "name": {
+                  "const": "open_workspace"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "payload": {
+                  "type": "object",
+                  "required": [
+                    "resource_id"
+                  ],
+                  "properties": {
+                    "resource_id": {}
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "name": {
+                  "const": "inspect_repository"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "payload": {
+                  "type": "object",
+                  "required": [
+                    "resource_id"
+                  ],
+                  "properties": {
+                    "resource_id": {}
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "name": {
+                  "const": "complete_node"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "payload": {
+                  "type": "object",
+                  "required": [
+                    "summary"
+                  ],
+                  "properties": {
+                    "summary": {},
+                    "artifact_ids": {},
+                    "handled_guidance_ids": {}
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "name": {
+                  "const": "commit_task_turn"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "payload": {
+                  "type": "object",
+                  "required": [
+                    "reply",
+                    "source_watermark",
+                    "routing"
+                  ],
+                  "properties": {
+                    "reply": {},
+                    "source_watermark": {},
+                    "routing": {}
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        ]
+      },
+      "CommandPayload": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "resource_id": {
+            "$ref": "#/components/schemas/Id"
+          },
+          "summary": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 262144
+          },
+          "artifact_ids": {
+            "type": "array",
+            "maxItems": 0,
+            "items": {
+              "$ref": "#/components/schemas/Id"
+            }
+          },
+          "handled_guidance_ids": {
+            "type": "array",
+            "maxItems": 0,
+            "items": {
+              "$ref": "#/components/schemas/Id"
+            }
+          },
+          "reply": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 262144
+          },
+          "source_watermark": {
+            "$ref": "#/components/schemas/Counter"
+          },
+          "routing": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "kind"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "reply_only"
+                ]
+              }
+            }
+          }
+        }
+      },
+      "CommandSubmission": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "envelope_json",
+          "sha256"
+        ],
+        "properties": {
+          "envelope_json": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1048576
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          }
+        }
+      },
+      "ErrorInfo": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "code",
+          "message"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": [
+              "invalid_input",
+              "denied_scope",
+              "unauthorized",
+              "stale_execution",
+              "version_conflict",
+              "payload_conflict",
+              "unmet_precondition",
+              "unsupported_version",
+              "control_unavailable",
+              "internal_error"
+            ]
+          },
+          "message": {
+            "type": "string",
+            "maxLength": 1024
+          },
+          "current_control_version": {
+            "$ref": "#/components/schemas/Counter"
+          }
+        }
+      },
+      "EffectResult": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "workspace_id": {
+            "$ref": "#/components/schemas/Id"
+          },
+          "path": {
+            "type": "string",
+            "maxLength": 4096
+          },
+          "git_commit": {
+            "type": "string",
+            "pattern": "^(?:[a-f0-9]{40}|[a-f0-9]{64})$"
+          },
+          "git_tree": {
+            "type": "string",
+            "pattern": "^(?:[a-f0-9]{40}|[a-f0-9]{64})$"
+          },
+          "writer_absent": {
+            "type": "boolean"
+          },
+          "reply": {
+            "type": "string",
+            "maxLength": 262144
+          },
+          "source_watermark": {
+            "$ref": "#/components/schemas/Counter"
+          },
+          "message": {
+            "type": "string",
+            "maxLength": 1024
+          }
+        }
+      },
+      "CommandResult": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "schema_version",
+          "status"
+        ],
+        "properties": {
+          "schema_version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "admitted",
+              "committed",
+              "error",
+              "unknown"
+            ]
+          },
+          "request_id": {
+            "$ref": "#/components/schemas/Id"
+          },
+          "operation_id": {
+            "$ref": "#/components/schemas/Id"
+          },
+          "result": {
+            "$ref": "#/components/schemas/EffectResult"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorInfo"
+          }
+        }
+      },
+      "Dispatch": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "dispatch_id",
+          "attempt_id",
+          "runner_id",
+          "task_id",
+          "kind",
+          "fencing_generation",
+          "node_activation",
+          "control_version",
+          "resource_id",
+          "runtime_id",
+          "model",
+          "prompt",
+          "source_watermark",
+          "mutation_allowed",
+          "process_released"
+        ],
+        "properties": {
+          "dispatch_id": {
+            "$ref": "#/components/schemas/Id"
+          },
+          "attempt_id": {
+            "$ref": "#/components/schemas/Id"
+          },
+          "runner_id": {
+            "$ref": "#/components/schemas/Id"
+          },
+          "task_id": {
+            "$ref": "#/components/schemas/Id"
+          },
+          "node_id": {
+            "$ref": "#/components/schemas/Id"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "node",
+              "planner"
+            ]
+          },
+          "fencing_generation": {
+            "$ref": "#/components/schemas/Counter"
+          },
+          "node_activation": {
+            "$ref": "#/components/schemas/Counter"
+          },
+          "control_version": {
+            "$ref": "#/components/schemas/Counter"
+          },
+          "resource_id": {
+            "$ref": "#/components/schemas/Id"
+          },
+          "runtime_id": {
+            "type": "string",
+            "enum": [
+              "opencode"
+            ]
+          },
+          "model": {
+            "type": "string",
+            "enum": [
+              "opencode/mimo-v2.6-flash-free"
+            ]
+          },
+          "prompt": {
+            "type": "string",
+            "maxLength": 262144
+          },
+          "source_watermark": {
+            "$ref": "#/components/schemas/Counter"
+          },
+          "mutation_allowed": {
+            "type": "boolean"
+          },
+          "process_released": {
+            "type": "boolean"
+          }
+        }
+      },
+      "Operation": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "schema_version",
+          "operation_id",
+          "attempt_id",
+          "dispatch_id",
+          "request_id",
+          "kind",
+          "resource_id",
+          "state"
+        ],
+        "properties": {
+          "schema_version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "operation_id": {
+            "$ref": "#/components/schemas/Id"
+          },
+          "attempt_id": {
+            "$ref": "#/components/schemas/Id"
+          },
+          "dispatch_id": {
+            "$ref": "#/components/schemas/Id"
+          },
+          "request_id": {
+            "$ref": "#/components/schemas/Id"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "open_workspace",
+              "inspect_repository",
+              "complete_node",
+              "stop"
+            ]
+          },
+          "resource_id": {
+            "$ref": "#/components/schemas/Id"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "admitted",
+              "succeeded",
+              "recovery"
+            ]
+          },
+          "result": {
+            "$ref": "#/components/schemas/EffectResult"
+          }
+        }
+      },
+      "RuntimeEvent": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "attempt_id",
+          "dispatch_id",
+          "stream_id",
+          "sequence",
+          "kind",
+          "text"
+        ],
+        "properties": {
+          "attempt_id": {
+            "$ref": "#/components/schemas/Id"
+          },
+          "dispatch_id": {
+            "$ref": "#/components/schemas/Id"
+          },
+          "stream_id": {
+            "$ref": "#/components/schemas/Id"
+          },
+          "sequence": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "started",
+              "output",
+              "attention",
+              "exited",
+              "process_absent"
+            ]
+          },
+          "text": {
+            "type": "string",
+            "maxLength": 65536
+          },
+          "exit_code": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          },
+          "boot_id": {
+            "$ref": "#/components/schemas/Id"
+          }
+        }
+      },
+      "OperationResult": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "operation_id",
+          "attempt_id",
+          "success",
+          "result"
+        ],
+        "properties": {
+          "operation_id": {
+            "$ref": "#/components/schemas/Id"
+          },
+          "attempt_id": {
+            "$ref": "#/components/schemas/Id"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "result": {
+            "$ref": "#/components/schemas/EffectResult"
+          },
+          "failure_kind": {
+            "type": "string",
+            "enum": [
+              "recoverable",
+              "capture_hard_limit",
+              "invalid_finalization"
+            ]
+          }
+        },
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "success": {
+                  "const": true
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "failure_kind": false
+              }
+            }
+          }
+        ]
+      },
+      "Frame": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "schema_version",
+          "type"
+        ],
+        "properties": {
+          "schema_version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "hello",
+              "welcome",
+              "ready",
+              "heartbeat",
+              "start",
+              "effect",
+              "authorize_dispatch",
+              "authorization",
+              "event",
+              "event_ack",
+              "operation_result",
+              "operation_ack",
+              "error"
+            ]
+          },
+          "runner_id": {
+            "$ref": "#/components/schemas/Id"
+          },
+          "boot_id": {
+            "$ref": "#/components/schemas/Id"
+          },
+          "incarnation": {
+            "$ref": "#/components/schemas/Counter"
+          },
+          "correlation_id": {
+            "$ref": "#/components/schemas/Id"
+          },
+          "dispatch_id": {
+            "$ref": "#/components/schemas/Id"
+          },
+          "attempt_id": {
+            "$ref": "#/components/schemas/Id"
+          },
+          "allowed": {
+            "type": "boolean"
+          },
+          "credential": {
+            "type": "string",
+            "maxLength": 4096
+          },
+          "expires_at": {
+            "type": "string",
+            "maxLength": 40
+          },
+          "dispatch": {
+            "$ref": "#/components/schemas/Dispatch"
+          },
+          "operation": {
+            "$ref": "#/components/schemas/Operation"
+          },
+          "event": {
+            "$ref": "#/components/schemas/RuntimeEvent"
+          },
+          "operation_result": {
+            "$ref": "#/components/schemas/OperationResult"
+          },
+          "stream_id": {
+            "$ref": "#/components/schemas/Id"
+          },
+          "sequence": {
+            "$ref": "#/components/schemas/Counter"
+          },
+          "operation_id": {
+            "$ref": "#/components/schemas/Id"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorInfo"
+          }
+        },
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "type": {
+                  "const": "hello"
+                }
+              }
+            },
+            "then": {
+              "required": [
+                "schema_version",
+                "type",
+                "runner_id",
+                "boot_id"
+              ],
+              "properties": {
+                "schema_version": {},
+                "type": {},
+                "runner_id": {},
+                "boot_id": {}
+              },
+              "additionalProperties": false
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "type": {
+                  "const": "welcome"
+                }
+              }
+            },
+            "then": {
+              "required": [
+                "schema_version",
+                "type",
+                "runner_id",
+                "incarnation"
+              ],
+              "properties": {
+                "schema_version": {},
+                "type": {},
+                "runner_id": {},
+                "incarnation": {}
+              },
+              "additionalProperties": false
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "type": {
+                  "const": "ready"
+                }
+              }
+            },
+            "then": {
+              "required": [
+                "schema_version",
+                "type",
+                "incarnation"
+              ],
+              "properties": {
+                "schema_version": {},
+                "type": {},
+                "incarnation": {}
+              },
+              "additionalProperties": false
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "type": {
+                  "const": "heartbeat"
+                }
+              }
+            },
+            "then": {
+              "required": [
+                "schema_version",
+                "type",
+                "incarnation"
+              ],
+              "properties": {
+                "schema_version": {},
+                "type": {},
+                "incarnation": {}
+              },
+              "additionalProperties": false
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "type": {
+                  "const": "start"
+                }
+              }
+            },
+            "then": {
+              "required": [
+                "schema_version",
+                "type",
+                "dispatch",
+                "incarnation"
+              ],
+              "properties": {
+                "schema_version": {},
+                "type": {},
+                "dispatch": {},
+                "incarnation": {}
+              },
+              "additionalProperties": false
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "type": {
+                  "const": "effect"
+                }
+              }
+            },
+            "then": {
+              "required": [
+                "schema_version",
+                "type",
+                "operation",
+                "incarnation"
+              ],
+              "properties": {
+                "schema_version": {},
+                "type": {},
+                "operation": {},
+                "incarnation": {}
+              },
+              "additionalProperties": false
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "type": {
+                  "const": "authorize_dispatch"
+                }
+              }
+            },
+            "then": {
+              "required": [
+                "schema_version",
+                "type",
+                "dispatch_id",
+                "correlation_id",
+                "incarnation"
+              ],
+              "properties": {
+                "schema_version": {},
+                "type": {},
+                "dispatch_id": {},
+                "correlation_id": {},
+                "incarnation": {}
+              },
+              "additionalProperties": false
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "type": {
+                  "const": "authorization"
+                }
+              }
+            },
+            "then": {
+              "required": [
+                "schema_version",
+                "type",
+                "correlation_id",
+                "allowed",
+                "incarnation"
+              ],
+              "properties": {
+                "schema_version": {},
+                "type": {},
+                "correlation_id": {},
+                "allowed": {},
+                "incarnation": {},
+                "credential": {},
+                "expires_at": {}
+              },
+              "additionalProperties": false
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "type": {
+                  "const": "event"
+                }
+              }
+            },
+            "then": {
+              "required": [
+                "schema_version",
+                "type",
+                "event",
+                "incarnation"
+              ],
+              "properties": {
+                "schema_version": {},
+                "type": {},
+                "event": {},
+                "incarnation": {}
+              },
+              "additionalProperties": false
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "type": {
+                  "const": "event_ack"
+                }
+              }
+            },
+            "then": {
+              "required": [
+                "schema_version",
+                "type",
+                "attempt_id",
+                "stream_id",
+                "sequence",
+                "incarnation"
+              ],
+              "properties": {
+                "schema_version": {},
+                "type": {},
+                "attempt_id": {},
+                "stream_id": {},
+                "sequence": {},
+                "incarnation": {}
+              },
+              "additionalProperties": false
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "type": {
+                  "const": "operation_result"
+                }
+              }
+            },
+            "then": {
+              "required": [
+                "schema_version",
+                "type",
+                "operation_result",
+                "incarnation"
+              ],
+              "properties": {
+                "schema_version": {},
+                "type": {},
+                "operation_result": {},
+                "incarnation": {}
+              },
+              "additionalProperties": false
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "type": {
+                  "const": "operation_ack"
+                }
+              }
+            },
+            "then": {
+              "required": [
+                "schema_version",
+                "type",
+                "operation_id",
+                "incarnation"
+              ],
+              "properties": {
+                "schema_version": {},
+                "type": {},
+                "operation_id": {},
+                "incarnation": {}
+              },
+              "additionalProperties": false
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "type": {
+                  "const": "error"
+                }
+              }
+            },
+            "then": {
+              "required": [
+                "schema_version",
+                "type",
+                "error",
+                "incarnation"
+              ],
+              "properties": {
+                "schema_version": {},
+                "type": {},
+                "error": {},
+                "incarnation": {},
+                "correlation_id": {}
+              },
+              "additionalProperties": false
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "type": {
+                  "const": "authorization"
+                },
+                "allowed": {
+                  "const": true
+                }
+              },
+              "required": [
+                "allowed"
+              ]
+            },
+            "then": {
+              "required": [
+                "credential",
+                "expires_at"
+              ]
+            }
+          }
+        ]
+      },
+      "RunnerInventory": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "schema_version",
+          "dispatches",
+          "operations",
+          "snapshot_id"
+        ],
+        "properties": {
+          "schema_version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "dispatches": {
+            "type": "array",
+            "maxItems": 1000,
+            "items": {
+              "$ref": "#/components/schemas/Dispatch"
+            }
+          },
+          "operations": {
+            "type": "array",
+            "maxItems": 1000,
+            "items": {
+              "$ref": "#/components/schemas/Operation"
+            }
+          },
+          "snapshot_id": {
+            "$ref": "#/components/schemas/Id"
+          },
+          "next_cursor": {
+            "$ref": "#/components/schemas/InventoryCursor"
+          }
+        }
+      },
+      "InventoryCursor": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 256,
+        "pattern": "^[A-Za-z0-9_-]+$"
+      },
+      "InventoryQuery": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "after": {
+            "$ref": "#/components/schemas/InventoryCursor"
+          },
+          "snapshot_id": {
+            "$ref": "#/components/schemas/Id"
+          }
+        },
+        "dependencies": {
+          "after": [
+            "snapshot_id"
+          ],
+          "snapshot_id": [
+            "after"
+          ]
+        }
+      }
+    },
+    "securitySchemes": {
+      "AttemptAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Attempt-scoped credential; never a Runner token."
+      },
+      "RunnerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Service-private enrolled Runner identity."
+      }
+    }
+  }
+}

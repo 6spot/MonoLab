@@ -88,6 +88,8 @@ Inside the returned workspace, the Runtime's native coding tools may freely read
 
 A Planner inspection snapshot (module 02) is a disposable read-only materialization at a finalized revision. It is not a Task Workspace, has no delivery lineage, and never becomes a Node input or integration source.
 
+The service account owns the snapshot and its parent directories, and exposes only read/traversal permission to the execution account. That account cannot replace the root or change snapshot files/modes even through its normal shell tools. Snapshot creation/cleanup remains a system-owned effect; Planner scratch stays writable. This is a protection for the returned materialization, not a general host filesystem sandbox.
+
 Workspace access must respect current execution ownership. A superseded Attempt must not be allowed to finalize/integrate Workspace state after a successor Attempt has taken ownership.
 ## V1 Workspace lifecycle
 

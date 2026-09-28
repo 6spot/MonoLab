@@ -1,0 +1,56 @@
+name: monolab-boundary-probe
+services:
+  database:
+    image: postgres:17.11-trixie@sha256:d74eeac9a635390a49bc21bd49fccd973de707e2a53a76ac49b552b8712ec46f
+    environment:
+      POSTGRES_DB: monolab
+      POSTGRES_USER: monolab
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+    secrets: [db_password]
+    volumes: [database_data:/var/lib/postgresql/data]
+    networks: [control]
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U monolab -d monolab]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+    restart: unless-stopped
+  server:
+    build: { context: ../.., dockerfile: infra/compose/Dockerfile, target: server }
+    environment:
+      MONOLAB_DATABASE_URL_FILE: /run/secrets/database_url
+      MONOLAB_SIGNING_KEY_FILE: /run/secrets/signing_key
+      MONOLAB_TLS_KEY_FILE: /run/secrets/tls_key
+      MONOLAB_TLS_CERT_FILE: /run/secrets/tls_cert
+      MONOLAB_LISTEN_HOST: 0.0.0.0
+      MONOLAB_PORT: "18443"
+    secrets: [database_url, signing_key, tls_key, tls_cert]
+    ports: ["127.0.0.1:18443:18443"]
+    networks: [control, ingress]
+    depends_on: { database: { condition: service_healthy } }
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    read_only: true
+    tmpfs: [/tmp]
+    restart: unless-stopped
+  tests:
+    profiles: [test]
+    build: { context: ../.., dockerfile: infra/compose/Dockerfile, target: test }
+    environment:
+      MONOLAB_DATABASE_URL_FILE: /run/secrets/database_url
+    secrets: [database_url]
+    networks: [control]
+    depends_on: { database: { condition: service_healthy } }
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+networks:
+  control: { internal: true }
+  ingress: {}
+volumes:
+  database_data:
+secrets:
+  db_password: { file: ./private/db_password }
+  database_url: { file: ./private/database_url }
+  signing_key: { file: ./private/signing_key }
+  tls_key: { file: ./private/server.key }
+  tls_cert: { file: ./private/server.crt }

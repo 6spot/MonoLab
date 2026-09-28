@@ -1,0 +1,52 @@
+import { once } from 'node:events';
+import type { AddressInfo } from 'node:net';
+import { WebSocket } from 'ws';
+import { expect, it, vi } from 'vitest';
+import { database } from '../../../packages/db/src/index.ts';
+import { MAX_BODY_BYTES } from '../../../packages/protocol/src/index.ts';
+import { createApp } from '../src/app.ts';
+import { BoundaryService } from '../src/service.ts';
+
+it('rejects malformed, oversized and unsupported HTTP bodies without an internal-error result', async () => {
+  // These fail before admission; there is deliberately no live database here.
+  const db = database('postgres://unused:unused@127.0.0.1:1/unused');
+  const app = createApp(new BoundaryService(db, { signingKey: 'test-only-signing-key-never-for-deployment' }));
+  try {
+    for (const [contentType, payload] of [['application/json', '{'], ['application/json', JSON.stringify('x'.repeat(MAX_BODY_BYTES))], ['application/octet-stream', 'body']]) {
+      const response = await app.inject({ method: 'POST', url: '/v1/commands', headers: { 'content-type': contentType! }, payload });
+      expect(response.statusCode).toBe(409);
+      expect(response.json()).toMatchObject({ status: 'error', error: { code: 'invalid_input' } });
+    }
+  } finally { await app.close(); await db.pool.end(); }
+});
+
+it('bounds queued Runner frames and disconnects before a stalled request finishes', async () => {
+  const db = database('postgres://unused:unused@127.0.0.1:1/unused');
+  const service = new BoundaryService(db, { signingKey: 'test-only-signing-key-never-for-deployment' });
+  vi.spyOn(service, 'authenticateRunner').mockResolvedValue('runner-test');
+  vi.spyOn(service, 'connect').mockResolvedValue(1);
+  vi.spyOn(service, 'pending').mockResolvedValue([]);
+  const disconnect = vi.spyOn(service, 'disconnect').mockResolvedValue();
+  let release!: () => void;
+  const stalled = new Promise<void>((resolve) => { release = resolve; });
+  const touch = vi.spyOn(service, 'touch').mockImplementation(() => stalled);
+  const app = createApp(service);
+  await app.listen({ host: '127.0.0.1', port: 0 });
+  const socket = new WebSocket(`ws://127.0.0.1:${(app.server.address() as AddressInfo).port}/v1/runner`, { headers: { authorization: 'Bearer fixture-only' } });
+  socket.on('error', () => undefined);
+  try {
+    await once(socket, 'open');
+    const welcome = once(socket, 'message');
+    socket.send(JSON.stringify({ schema_version: 1, type: 'hello', runner_id: 'runner-test', boot_id: 'boot-test' }));
+    await welcome;
+    socket.send(JSON.stringify({ schema_version: 1, type: 'ready', incarnation: 1 }));
+    await expect.poll(() => touch.mock.calls.length).toBe(1);
+    const closed = once(socket, 'close');
+    for (let index = 0; index < 70; index++) socket.send(JSON.stringify({ schema_version: 1, type: 'heartbeat', incarnation: 1 }));
+    expect((await closed)[0]).toBe(4008);
+    await expect.poll(() => disconnect.mock.calls.length).toBe(1);
+    release();
+    await expect.poll(() => disconnect.mock.calls.length).toBe(2);
+    expect(touch).toHaveBeenCalledTimes(1);
+  } finally { release(); socket.terminate(); await app.close(); await db.pool.end(); }
+});

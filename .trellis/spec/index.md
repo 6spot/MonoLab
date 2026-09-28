@@ -2,16 +2,16 @@
 
 ## Status and authority
 
-MonoLab contains architecture documents and Trellis tooling; product packages, migrations and tests have not been scaffolded. These specs translate accepted decisions into implementation guidance. Examples are contract sketches, not existing functions or passing tests. Add real source/test references as each slice lands.
+The Stage A boundary probe now scaffolds `apps/server`, `packages/{domain,db,protocol}`, the Go `runner`, and deployment recipes under `infra`. These specs connect accepted decisions to that implementation. The frontend and full Task/delivery product flow remain unimplemented. Source references establish behavior; the active task's evidence report distinguishes local tests from real Linux/CLI acceptance.
 
 Read [ARCHITECTURE.md](../../ARCHITECTURE.md), the relevant [module](../../docs/README.md), and [invariants](../../docs/08-principles-and-non-goals.md) first. Domain rules belong there; this tree specifies implementation and verification. Update both when an accepted decision changes.
 
 ## Layers
 
-| Entry | Selected destinations, not yet scaffolded |
+| Entry | Destinations |
 | --- | --- |
 | [Backend](backend/index.md) | `apps/server`, `packages/domain`, `packages/db` |
-| [Frontend](frontend/index.md) | `apps/web` |
+| [Frontend](frontend/index.md) | `apps/web` (planned, not scaffolded) |
 | [Protocol](protocol/index.md) | `packages/protocol`; HTTP/WSS/CLI boundaries |
 | [Runner](runner/index.md) | Go `runner` and Linux host configuration |
 | [Thinking guides](guides/index.md) | Cross-layer changes and reuse |
@@ -30,6 +30,6 @@ Prefer standard APIs and existing dependencies. A new dependency needs a concret
 2. Identify the command boundary and required failure cases.
 3. Preserve Task/Plan/Node/Attempt and admission/completion distinctions.
 4. Follow [Stage A](../../docs/09-first-executable-slice.md): real Linux/CLI feasibility precedes broad product implementation.
-5. Establish package checks during scaffolding. No product lint/type/test command exists yet; never report a planned command as passing.
+5. Run the affected package checks: root `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm protocol:check`; Runner `go test -race ./...` and `go vet ./...`. PostgreSQL tests use the isolated Compose recipe. Never report an unrun real-host scenario as passing from unit tests.
 
 Documentation is English. Current checks include `git diff --check`, local links, index coverage and unfilled-template scans.

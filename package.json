@@ -1,0 +1,30 @@
+{
+  "name": "monolab",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@12.6.0",
+  "engines": { "node": ">=24.0.0 <27" },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "lint": "eslint apps packages --max-warnings 0",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:db": "MONOLAB_TEST_DATABASE=1 vitest run apps/server/test/postgres.test.ts apps/server/test/postgres-claims.test.ts apps/server/test/postgres-recovery.test.ts",
+    "protocol:generate": "node packages/protocol/scripts/generate.mjs",
+    "protocol:check": "node packages/protocol/scripts/generate.mjs --check",
+    "db:migrate": "node --experimental-strip-types packages/db/src/migrate.ts",
+    "probe:admin": "node --experimental-strip-types apps/server/src/admin.ts",
+    "start": "node --experimental-strip-types apps/server/src/main.ts"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@types/node": "24.19.0",
+    "@types/pg": "8.23.1",
+    "@types/ws": "8.18.1",
+    "eslint": "10.11.0",
+    "quicktype-core": "26.0.0",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.70.1",
+    "vitest": "5.0.2"
+  }
+}

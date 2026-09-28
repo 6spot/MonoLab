@@ -1,0 +1,256 @@
+[
+  {
+    "name": "hello",
+    "schema": "Frame",
+    "valid": true,
+    "value": {
+      "schema_version": 1,
+      "type": "hello",
+      "runner_id": "runner-a",
+      "boot_id": "boot-a"
+    }
+  },
+  {
+    "name": "unknown frame field",
+    "schema": "Frame",
+    "valid": false,
+    "value": {
+      "schema_version": 1,
+      "type": "hello",
+      "runner_id": "runner-a",
+      "boot_id": "boot-a",
+      "owner": true
+    }
+  },
+  {
+    "name": "hello cannot choose incarnation",
+    "schema": "Frame",
+    "valid": false,
+    "value": {
+      "schema_version": 1,
+      "type": "hello",
+      "runner_id": "runner-a",
+      "boot_id": "boot-a",
+      "incarnation": 1
+    }
+  },
+  {
+    "name": "required event body",
+    "schema": "Frame",
+    "valid": false,
+    "value": {
+      "schema_version": 1,
+      "type": "event",
+      "incarnation": 1
+    }
+  },
+  {
+    "name": "null is not absent",
+    "schema": "Frame",
+    "valid": false,
+    "value": {
+      "schema_version": 1,
+      "type": "heartbeat",
+      "incarnation": null
+    }
+  },
+  {
+    "name": "unsupported version",
+    "schema": "Frame",
+    "valid": false,
+    "value": {
+      "schema_version": 2,
+      "type": "hello",
+      "runner_id": "runner-a",
+      "boot_id": "boot-a"
+    }
+  },
+  {
+    "name": "integer max",
+    "schema": "Frame",
+    "valid": true,
+    "value": {
+      "schema_version": 1,
+      "type": "heartbeat",
+      "incarnation": 9007199254740991
+    }
+  },
+  {
+    "name": "unsafe integer",
+    "schema": "Frame",
+    "valid": false,
+    "value": {
+      "schema_version": 1,
+      "type": "heartbeat",
+      "incarnation": 9007199254740992
+    }
+  },
+  {
+    "name": "grant requires credential",
+    "schema": "Frame",
+    "valid": false,
+    "value": {
+      "schema_version": 1,
+      "type": "authorization",
+      "incarnation": 1,
+      "correlation_id": "a",
+      "allowed": true
+    }
+  },
+  {
+    "name": "deny grant",
+    "schema": "Frame",
+    "valid": true,
+    "value": {
+      "schema_version": 1,
+      "type": "authorization",
+      "incarnation": 1,
+      "correlation_id": "a",
+      "allowed": false
+    }
+  },
+  {
+    "name": "complete payload",
+    "schema": "CommandEnvelope",
+    "valid": true,
+    "value": {
+      "schema_version": 1,
+      "request_id": "request-a",
+      "scope_id": "task-a",
+      "name": "complete_node",
+      "expected_control_version": 1,
+      "payload": {
+        "summary": "done"
+      }
+    }
+  },
+  {
+    "name": "missing summary",
+    "schema": "CommandEnvelope",
+    "valid": false,
+    "value": {
+      "schema_version": 1,
+      "request_id": "request-a",
+      "scope_id": "task-a",
+      "name": "complete_node",
+      "expected_control_version": 1,
+      "payload": {}
+    }
+  },
+  {
+    "name": "irrelevant command field",
+    "schema": "CommandEnvelope",
+    "valid": false,
+    "value": {
+      "schema_version": 1,
+      "request_id": "request-a",
+      "scope_id": "task-a",
+      "name": "open_workspace",
+      "expected_control_version": 1,
+      "payload": {
+        "resource_id": "repo-a",
+        "summary": "done"
+      }
+    }
+  },
+  {
+    "name": "zero event sequence",
+    "schema": "RuntimeEvent",
+    "valid": false,
+    "value": {
+      "attempt_id": "a",
+      "dispatch_id": "d",
+      "stream_id": "s",
+      "sequence": 0,
+      "kind": "output",
+      "text": "hi"
+    }
+  },
+  {
+    "name": "sha1",
+    "schema": "EffectResult",
+    "valid": true,
+    "value": {
+      "git_commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    }
+  },
+  {
+    "name": "invalid hash length",
+    "schema": "EffectResult",
+    "valid": false,
+    "value": {
+      "git_commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    }
+  },
+  {
+    "name": "inventory cursor requires snapshot",
+    "schema": "InventoryQuery",
+    "valid": false,
+    "value": {
+      "after": "cursor"
+    }
+  },
+  {
+    "name": "inventory snapshot requires cursor",
+    "schema": "InventoryQuery",
+    "valid": false,
+    "value": {
+      "snapshot_id": "snapshot"
+    }
+  },
+  {
+    "name": "inventory rejects unknown query fields",
+    "schema": "InventoryQuery",
+    "valid": false,
+    "value": {
+      "limit": 100
+    }
+  },
+  {
+    "name": "success cannot include failure class",
+    "schema": "OperationResult",
+    "valid": false,
+    "value": {
+      "operation_id": "o",
+      "attempt_id": "a",
+      "success": true,
+      "result": {},
+      "failure_kind": "capture_hard_limit"
+    }
+  },
+  {
+    "name": "typed capture failure",
+    "schema": "OperationResult",
+    "valid": true,
+    "value": {
+      "operation_id": "o",
+      "attempt_id": "a",
+      "success": false,
+      "result": {
+        "message": "capture full"
+      },
+      "failure_kind": "capture_hard_limit"
+    }
+  },
+  {
+    "name": "inventory snapshot is mandatory",
+    "schema": "RunnerInventory",
+    "valid": false,
+    "value": {
+      "schema_version": 1,
+      "dispatches": [],
+      "operations": []
+    }
+  },
+  {
+    "name": "empty inventory snapshot",
+    "schema": "RunnerInventory",
+    "valid": true,
+    "value": {
+      "schema_version": 1,
+      "snapshot_id": "aabbcc",
+      "dispatches": [],
+      "operations": []
+    }
+  }
+]

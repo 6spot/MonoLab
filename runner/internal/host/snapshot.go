@@ -1,0 +1,118 @@
+package host
+
+import (
+	"fmt"
+	protocol "monolab.local/protocol"
+	"os"
+	"path/filepath"
+	"syscall"
+)
+
+func serviceDirectory(path string, private bool) error {
+	s, err := os.Lstat(path)
+	if err != nil {
+		return err
+	}
+	stat, ok := s.Sys().(*syscall.Stat_t)
+	if !ok || !s.IsDir() || stat.Uid != uint32(os.Geteuid()) || s.Mode().Perm()&0022 != 0 {
+		return fmt.Errorf("unsafe service directory: %s", path)
+	}
+	if private && s.Mode().Perm()&0077 != 0 {
+		return fmt.Errorf("service directory is not private")
+	}
+	return nil
+}
+
+// Git upload-pack versions differ in whether ownership is checked against the
+// linked worktree or its administrative Git directory. Trust exactly those two
+// paths in this fixture layout, never every repository beneath the common root.
+func exportCloneArgs(workspace, common, destination string) []string {
+	metadata := filepath.Join(common, "worktrees", filepath.Base(workspace))
+	return []string{
+		"-c", "safe.directory=" + workspace,
+		"-c", "safe.directory=" + metadata,
+		"clone", "--bare", "--no-local", workspace, destination,
+	}
+}
+
+// Inspect runs as the unprivileged service identity, never as the Agent account.
+// The execution group can read the snapshot; only service ownership can modify it.
+func Inspect(id string) (protocol.EffectResult, error) {
+	if !ValidID(id) || os.Geteuid() == 0 {
+		return protocol.EffectResult{}, fmt.Errorf("invalid service inspection")
+	}
+	path := filepath.Join(Root, "inspection", id)
+	if err := serviceDirectory(filepath.Dir(path), false); err != nil {
+		return protocol.EffectResult{}, err
+	}
+	if err := os.Mkdir(path, 0750); err != nil && !os.IsExist(err) {
+		return protocol.EffectResult{}, err
+	}
+	if err := serviceDirectory(path, false); err != nil {
+		return protocol.EffectResult{}, err
+	}
+	if _, err := os.Stat(filepath.Join(path, ".git")); os.IsNotExist(err) {
+		if _, err = git(path, "clone", "--no-local", filepath.Join(Root, "cache", "fixture.git"), path); err != nil {
+			return protocol.EffectResult{}, err
+		}
+	} else if err != nil {
+		return protocol.EffectResult{}, err
+	}
+	// A retained .git alone does not establish that a crash-interrupted clone
+	// finished its checkout. Keep incomplete state for recovery instead of exposing it.
+	tree, err := git(path, "rev-parse", "HEAD^{tree}")
+	if err != nil {
+		return protocol.EffectResult{}, err
+	}
+	index, err := git(path, "write-tree")
+	if err != nil {
+		return protocol.EffectResult{}, err
+	}
+	dirty, err := git(path, "status", "--porcelain")
+	if err != nil {
+		return protocol.EffectResult{}, err
+	}
+	if index != tree || dirty != "" {
+		return protocol.EffectResult{}, fmt.Errorf("inspection checkout incomplete or changed")
+	}
+	return protocol.EffectResult{WorkspaceID: ptr(WorkspaceID("inspection", id)), Path: &path}, nil
+}
+
+// Export retains the exact private result in service-owned storage without publication.
+func Export(id, op, commit, tree string) error {
+	if !ValidID(id) || !ValidID(op) || os.Geteuid() == 0 {
+		return fmt.Errorf("invalid service export")
+	}
+	if !objectID.MatchString(commit) || !objectID.MatchString(tree) {
+		return invalidFinalization(fmt.Errorf("invalid finalized object identity"))
+	}
+	destination := filepath.Join(Root, "results", op)
+	if err := serviceDirectory(filepath.Dir(destination), true); err != nil {
+		return err
+	}
+	if err := os.Mkdir(destination, 0700); err != nil && !os.IsExist(err) {
+		return err
+	}
+	if err := serviceDirectory(destination, true); err != nil {
+		return err
+	}
+	if _, err := os.Stat(filepath.Join(destination, "HEAD")); os.IsNotExist(err) {
+		if _, err = git(destination, exportCloneArgs(Path(id, "workspace"), Path(id, "common"), destination)...); err != nil {
+			return err
+		}
+	} else if err != nil {
+		return err
+	}
+	if _, err := git(destination, "--git-dir="+destination, "fsck", "--connectivity-only", "--no-reflogs"); err != nil {
+		return err
+	}
+	actual, err := git(destination, "--git-dir="+destination, "rev-parse", commit+"^{tree}")
+	if err != nil {
+		return err
+	}
+	if actual != tree {
+		return invalidFinalization(fmt.Errorf("exported tree mismatch"))
+	}
+	_, err = git(destination, "--git-dir="+destination, "update-ref", "refs/monolab/result", commit)
+	return err
+}

@@ -1,0 +1,209 @@
+package host
+
+import (
+	protocol "monolab.local/protocol"
+	"os"
+	"path/filepath"
+	"strings"
+	"syscall"
+	"testing"
+)
+
+func TestHelperRejectsUnboundedOrUntrustedInput(t *testing.T) {
+	for _, raw := range []string{`{"action":"status","attempt_id":"../escape"}`, `{"action":"shell","attempt_id":"a"}`, `{"action":"status","attempt_id":"a","command":"/bin/sh"}`, `{"action":"status","attempt_id":"a"} {}`, strings.Repeat("a", 1048577)} {
+		if _, err := DecodeRequest(strings.NewReader(raw)); err == nil {
+			t.Fatalf("accepted unsafe request %.100s", raw)
+		}
+	}
+	if _, err := DecodeRequest(strings.NewReader(`{"action":"status","attempt_id":"a"}`)); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestTraversalRootSurvivesRestrictiveUmask(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "attempt")
+	previous := syscall.Umask(0027)
+	defer syscall.Umask(previous)
+	if err := createTraversalRoot(path, os.Getuid(), os.Getgid()); err != nil {
+		t.Fatal(err)
+	}
+	if err := createTraversalRoot(path, os.Getuid(), os.Getgid()); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chmod(path, 0750); err != nil {
+		t.Fatal(err)
+	}
+	if createTraversalRoot(path, os.Getuid(), os.Getgid()) == nil {
+		t.Fatal("reused a root with no execution-account traversal")
+	}
+	info, err := os.Stat(path)
+	if err != nil || info.Mode().Perm() != 0750 {
+		t.Fatal("silently repaired an ambiguous existing root")
+	}
+}
+
+func TestUnitOwnershipRejectsOtherServiceAndCgroup(t *testing.T) {
+	valid := map[string]string{"Transient": "yes", "User": "me", "Group": "monolab-probe-read", "Description": "MonoLab probe attempt dispatch-a", "ControlGroup": "/system.slice/" + Unit("a")}
+	if err := validateUnit(valid, Unit("a"), "MonoLab probe attempt dispatch-a"); err != nil {
+		t.Fatal(err)
+	}
+	for _, key := range []string{"Transient", "User", "Group", "Description", "ControlGroup"} {
+		bad := make(map[string]string)
+		for k, v := range valid {
+			bad[k] = v
+		}
+		bad[key] = "other"
+		if validateUnit(bad, Unit("a"), "MonoLab probe attempt dispatch-a") == nil {
+			t.Fatalf("accepted changed %s", key)
+		}
+	}
+}
+
+func TestTrustedFileRejectsSymlinkAndWritableFile(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "file")
+	if err := os.WriteFile(path, []byte("owned"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := trustedFile(path, uint32(os.Getuid())); err != nil {
+		t.Fatal(err)
+	}
+	link := path + ".link"
+	if err := os.Symlink(path, link); err != nil {
+		t.Fatal(err)
+	}
+	if trustedFile(link, uint32(os.Getuid())) == nil {
+		t.Fatal("accepted symlink")
+	}
+	if err := os.Chmod(path, 0666); err != nil {
+		t.Fatal(err)
+	}
+	if trustedFile(path, uint32(os.Getuid())) == nil {
+		t.Fatal("accepted writable file")
+	}
+}
+
+func TestAtomicRecordIgnoresUnfinishedTemporaryFile(t *testing.T) {
+	dir := t.TempDir()
+	stale := filepath.Join(dir, ".record-crashed")
+	if err := os.WriteFile(stale, []byte("partial"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(dir, "record.json")
+	if err := saveRecord(path, map[string]string{"stage": "started"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := saveRecord(path, map[string]string{"stage": "finished"}); err != nil {
+		t.Fatal(err)
+	}
+	raw, err := os.ReadFile(path)
+	if err != nil || string(raw) != `{"stage":"finished"}` {
+		t.Fatalf("atomic record update failed: %s %v", raw, err)
+	}
+	if _, err := os.Stat(stale); err != nil {
+		t.Fatal("crash evidence was removed")
+	}
+}
+
+func TestOperationReplayBindsImmutableIdentity(t *testing.T) {
+	a := protocol.Operation{OperationID: "op", AttemptID: "a", DispatchID: "d", ResourceID: "r", RequestID: "req", SchemaVersion: 1, Kind: protocol.KindCompleteNode}
+	b := a
+	b.State = protocol.State("running")
+	if !sameOperation(a, b) {
+		t.Fatal("mutable control projection rejected")
+	}
+	b.ResourceID = "other"
+	if sameOperation(a, b) {
+		t.Fatal("changed immutable resource accepted")
+	}
+}
+func TestPrivilegeConfigurationIsNotCallerControlled(t *testing.T) {
+	p := strings.Join(properties("a", false), "\n")
+	for _, required := range []string{"User=me", "Group=monolab-probe-read", "NoNewPrivileges=yes", "KillMode=control-group"} {
+		if !strings.Contains(p, required) {
+			t.Fatal(required)
+		}
+	}
+	for _, forbidden := range []string{"User=root", "Delegate=yes", "ProtectSystem=strict", "PrivatePIDs"} {
+		if strings.Contains(p, forbidden) {
+			t.Fatal(forbidden)
+		}
+	}
+}
+func TestDispatchIdentityMustMatchHelperRequest(t *testing.T) {
+	d := protocol.Dispatch{AttemptID: "other", RuntimeID: protocol.Opencode, Model: protocol.OpencodeMIMOV26FlashFree}
+	if ValidateRequest(Request{Action: "start", AttemptID: "a", Dispatch: &d}) == nil {
+		t.Fatal("accepted cross-attempt start")
+	}
+}
+
+func TestRevocationTombstoneRejectsLateStartAndOwnershipReplacement(t *testing.T) {
+	d := protocol.Dispatch{AttemptID: "a", DispatchID: "d", RunnerID: "runner", TaskID: "task", ResourceID: "repo", Kind: protocol.Node, RuntimeID: protocol.Opencode, Model: protocol.OpencodeMIMOV26FlashFree, Prompt: "probe"}
+	if err := ValidateRequest(Request{Action: "tombstone", AttemptID: "a", Dispatch: &d}); err != nil {
+		t.Fatal(err)
+	}
+	revoked, err := revokedManifest(nil, d, "boot")
+	if err != nil || !revoked.Revoked || revoked.Launched {
+		t.Fatalf("invalid tombstone: %+v %v", revoked, err)
+	}
+	if _, err = revokedManifest(&revoked, d, "boot"); err != nil {
+		t.Fatal(err)
+	}
+	live := d
+	live.MutationAllowed = true
+	if err = ValidateRequest(Request{Action: "tombstone", AttemptID: "a", Dispatch: &live}); err == nil {
+		t.Fatal("accepted live dispatch revocation")
+	}
+	if err = validateRepeatedStart(revoked, live); err == nil {
+		t.Fatal("late start passed tombstone")
+	}
+	if err = validateRepeatedStart(revoked, d); err == nil {
+		t.Fatal("revoked start passed tombstone")
+	}
+	if _, err = revokedManifest(&Manifest{Dispatch: d, Launched: true}, d, "boot"); err == nil {
+		t.Fatal("replaced launched ownership with never-launched tombstone")
+	}
+	changed := d
+	changed.ResourceID = "other"
+	if _, err = revokedManifest(&revoked, changed, "boot"); err == nil {
+		t.Fatal("changed tombstone identity")
+	}
+}
+
+func TestTraversalRootRejectsUnownedExistingPaths(t *testing.T) {
+	for _, kind := range []string{"symlink", "file", "owner", "group"} {
+		t.Run(kind, func(t *testing.T) {
+			path := filepath.Join(t.TempDir(), "attempt")
+			uid, gid := os.Getuid(), os.Getgid()
+			switch kind {
+			case "symlink":
+				if err := os.Symlink(t.TempDir(), path); err != nil {
+					t.Fatal(err)
+				}
+			case "file":
+				if err := os.WriteFile(path, nil, 0755); err != nil {
+					t.Fatal(err)
+				}
+			default:
+				if err := createTraversalRoot(path, uid, gid); err != nil {
+					t.Fatal(err)
+				}
+				if kind == "owner" {
+					uid++
+				} else {
+					gid++
+				}
+			}
+			before, err := os.Lstat(path)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err := createTraversalRoot(path, uid, gid); err == nil {
+				t.Fatal("accepted existing path with incompatible ownership or type")
+			}
+			after, err := os.Lstat(path)
+			if err != nil || !os.SameFile(before, after) || before.Mode() != after.Mode() {
+				t.Fatal("changed rejected path")
+			}
+		})
+	}
+}

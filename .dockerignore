@@ -1,0 +1,12 @@
+.git
+.trellis
+.agents
+.codex
+node_modules
+**/node_modules
+dist
+coverage
+infra/compose/private
+runner
+.env
+.env.*

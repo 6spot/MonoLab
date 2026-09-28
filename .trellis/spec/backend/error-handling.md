@@ -8,7 +8,9 @@ Command validation, asynchronous operations, Runtime failures and delivery findi
 
 ## 2. Signatures
 
-Commands return a committed result, accepted operation reference, or deterministic error with stable code, explanation and relevant current-version/operation reference. Exact schemas and HTTP mappings are established in `packages/protocol` during scaffolding.
+Commands return the generated `CommandResult` (`committed`, `admitted`, `error`, `unknown`) in [contracts.json](../../../packages/protocol/schemas/v1/contracts.json). `CommandError` carries a stable protocol code. [app.ts](../../../apps/server/src/app.ts) maps unauthorized to HTTP 401, denied scope to 403, internal errors to 500 and other deterministic probe errors to 409. Malformed/oversized/unsupported HTTP bodies become `invalid_input`, not internal failures.
+
+`OperationResult` includes `operation_id`, `attempt_id`, `success`, `result` and optional `failure_kind`. Failure kind is forbidden on success; blocking kinds are accepted only for completion operations.
 
 ## 3. Contracts
 
@@ -21,8 +23,9 @@ Distinguish invalid input, denied scope, stale execution, version conflict, unme
 | Invalid Plan | Correctable validation, no Runtime fallback | Same Planner corrects |
 | Objective CLI failure | End Attempt, bounded fallback | Same Node/activation |
 | Exit without lifecycle outcome | Node BLOCKED | Owner Retry |
+| Planner exit without formal reply | Surrounding Task state unchanged; attention/stop recorded | Planner recovery |
 | Uncertain admitted completion | Node RUNNING with recovery | Reconcile existing operation |
-| Local capture hard limit | No completion; Node BLOCKED | Preserve, repair/reconcile, Retry |
+| `capture_hard_limit` / `invalid_finalization` | No completion; Node BLOCKED | Preserve original operation, repair/reconcile, Retry |
 | Publication-only size/content finding | Completed Node; Task REVIEW; no remote write | Correction or eligible policy override |
 | Provider hard size/permission limit | REVIEW | Correct/configure; no override |
 | Failed accepted delivery | REVIEW, retain frozen batch | Retry; later chat does not gate it |
@@ -36,6 +39,8 @@ Bad: timeout starts a second PR or adds Task FAILED.
 ## 6. Tests Required
 
 Assert category and committed effects, not only HTTP status. Use separate local capture and publication limits; assert BLOCKED versus REVIEW. Test scoped overrides, non-overridable provider limits and uncertain-effect reconciliation.
+
+Current probe regressions are in [app.test.ts](../../../apps/server/test/app.test.ts), [auth.test.ts](../../../apps/server/test/auth.test.ts) and [postgres.test.ts](../../../apps/server/test/postgres.test.ts). Malformed signed identities fail authentication; an expired Agent token cannot mutate while Runner-scoped reads can recover admitted results. Typed failure -> transient failure -> repaired success must keep the same operation and reject a changed activation. Publication/override cases remain unimplemented product gates.
 
 ## 7. Wrong vs Correct
 

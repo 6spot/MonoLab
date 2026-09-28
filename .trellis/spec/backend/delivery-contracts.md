@@ -8,7 +8,7 @@ Owner acceptance, Task messages, provider workers, explicit correction/cancellat
 
 ## 2. Signatures
 
-Existing conceptual commands: `submit_task_message(content, request_id)`, `commit_task_turn(reply, source_watermark, routing)`, `complete_node(summary, artifact_ids?, handled_guidance_ids?)`; Owner Accept, Request Changes, Cancel and delivery Retry use the common envelope. Exact HTTP routes and generated types are established during scaffolding.
+The probe implements `commit_task_turn(reply, source_watermark, routing)` and `complete_node(summary, artifact_ids?, handled_guidance_ids?)` through the versioned `POST /v1/commands` envelope. `submit_task_message`, Owner Accept, Request Changes, Cancel and delivery Retry remain conceptual full-product contracts; their routes and records are not implemented by this boundary probe.
 
 ## 3. Contracts
 
@@ -58,3 +58,20 @@ Capture fixtures must distinguish local hard limits from provider/policy publica
 
 Wrong: `if (task.hasPendingMessages) pauseEveryDelivery()`.
 Correct: classify under the acceptance transaction; only pre-acceptance obligations block admission. Accepted workers follow the frozen batch plus explicit authority/result/provider guards.
+
+## Provider feasibility evidence
+
+`infra/github/probe.py` verifies required commit-status enforcement and expected
+SHA rejection on an explicitly authorized synthetic repository. Wait for current
+head checks and clean mergeability before isolating the old-SHA guard: a transient
+405 is not proof of SHA comparison. Observed old-SHA rejection is 409; required
+pending/failure statuses return 405; successful exact-head merge returns 200.
+Private branch protection can be unavailable by plan (403). Never infer required
+check enforcement merely because setting a commit status succeeded.
+
+`infra/github/uncertain.py` discards successful API replies, then resolves the PR
+by exact repository/head/base/operation marker and confirms merged head/commit
+through a fresh read. Missing or ambiguous lookup results remain unresolved,
+without another create/merge. Tests assert one mutation each and reject changed
+heads or ambiguous identities. This is application-response-loss evidence, not
+TCP packet injection or the production delivery coordinator.

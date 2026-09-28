@@ -1,6 +1,6 @@
 # Go Runner and Linux Execution
 
-Status: architecture-backed baseline; no Go module or host probe exists yet.
+Status: the Go boundary probe is implemented under `runner`; Linux installation recipes are in `infra/runner`. The active task tracks real-host acceptance separately from local tests. This is not the full Task scheduler or delivery implementation.
 
 ## Pre-Development Checklist
 

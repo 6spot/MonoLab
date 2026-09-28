@@ -1,0 +1,6 @@
+[
+  {"name":"reordered input","input":{"z":"last","a":"first"},"canonical":"{\"a\":\"first\",\"z\":\"last\"}"},
+  {"name":"HTML and separators","input":{"s":"<>&  "},"canonical":"{\"s\":\"<>&  \"}"},
+  {"name":"UTF16 key ordering","input":{"€":"euro","😀":"face","a":"ascii"},"canonical":"{\"a\":\"ascii\",\"€\":\"euro\",\"😀\":\"face\"}"},
+  {"name":"empty array present","input":{"payload":{"artifact_ids":[],"summary":"done"}},"canonical":"{\"payload\":{\"artifact_ids\":[],\"summary\":\"done\"}}"}
+]

@@ -1,0 +1,284 @@
+// Package journal owns private infrastructure records; it is not a domain database.
+package journal
+
+import (
+	"bytes"
+	"database/sql"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"os"
+	"path/filepath"
+
+	_ "github.com/mattn/go-sqlite3"
+	protocol "monolab.local/protocol"
+	"monolab.local/runner/internal/wire"
+)
+
+var ErrConflict = errors.New("payload_conflict")
+var ErrUnknown = errors.New("unknown retained request")
+
+type DB struct{ db *sql.DB }
+type Start struct {
+	Dispatch protocol.Dispatch `json:"dispatch"`
+	BootID   string            `json:"boot_id"`
+	PID      int               `json:"pid"`
+	Birth    string            `json:"birth"`
+	Cgroup   string            `json:"cgroup"`
+	Phase    string            `json:"phase"`
+}
+type Request struct {
+	AttemptID string
+	ID        string
+	Raw       []byte
+	Digest    string
+}
+
+func Open(path string) (*DB, error) {
+	if err := os.MkdirAll(filepath.Dir(path), 0700); err != nil {
+		return nil, err
+	}
+	info, err := os.Stat(filepath.Dir(path))
+	if err != nil {
+		return nil, err
+	}
+	if info.Mode().Perm()&0077 != 0 {
+		return nil, fmt.Errorf("journal directory must be private")
+	}
+	handle, err := sql.Open("sqlite3", "file:"+path+"?_journal_mode=WAL&_synchronous=FULL&_busy_timeout=5000&_foreign_keys=on")
+	if err != nil {
+		return nil, err
+	}
+	handle.SetMaxOpenConns(1)
+	_, err = handle.Exec(`CREATE TABLE IF NOT EXISTS starts(attempt TEXT PRIMARY KEY, dispatch TEXT UNIQUE NOT NULL, body BLOB NOT NULL);
+ CREATE TABLE IF NOT EXISTS requests(attempt TEXT NOT NULL, id TEXT NOT NULL, envelope BLOB NOT NULL, digest TEXT NOT NULL, PRIMARY KEY(attempt,id));
+ CREATE TABLE IF NOT EXISTS effects(id TEXT PRIMARY KEY, body BLOB NOT NULL, result BLOB);
+ CREATE TABLE IF NOT EXISTS events(attempt TEXT NOT NULL, stream TEXT NOT NULL, seq INTEGER NOT NULL, body BLOB NOT NULL, acked INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(attempt,stream,seq));
+ CREATE TABLE IF NOT EXISTS log_offsets(attempt TEXT NOT NULL, stream TEXT NOT NULL, position INTEGER NOT NULL, PRIMARY KEY(attempt,stream));`)
+	if err != nil {
+		handle.Close()
+		return nil, err
+	}
+	if err = os.Chmod(path, 0600); err != nil {
+		handle.Close()
+		return nil, err
+	}
+	return &DB{handle}, nil
+}
+func (d *DB) Close() error { return d.db.Close() }
+func (d *DB) SaveStart(s Start) error {
+	old, err := d.Start(s.Dispatch.AttemptID)
+	if err == nil && old.Dispatch.DispatchID != s.Dispatch.DispatchID {
+		return ErrConflict
+	}
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return err
+	}
+	raw, err := json.Marshal(s)
+	if err != nil {
+		return err
+	}
+	_, err = d.db.Exec("INSERT INTO starts VALUES(?,?,?) ON CONFLICT(attempt) DO UPDATE SET body=excluded.body", s.Dispatch.AttemptID, s.Dispatch.DispatchID, raw)
+	return err
+}
+func (d *DB) Start(id string) (Start, error) {
+	var s Start
+	var raw []byte
+	err := d.db.QueryRow("SELECT body FROM starts WHERE attempt=?", id).Scan(&raw)
+	if err == nil {
+		err = json.Unmarshal(raw, &s)
+	}
+	return s, err
+}
+func (d *DB) Starts() ([]Start, error) {
+	rows, err := d.db.Query("SELECT body FROM starts ORDER BY attempt")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	out := []Start{}
+	for rows.Next() {
+		var raw []byte
+		var s Start
+		if err = rows.Scan(&raw); err != nil {
+			return nil, err
+		}
+		if err = json.Unmarshal(raw, &s); err != nil {
+			return nil, err
+		}
+		out = append(out, s)
+	}
+	return out, rows.Err()
+}
+func (d *DB) PutRequest(attempt string, raw []byte) (Request, error) {
+	env, err := wire.Envelope(raw)
+	if err != nil {
+		return Request{}, err
+	}
+	canonical, digest, err := wire.CanonicalRaw(raw)
+	if err != nil {
+		return Request{}, err
+	}
+	tx, err := d.db.Begin()
+	if err != nil {
+		return Request{}, err
+	}
+	defer tx.Rollback()
+	_, err = tx.Exec("INSERT INTO requests VALUES(?,?,?,?) ON CONFLICT(attempt,id) DO NOTHING", attempt, env.RequestID, canonical, digest)
+	if err != nil {
+		return Request{}, err
+	}
+	var retained []byte
+	var hash string
+	err = tx.QueryRow("SELECT envelope,digest FROM requests WHERE attempt=? AND id=?", attempt, env.RequestID).Scan(&retained, &hash)
+	if err != nil {
+		return Request{}, err
+	}
+	if !bytes.Equal(retained, canonical) || hash != digest {
+		return Request{}, ErrConflict
+	}
+	if err = tx.Commit(); err != nil {
+		return Request{}, err
+	}
+	return Request{attempt, env.RequestID, retained, hash}, nil
+}
+func (d *DB) Request(attempt, id string) (Request, error) {
+	r := Request{AttemptID: attempt, ID: id}
+	err := d.db.QueryRow("SELECT envelope,digest FROM requests WHERE attempt=? AND id=?", attempt, id).Scan(&r.Raw, &r.Digest)
+	if errors.Is(err, sql.ErrNoRows) {
+		err = ErrUnknown
+	}
+	return r, err
+}
+func (d *DB) BeginEffect(op protocol.Operation) error {
+	raw, err := json.Marshal(op)
+	if err != nil {
+		return err
+	}
+	tx, err := d.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	_, err = tx.Exec("INSERT INTO effects(id,body) VALUES(?,?) ON CONFLICT(id) DO NOTHING", op.OperationID, raw)
+	if err != nil {
+		return err
+	}
+	var oldRaw []byte
+	if err = tx.QueryRow("SELECT body FROM effects WHERE id=?", op.OperationID).Scan(&oldRaw); err != nil {
+		return err
+	}
+	var old protocol.Operation
+	if err = json.Unmarshal(oldRaw, &old); err != nil {
+		return err
+	}
+	if old.AttemptID != op.AttemptID || old.DispatchID != op.DispatchID || old.Kind != op.Kind || old.ResourceID != op.ResourceID || old.RequestID != op.RequestID {
+		return ErrConflict
+	}
+	return tx.Commit()
+}
+
+func (d *DB) LogOffset(attempt, stream string) (int64, error) {
+	var n int64
+	err := d.db.QueryRow("SELECT position FROM log_offsets WHERE attempt=? AND stream=?", attempt, stream).Scan(&n)
+	if errors.Is(err, sql.ErrNoRows) {
+		err = nil
+	}
+	return n, err
+}
+
+// LogEvent atomically records a chunk and advances its source cursor. Reconnect
+// replays the same event sequence rather than minting duplicate stream events.
+func (d *DB) LogEvent(e protocol.RuntimeEvent, from, to int64) (protocol.RuntimeEvent, error) {
+	tx, err := d.db.Begin()
+	if err != nil {
+		return e, err
+	}
+	defer tx.Rollback()
+	var current int64
+	err = tx.QueryRow("SELECT position FROM log_offsets WHERE attempt=? AND stream=?", e.AttemptID, e.StreamID).Scan(&current)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return e, err
+	}
+	if current != from || to <= from {
+		return e, ErrConflict
+	}
+	if err = tx.QueryRow("SELECT COALESCE(MAX(seq),0)+1 FROM events WHERE attempt=? AND stream=?", e.AttemptID, e.StreamID).Scan(&e.Sequence); err != nil {
+		return e, err
+	}
+	raw, err := json.Marshal(e)
+	if err != nil {
+		return e, err
+	}
+	if _, err = tx.Exec("INSERT INTO events(attempt,stream,seq,body) VALUES(?,?,?,?)", e.AttemptID, e.StreamID, e.Sequence, raw); err != nil {
+		return e, err
+	}
+	if _, err = tx.Exec("INSERT INTO log_offsets VALUES(?,?,?) ON CONFLICT(attempt,stream) DO UPDATE SET position=excluded.position", e.AttemptID, e.StreamID, to); err != nil {
+		return e, err
+	}
+	return e, tx.Commit()
+}
+func (d *DB) FinishEffect(r protocol.OperationResult) error {
+	raw, err := json.Marshal(r)
+	if err != nil {
+		return err
+	}
+	_, err = d.db.Exec("UPDATE effects SET result=? WHERE id=?", raw, r.OperationID)
+	return err
+}
+func (d *DB) Effect(id string) (*protocol.OperationResult, error) {
+	var raw []byte
+	err := d.db.QueryRow("SELECT result FROM effects WHERE id=?", id).Scan(&raw)
+	if errors.Is(err, sql.ErrNoRows) || err == nil && raw == nil {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	var result protocol.OperationResult
+	err = json.Unmarshal(raw, &result)
+	return &result, err
+}
+func (d *DB) Event(e protocol.RuntimeEvent) (protocol.RuntimeEvent, error) {
+	tx, err := d.db.Begin()
+	if err != nil {
+		return e, err
+	}
+	defer tx.Rollback()
+	if err = tx.QueryRow("SELECT COALESCE(MAX(seq),0)+1 FROM events WHERE attempt=? AND stream=?", e.AttemptID, e.StreamID).Scan(&e.Sequence); err != nil {
+		return e, err
+	}
+	raw, err := json.Marshal(e)
+	if err != nil {
+		return e, err
+	}
+	_, err = tx.Exec("INSERT INTO events(attempt,stream,seq,body) VALUES(?,?,?,?)", e.AttemptID, e.StreamID, e.Sequence, raw)
+	if err != nil {
+		return e, err
+	}
+	return e, tx.Commit()
+}
+func (d *DB) Ack(attempt, stream string, seq int64) error {
+	_, err := d.db.Exec("UPDATE events SET acked=1 WHERE attempt=? AND stream=? AND seq=?", attempt, stream, seq)
+	return err
+}
+func (d *DB) PendingEvents() ([]protocol.RuntimeEvent, error) {
+	rows, err := d.db.Query("SELECT body FROM events WHERE acked=0 ORDER BY attempt,stream,seq LIMIT 256")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	out := []protocol.RuntimeEvent{}
+	for rows.Next() {
+		var raw []byte
+		var e protocol.RuntimeEvent
+		if err = rows.Scan(&raw); err != nil {
+			return nil, err
+		}
+		if err = json.Unmarshal(raw, &e); err != nil {
+			return nil, err
+		}
+		out = append(out, e)
+	}
+	return out, rows.Err()
+}

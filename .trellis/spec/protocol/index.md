@@ -1,6 +1,6 @@
 # Cross-Language Protocol
 
-Status: accepted contract guidance; `packages/protocol` and generated types are not yet scaffolded.
+Status: implemented boundary-probe schemas, generated TypeScript/Go types, OpenAPI and shared fixtures are in `packages/protocol`. Full-product commands remain architecture contracts until implemented.
 
 ## Pre-Development Checklist
 
@@ -8,4 +8,4 @@ Read [command contracts](commands.md), [schema generation](schema-generation.md)
 
 ## Quality Check
 
-One versioned JSON Schema authority generates TS/Go transport types. Authenticate scopes server-side. Keep request replay, operation admission and result completion distinct. Check both producer and consumer fixtures, compatibility and generation drift once tooling exists. Add no new transport/validation framework without a concrete need.
+One versioned JSON Schema authority generates TS/Go transport types. Authenticate scopes server-side. Keep request replay, operation admission and result completion distinct. Run `pnpm protocol:check`, `pnpm test`, and the Runner's shared-fixture tests after a wire change. Add no new transport/validation framework without a concrete need.

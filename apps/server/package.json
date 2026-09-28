@@ -1,0 +1,6 @@
+{
+  "name": "@monolab/server",
+  "private": true,
+  "type": "module",
+  "dependencies": { "fastify": "5.12.5", "ws": "8.22.0" }
+}

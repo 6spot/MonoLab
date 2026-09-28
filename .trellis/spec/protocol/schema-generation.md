@@ -1,32 +1,60 @@
 # Wire Schema Ownership and Evolution
 
-Sources: [technology](../../../docs/11-technology-and-deployment.md), [evolution](../../../docs/05-tool-protocol.md).
+Sources: [technology](../../../docs/11-technology-and-deployment.md), [evolution](../../../docs/05-tool-protocol.md), [implemented protocol](../../../packages/protocol/README.md).
 
-## Source of truth
+## 1. Scope / Trigger
 
-Versioned JSON Schemas in future `packages/protocol` generate TypeScript and Go transport types. OpenAPI uses the same contracts. Neither handwritten TS interfaces nor Go structs independently define the wire shape.
+Every command, dispatch, normalized Runtime event, recovery page or backend/Runner RPC change. Generated language types are data representations, not a substitute for validation.
 
-Select schema tooling during scaffolding after checking required JSON Schema support, TS/Go fidelity and dependency footprint. No generator package or command exists yet. Keep a single pinned generation entrypoint and CI drift check once chosen.
+## 2. Signatures
 
-## Compatibility rules
+- Authority: [schemas/v1/contracts.json](../../../packages/protocol/schemas/v1/contracts.json), JSON Schema draft 7.
+- Generator: [generate.mjs](../../../packages/protocol/scripts/generate.mjs), pinned `quicktype-core` from the root manifest; `pnpm protocol:generate` updates TS, Go, embedded Go schema and OpenAPI together.
+- Drift gate: `pnpm protocol:check`; never hand-edit `packages/protocol/generated`.
+- Runtime validation: [protocol/src/index.ts](../../../packages/protocol/src/index.ts) uses AJV; [wire.go](../../../runner/internal/wire/wire.go) validates against the same embedded schema before decoding Go structs.
+- `RunnerInventory { schema_version, snapshot_id, dispatches, operations, next_cursor? }`; `InventoryQuery { after?, snapshot_id? }` requires both query fields together.
+- `OperationResult { operation_id, attempt_id, success, result, failure_kind? }`; failure classification is forbidden on success.
 
-- Commands, normalized Runtime events and backend/Runner RPC carry explicit schema versions.
-- Negotiate before dispatch; unsupported required semantics fail clearly.
-- Allow unknown/additive fields only where the schema says so.
-- Keep old admitted operation payloads readable under their original version or an explicit migration.
-- Do not conflate domain IDs, Node activation, Attempt fencing, connection incarnation, event sequence and message cutoff.
-- Define integer ranges/serialization explicitly so Go and JavaScript do not disagree at numeric boundaries.
-- Define absent versus null and timestamp formats in schema rather than consumer guesses.
+## 3. Contracts
 
-## Event and content paths
+Commands, normalized events and backend/Runner frames carry explicit schema versions. Negotiate before dispatch; unsupported required semantics fail clearly. Optional fields are absent, not null. Unknown fields and command/frame-specific irrelevant fields are rejected by schema conditionals. Use the same schema definitions in OpenAPI, not hand-maintained DTOs.
 
-Delivery is at least once. Deduplicate Runtime events by `(attempt_id, stream_id, sequence)`; reconnect from acknowledged cursors. A persisted transport acknowledgement is not lifecycle completion.
+Counters are integers in `0..9007199254740991`, with event sequences starting at 1. Do not conflate domain IDs, Node activation, Attempt fencing, connection incarnation, event sequence and message cutoff. Stored operations retain their original schema version. Changing historical meaning requires an explicit migration, not a regenerated reinterpretation.
 
-Large content/logs use bounded batches and authenticated transfer. Artifact content is pinned immutably before publication. Do not embed unbounded transcripts or raw credentials in command envelopes.
+RFC 8785 canonical JSON defines the immutable UTF-8 envelope and SHA256 digest. Reject malformed Unicode before language decoders can substitute a different string. Preserve absent versus empty arrays and exact payloads on replay.
 
-## Tests and wrong patterns
+WSS frames/inventory pages have a 1 MiB **encoded byte** limit. Dispatch/operation/operation-result items reserve 4096 bytes for wrappers. Command submission has a 2 MiB outer HTTP limit around a canonical envelope of at most 1 MiB. Schema `maxLength` counts characters, so Unicode byte limits require explicit transport validation before admission; merely increasing character or item counts is not a fix.
 
-Generation tests cover a shared fixture corpus in both languages, unsupported versions, duplicate/reordered events and persisted-operation recovery across upgrades. Integration tests run backend and Runner with distinct filesystem roots.
+Inventory pages contain only unresolved ownership/operations. Collect every page under the returned snapshot token before reconciliation or `ready`; reject stale snapshots and start a fresh complete scan. The server bounds each page by bytes and 64 records. Heartbeats do not invalidate the snapshot, while relevant row changes do. Released history remains available through separate scoped receipt reads.
 
-Wrong: hand-edit generated Go types to accept a new field.
-Correct: change the canonical schema, regenerate both languages and test compatibility plus domain validation.
+Runtime delivery is at least once. Deduplicate `(attempt_id, stream_id, sequence)` without acknowledging missing earlier events. A transport acknowledgement is not lifecycle completion. Large logs/content use bounded authenticated batches; credentials never enter envelopes or journals.
+
+## 4. Validation & Error Matrix
+
+| Condition | Result |
+| --- | --- |
+| Unsupported schema version | Reject before dispatch/admission |
+| Null/unknown/irrelevant field | Schema validation failure |
+| Unsafe or fractional counter | Validation failure |
+| Unicode payload exceeds encoded byte budget | Reject before dispatch admission |
+| Success result includes `failure_kind` | Validation failure |
+| Cursor without snapshot, or snapshot without cursor | Validation failure |
+| Snapshot changes between pages | HTTP 409 `version_conflict`; discard partial scan |
+| Duplicate/conflicting page records or cursor loop | Deduplicate exact records; reject conflicts/loops without releasing ownership |
+
+## 5. Good / Base / Bad Cases
+
+Good: three long Unicode prompts cross a page boundary; the Runner collects all pages and preserves all claims.
+Base: matching generated TS/Go validators accept the same shared fixture.
+Bad: a Go struct silently ignores a field, or one partial recovery page is treated as the complete live-process set.
+
+## 6. Tests Required
+
+Run `pnpm protocol:check` and `pnpm test`, then `go test ./...` from `runner`. Shared [validation](../../../packages/protocol/fixtures/validation.json) and [canonicalization](../../../packages/protocol/fixtures/canonicalization.json) fixtures cover versions, optional/null fields, unknown members and stable UTF-8 content.
+
+Real [PostgreSQL tests](../../../apps/server/test/postgres.test.ts) exercise Unicode/operation pagination, stale snapshot restart, preserved receipt reads, event reordering and typed failure recovery. Producer and consumer tests must agree after regeneration. Distinct backend/Runner roots and verified TLS still require real deployment evidence.
+
+## 7. Wrong vs Correct
+
+Wrong: edit generated Go fields or return the first 1000 rows as a complete inventory.
+Correct: edit the versioned schema, regenerate both consumers, and use bounded pages with explicit completeness and snapshot conflict handling.

@@ -4,9 +4,17 @@ Sources: [Stage A](../../../docs/09-first-executable-slice.md), [readiness](../.
 
 ## Verification status
 
-No product manifest, migration suite or test runner exists. Vitest and PostgreSQL integration testing are selected, not executed. Scaffolding must establish actual lint/type/test/schema-generation commands.
+The boundary probe has actual scripts in [package.json](../../../package.json): `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm protocol:check`, `pnpm build`, and `pnpm test:db`. Default `pnpm test` deliberately skips the real PostgreSQL suite. On 2026-09-28 the reviewed backend passed 45 unit/schema tests locally and 15 PostgreSQL integration tests in the isolated Node 24/PostgreSQL 17.11 Compose deployment. These tests prove only their asserted probe behavior.
+
+The [Compose README](../../../infra/compose/README.md) describes the private database and real test command. SQL tests create/drop a unique test schema, not production tables or Runner journals. Main-session host evidence owns TLS, Linux processes, real CLI, service restart and reboot claims; no unit test can establish them. Full PostgreSQL multi-worker and authorized GitHub expected-head/merge gates remain separate.
 
 ## Rules
+
+The real database entrypoint now includes `postgres.test.ts` (16 cases),
+`postgres-claims.test.ts` (6 independent-process cases) and
+`postgres-recovery.test.ts` (3 process-crash/settlement cases). All 25 passed on
+the pinned Linux PostgreSQL deployment. The regular unit entrypoint skips all
+three unless `MONOLAB_TEST_DATABASE=1`; use `pnpm test:db` for this gate.
 
 - Test deterministic rules independently of HTTP/Git/Runtime.
 - Use fakes for races, then real Linux/CLI/provider probes for external assumptions.
@@ -16,6 +24,8 @@ No product manifest, migration suite or test runner exists. Vitest and PostgreSQ
 - Apply the [dependency policy](../index.md); no speculative frameworks.
 
 ## High-value tests
+
+Current probe regressions: receipt replay/conflict, atomic rollback/lost reply, capacity reservation, stale connection/credential rejection, event reordering, outbox starvation, complete snapshot pagination with Unicode byte bounds, typed capture repair, and Planner failure state preservation. The table below additionally guides later full-product work; those unimplemented flows are not claimed covered by the probe.
 
 | Boundary | Assertion |
 | --- | --- |
@@ -33,4 +43,4 @@ Test observable behavior and races, not private-helper mirroring. Documentation-
 
 ## Review exit
 
-Report executed checks and untested real-host assumptions. No code currently proves Stage A. Add real command paths and representative tests as scaffolding lands.
+Report executed checks and untested real-host assumptions. The probe does not prove the complete Stage A flow, full multi-worker claims, GitHub delivery or cancellation during admitted finalization. Keep added regressions at their actual boundary instead of declaring external behavior from fake adapters.

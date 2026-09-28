@@ -1,0 +1,186 @@
+// Package local supplies per-operation kernel-attributed journal/credential access.
+package local
+
+import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"fmt"
+	"io"
+	"net"
+	"os"
+	"strings"
+	"time"
+
+	protocol "monolab.local/protocol"
+	"monolab.local/runner/internal/control"
+	"monolab.local/runner/internal/host"
+	"monolab.local/runner/internal/journal"
+	"monolab.local/runner/internal/wire"
+)
+
+type Request struct {
+	Action    string          `json:"action"`
+	Name      protocol.Name   `json:"name,omitempty"`
+	RequestID string          `json:"request_id,omitempty"`
+	Payload   json.RawMessage `json:"payload,omitempty"`
+}
+type Response struct {
+	Error        string                  `json:"error,omitempty"`
+	EnvelopeJSON string                  `json:"envelope_json,omitempty"`
+	Digest       string                  `json:"sha256,omitempty"`
+	Credential   string                  `json:"credential,omitempty"`
+	Endpoint     string                  `json:"endpoint,omitempty"`
+	CA           []byte                  `json:"ca,omitempty"`
+	Result       *protocol.CommandResult `json:"result,omitempty"`
+}
+type Service struct {
+	DB      *journal.DB
+	Control *control.Client
+	UID     uint32
+}
+
+func Match(p host.Peer, s journal.Start) bool {
+	return p.BootID == s.BootID && p.Birth != "" && s.Cgroup != "" && (p.Cgroup == s.Cgroup || strings.HasPrefix(p.Cgroup, s.Cgroup+"/")) && s.Phase == "running"
+}
+func (s *Service) attribute(conn *net.UnixConn) (journal.Start, error) {
+	peer, err := host.SocketPeer(conn)
+	if err != nil {
+		return journal.Start{}, err
+	}
+	if peer.UID != s.UID {
+		return journal.Start{}, fmt.Errorf("denied execution identity")
+	}
+	starts, err := s.DB.Starts()
+	if err != nil {
+		return journal.Start{}, err
+	}
+	var matched *journal.Start
+	for _, start := range starts {
+		if Match(peer, start) {
+			if matched != nil {
+				return journal.Start{}, fmt.Errorf("ambiguous process ownership")
+			}
+			v := start
+			matched = &v
+		}
+	}
+	if matched == nil {
+		return journal.Start{}, fmt.Errorf("process not attributed")
+	}
+	// Verify the peer still denotes the same live process immediately before service work.
+	now, err := host.Identity(peer.PID)
+	if err != nil || now.Birth != peer.Birth || now.BootID != peer.BootID || now.Cgroup != peer.Cgroup {
+		return journal.Start{}, fmt.Errorf("process identity changed")
+	}
+	return *matched, nil
+}
+func (s *Service) Handle(ctx context.Context, conn *net.UnixConn, r Request) (Response, error) {
+	start, err := s.attribute(conn)
+	if err != nil {
+		return Response{}, err
+	}
+	d := start.Dispatch
+	if !host.ValidID(r.RequestID) {
+		return Response{}, fmt.Errorf("valid request ID required")
+	}
+	if r.Action == "status" {
+		if r.Name != "" || len(r.Payload) > 0 {
+			return Response{}, fmt.Errorf("status cannot replace command data")
+		}
+		var result protocol.CommandResult
+		err = s.Control.Get(ctx, "/v1/recovery/attempts/"+d.AttemptID+"/commands/"+r.RequestID, "CommandResult", &result)
+		return Response{Result: &result}, err
+	}
+	var retained journal.Request
+	switch r.Action {
+	case "prepare":
+		env := map[string]any{"schema_version": 1, "request_id": r.RequestID, "scope_id": d.TaskID, "name": r.Name, "expected_control_version": d.ControlVersion, "payload": r.Payload}
+		raw, _, e := wire.Canonical(env)
+		if e != nil {
+			return Response{}, e
+		}
+		retained, err = s.DB.PutRequest(d.AttemptID, raw)
+	case "retry":
+		if r.Name != "" || len(r.Payload) > 0 {
+			return Response{}, fmt.Errorf("retry cannot replace original envelope")
+		}
+		retained, err = s.DB.Request(d.AttemptID, r.RequestID)
+	default:
+		return Response{}, fmt.Errorf("unsupported local operation")
+	}
+	if err != nil {
+		return Response{}, err
+	}
+	// Persistence precedes authorization and send permission. No bearer is stored.
+	if _, err = s.attribute(conn); err != nil {
+		return Response{}, err
+	}
+	credential, err := s.Control.Authorize(ctx, d.DispatchID)
+	if err != nil {
+		var result protocol.CommandResult
+		if readErr := s.Control.Get(ctx, "/v1/recovery/attempts/"+d.AttemptID+"/commands/"+r.RequestID, "CommandResult", &result); readErr == nil && result.Status != protocol.Unknown {
+			return Response{Result: &result}, nil
+		}
+		return Response{}, err
+	}
+	ca, err := os.ReadFile(s.Control.Config.CAFile)
+	if err != nil {
+		return Response{}, err
+	}
+	return Response{EnvelopeJSON: string(retained.Raw), Digest: retained.Digest, Credential: credential, Endpoint: s.Control.Config.Endpoint, CA: ca}, nil
+}
+func (s *Service) Serve(ctx context.Context, path string) error {
+	listener, err := net.ListenUnix("unix", &net.UnixAddr{Name: path, Net: "unix"})
+	if err != nil {
+		return err
+	}
+	defer listener.Close()
+	if err = os.Chmod(path, 0660); err != nil {
+		return err
+	}
+	go func() { <-ctx.Done(); listener.Close() }()
+	slots := make(chan struct{}, 32)
+	for {
+		conn, err := listener.AcceptUnix()
+		if err != nil {
+			if ctx.Err() != nil {
+				return nil
+			}
+			return err
+		}
+		select {
+		case slots <- struct{}{}:
+			go func() {
+				defer func() { <-slots }()
+				defer conn.Close()
+				conn.SetDeadline(time.Now().Add(30 * time.Second))
+				raw, e := io.ReadAll(io.LimitReader(conn, wire.Limit+1))
+				var response Response
+				if e == nil && len(raw) <= wire.Limit {
+					var req Request
+					dec := json.NewDecoder(bytes.NewReader(raw))
+					dec.DisallowUnknownFields()
+					e = dec.Decode(&req)
+					if e == nil {
+						var extra any
+						if dec.Decode(&extra) != io.EOF {
+							e = fmt.Errorf("trailing local input")
+						}
+					}
+					if e == nil {
+						response, e = s.Handle(ctx, conn, req)
+					}
+				} else {
+					e = fmt.Errorf("invalid local request")
+				}
+				if e != nil {
+					response = Response{Error: e.Error()}
+				}
+				_ = json.NewEncoder(conn).Encode(response)
+			}()
+		default:
+			conn.Close()
+		}
+	}
+}
