@@ -5,6 +5,7 @@ import { CommandError } from '../../../packages/domain/src/commands.ts';
 import { MAX_BODY_BYTES, MAX_FRAME_BYTES, parseFrame, ProtocolValidationError, ProtocolVersionError, validate } from '../../../packages/protocol/src/index.ts';
 import type { CommandResult, Frame, InventoryQuery } from '../../../packages/protocol/src/index.ts';
 import type { BoundaryService } from './service.ts';
+import { OwnerCommands } from './owner-commands.ts';
 
 function bearer(request: { headers: { authorization?: string } }): string {
   const match = /^Bearer ([^\s]+)$/.exec(request.headers.authorization ?? '');
@@ -27,6 +28,9 @@ export function createApp(service: BoundaryService, tls?: { key: Buffer; cert: B
     void reply.code(code === 'unauthorized' ? 401 : code === 'denied_scope' ? 403 : code === 'internal_error' ? 500 : 409).send(result);
   });
   app.get('/health', async () => { await service.db.pool.query('SELECT 1'); return { schema_version: 1, database: 'ready', probe: true }; });
+  const owner = new OwnerCommands(service.db);
+  app.post('/v1/owner/commands', async (request) => owner.confirm(bearer(request), request.body));
+  app.get<{ Params: { scope_id: string; request_id: string } }>('/v1/owner/scopes/:scope_id/commands/:request_id', async (request) => owner.status(bearer(request), request.params.scope_id, request.params.request_id));
   app.post('/v1/commands', async (request) => service.admit(bearer(request), request.body));
   app.get<{ Params: { request_id: string } }>('/v1/commands/:request_id', async (request) => service.commandStatus(bearer(request), validate<string>('Id', request.params.request_id)));
   app.get<{ Querystring: InventoryQuery }>('/v1/runner/inventory', async (request) => {

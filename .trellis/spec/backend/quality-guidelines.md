@@ -14,7 +14,7 @@ The real database entrypoint now includes `postgres.test.ts` (16 cases),
 `postgres-claims.test.ts` (6 independent-process cases) and
 `postgres-recovery.test.ts` (3 process-crash/settlement cases). All 25 passed on
 the pinned Linux PostgreSQL deployment. The regular unit entrypoint skips all
-three unless `MONOLAB_TEST_DATABASE=1`; use `pnpm test:db` for this gate.
+database suites unless `MONOLAB_TEST_DATABASE=1`; use `pnpm test:db` for this gate.
 
 - Test deterministic rules independently of HTTP/Git/Runtime.
 - Use fakes for races, then real Linux/CLI/provider probes for external assumptions.
@@ -44,3 +44,8 @@ Test observable behavior and races, not private-helper mirroring. Documentation-
 ## Review exit
 
 Report executed checks and untested real-host assumptions. The probe does not prove the complete Stage A flow, full multi-worker claims, GitHub delivery or cancellation during admitted finalization. Keep added regressions at their actual boundary instead of declaring external behavior from fake adapters.
+
+Owner command foundation: 51 local unit/schema cases and 32 real PostgreSQL cases
+passed on 2026-09-29 (including 7 in `postgres-owner.test.ts`). Full Go race/vet
+passed after adapting generated enum references. These checks do not establish
+public login, domain action execution or the deferred live Runtime acceptance.

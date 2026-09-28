@@ -52,7 +52,7 @@ Bad: a Go struct silently ignores a field, or one partial recovery page is treat
 
 Run `pnpm protocol:check` and `pnpm test`, then `go test ./...` from `runner`. Shared [validation](../../../packages/protocol/fixtures/validation.json) and [canonicalization](../../../packages/protocol/fixtures/canonicalization.json) fixtures cover versions, optional/null fields, unknown members and stable UTF-8 content.
 
-Real [PostgreSQL tests](../../../apps/server/test/postgres.test.ts) exercise Unicode/operation pagination, stale snapshot restart, preserved receipt reads, event reordering and typed failure recovery. Producer and consumer tests must agree after regeneration. Distinct backend/Runner roots and verified TLS still require real deployment evidence.
+Real [PostgreSQL tests](../../../apps/server/test/postgres.test.ts) exercise Unicode/operation pagination, stale snapshot restart, preserved receipt reads, event reordering and typed failure recovery. Producer and consumer tests must agree after regeneration. Quicktype may rename existing Go enums when another definition introduces the same field/value; compile every Runner consumer after adding schemas, even when existing wire values are unchanged. Distinct backend/Runner roots and verified TLS still require real deployment evidence.
 
 ## 7. Wrong vs Correct
 

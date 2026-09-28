@@ -1,4 +1,7 @@
-{"file": ".trellis/spec/index.md", "reason": "Roadmap baseline; refine with leaf-specific contracts and evidence before implementation."}
-{"file": ".trellis/spec/backend/index.md", "reason": "Roadmap baseline; refine with leaf-specific contracts and evidence before implementation."}
-{"file": ".trellis/spec/protocol/index.md", "reason": "Roadmap baseline; refine with leaf-specific contracts and evidence before implementation."}
-{"file": "docs/09-first-executable-slice.md", "reason": "Roadmap baseline; refine with leaf-specific contracts and evidence before implementation."}
+{"file": ".trellis/spec/backend/database-guidelines.md", "reason": "Atomic receipt/confirmation lock contracts"}
+{"file": ".trellis/spec/backend/error-handling.md", "reason": "Error and admission semantics"}
+{"file": ".trellis/spec/backend/logging-guidelines.md", "reason": "No token/content disclosure"}
+{"file": ".trellis/spec/protocol/commands.md", "reason": "Scope and immutable retry"}
+{"file": "docs/05-tool-protocol.md", "reason": "Exact-content confirmations"}
+{"file": "docs/06-state-and-formal-data.md", "reason": "Receipt and proposal ownership"}
+{"file": ".trellis/tasks/09-28-command-scopes-receipts/design.md", "reason": "Bounded Owner command implementation"}

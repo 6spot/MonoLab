@@ -4,12 +4,12 @@ package protocol
 type InventoryCursor string
 
 type CommandEnvelope struct {
-	ExpectedControlVersion int64          `json:"expected_control_version"`
-	Name                   Name           `json:"name"`
-	Payload                CommandPayload `json:"payload"`
-	RequestID              string         `json:"request_id"`
-	SchemaVersion          int64          `json:"schema_version"`
-	ScopeID                string         `json:"scope_id"`
+	ExpectedControlVersion int64               `json:"expected_control_version"`
+	Name                   CommandEnvelopeName `json:"name"`
+	Payload                CommandPayload      `json:"payload"`
+	RequestID              string              `json:"request_id"`
+	SchemaVersion          int64               `json:"schema_version"`
+	ScopeID                string              `json:"scope_id"`
 }
 
 type CommandPayload struct {
@@ -32,12 +32,12 @@ type CommandSubmission struct {
 }
 
 type CommandResult struct {
-	Error         *ErrorInfo    `json:"error,omitempty"`
-	OperationID   *string       `json:"operation_id,omitempty"`
-	RequestID     *string       `json:"request_id,omitempty"`
-	Result        *EffectResult `json:"result,omitempty"`
-	SchemaVersion int64         `json:"schema_version"`
-	Status        Status        `json:"status"`
+	Error         *ErrorInfo          `json:"error,omitempty"`
+	OperationID   *string             `json:"operation_id,omitempty"`
+	RequestID     *string             `json:"request_id,omitempty"`
+	Result        *EffectResult       `json:"result,omitempty"`
+	SchemaVersion int64               `json:"schema_version"`
+	Status        CommandResultStatus `json:"status"`
 }
 
 type ErrorInfo struct {
@@ -142,13 +142,35 @@ type InventoryQuery struct {
 	SnapshotID *string `json:"snapshot_id,omitempty"`
 }
 
-type Name string
+type OwnerCommand struct {
+	ExpectedControlVersion int64            `json:"expected_control_version"`
+	Name                   OwnerCommandName `json:"name"`
+	Payload                Payload          `json:"payload"`
+	RequestID              string           `json:"request_id"`
+	SchemaVersion          int64            `json:"schema_version"`
+	ScopeID                string           `json:"scope_id"`
+}
+
+type Payload struct {
+	ContentDigest string `json:"content_digest"`
+	ProposalID    string `json:"proposal_id"`
+}
+
+type OwnerCommandResult struct {
+	ConfirmationID *string                  `json:"confirmation_id,omitempty"`
+	ProposalID     *string                  `json:"proposal_id,omitempty"`
+	RequestID      string                   `json:"request_id"`
+	SchemaVersion  int64                    `json:"schema_version"`
+	Status         OwnerCommandResultStatus `json:"status"`
+}
+
+type CommandEnvelopeName string
 
 const (
-	CommitTaskTurn        Name = "commit_task_turn"
-	NameCompleteNode      Name = "complete_node"
-	NameInspectRepository Name = "inspect_repository"
-	NameOpenWorkspace     Name = "open_workspace"
+	CommitTaskTurn        CommandEnvelopeName = "commit_task_turn"
+	NameCompleteNode      CommandEnvelopeName = "complete_node"
+	NameInspectRepository CommandEnvelopeName = "inspect_repository"
+	NameOpenWorkspace     CommandEnvelopeName = "open_workspace"
 )
 
 type RoutingKind string
@@ -172,13 +194,13 @@ const (
 	VersionConflict    Code = "version_conflict"
 )
 
-type Status string
+type CommandResultStatus string
 
 const (
-	Committed      Status = "committed"
-	StatusAdmitted Status = "admitted"
-	StatusError    Status = "error"
-	Unknown        Status = "unknown"
+	PurpleCommitted CommandResultStatus = "committed"
+	PurpleUnknown   CommandResultStatus = "unknown"
+	StatusAdmitted  CommandResultStatus = "admitted"
+	StatusError     CommandResultStatus = "error"
 )
 
 type DispatchKind string
@@ -251,4 +273,25 @@ const (
 	TypeError           Type = "error"
 	TypeOperationResult Type = "operation_result"
 	Welcome             Type = "welcome"
+)
+
+type TaskProposalAction string
+
+const (
+	AcceptDelivery             TaskProposalAction = "accept_delivery"
+	ApplyRework                TaskProposalAction = "apply_rework"
+	ApplySpecificationRevision TaskProposalAction = "apply_specification_revision"
+)
+
+type OwnerCommandName string
+
+const (
+	ConfirmProposal OwnerCommandName = "confirm_proposal"
+)
+
+type OwnerCommandResultStatus string
+
+const (
+	FluffyCommitted OwnerCommandResultStatus = "committed"
+	FluffyUnknown   OwnerCommandResultStatus = "unknown"
 )

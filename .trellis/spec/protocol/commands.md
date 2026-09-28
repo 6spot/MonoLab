@@ -19,7 +19,7 @@ server-authenticated binding:
 
 `POST /v1/commands` receives `CommandSubmission { envelope_json, sha256 }`. `GET /v1/commands/:request_id` reads the authenticated Attempt's receipt. Runner recovery uses `/v1/recovery/attempts/:attempt_id/commands/:request_id` or `/v1/recovery/operations/:operation_id`; its service credential never permits Agent command admission.
 
-The bundled [monolab](../../../runner/cmd/monolab/main.go) supports immutable retry/status, `open_workspace`, `inspect_repository`, `complete_node` and `commit_task_turn`. Consult its help and the [protocol README](../../../packages/protocol/README.md) for exact CLI argument syntax. Full Owner authorization/delivery commands are not implemented by these probe routes.
+The bundled [monolab](../../../runner/cmd/monolab/main.go) supports immutable retry/status, `open_workspace`, `inspect_repository`, `complete_node` and `commit_task_turn`. Consult its help and the [protocol README](../../../packages/protocol/README.md) for exact CLI argument syntax. Task-scoped Owner confirmation uses separate Owner routes described in [Owner commands](../backend/owner-commands.md); delivery execution remains separate work.
 
 ## 3. Contracts
 

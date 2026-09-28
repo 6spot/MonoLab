@@ -20,10 +20,10 @@ import (
 )
 
 type Request struct {
-	Action    string          `json:"action"`
-	Name      protocol.Name   `json:"name,omitempty"`
-	RequestID string          `json:"request_id,omitempty"`
-	Payload   json.RawMessage `json:"payload,omitempty"`
+	Action    string                       `json:"action"`
+	Name      protocol.CommandEnvelopeName `json:"name,omitempty"`
+	RequestID string                       `json:"request_id,omitempty"`
+	Payload   json.RawMessage              `json:"payload,omitempty"`
 }
 type Response struct {
 	Error        string                  `json:"error,omitempty"`
@@ -119,7 +119,7 @@ func (s *Service) Handle(ctx context.Context, conn *net.UnixConn, r Request) (Re
 	credential, err := s.Control.Authorize(ctx, d.DispatchID)
 	if err != nil {
 		var result protocol.CommandResult
-		if readErr := s.Control.Get(ctx, "/v1/recovery/attempts/"+d.AttemptID+"/commands/"+r.RequestID, "CommandResult", &result); readErr == nil && result.Status != protocol.Unknown {
+		if readErr := s.Control.Get(ctx, "/v1/recovery/attempts/"+d.AttemptID+"/commands/"+r.RequestID, "CommandResult", &result); readErr == nil && result.Status != "unknown" {
 			return Response{Result: &result}, nil
 		}
 		return Response{}, err

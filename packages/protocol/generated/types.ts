@@ -3,14 +3,14 @@ type InventoryCursor = string;
 
 export interface CommandEnvelope {
     expected_control_version: number;
-    name:                     Name;
+    name:                     CommandEnvelopeName;
     payload:                  CommandPayload;
     request_id:               string;
     schema_version:           number;
     scope_id:                 string;
 }
 
-export type Name = "open_workspace" | "inspect_repository" | "complete_node" | "commit_task_turn";
+export type CommandEnvelopeName = "open_workspace" | "inspect_repository" | "complete_node" | "commit_task_turn";
 
 export interface CommandPayload {
     artifact_ids?:         string[];
@@ -39,7 +39,7 @@ export interface CommandResult {
     request_id?:    string;
     result?:        EffectResult;
     schema_version: number;
-    status:         Status;
+    status:         CommandResultStatus;
 }
 
 export interface ErrorInfo {
@@ -61,7 +61,7 @@ export interface EffectResult {
     writer_absent?:    boolean;
 }
 
-export type Status = "admitted" | "committed" | "error" | "unknown";
+export type CommandResultStatus = "admitted" | "committed" | "error" | "unknown";
 
 export interface Frame {
     allowed?:          boolean;
@@ -163,3 +163,31 @@ export interface InventoryQuery {
     after?:       string;
     snapshot_id?: string;
 }
+
+export type TaskProposalAction = "apply_specification_revision" | "apply_rework" | "accept_delivery";
+
+export interface OwnerCommand {
+    expected_control_version: number;
+    name:                     OwnerCommandName;
+    payload:                  Payload;
+    request_id:               string;
+    schema_version:           number;
+    scope_id:                 string;
+}
+
+export type OwnerCommandName = "confirm_proposal";
+
+export interface Payload {
+    content_digest: string;
+    proposal_id:    string;
+}
+
+export interface OwnerCommandResult {
+    confirmation_id?: string;
+    proposal_id?:     string;
+    request_id:       string;
+    schema_version:   number;
+    status:           OwnerCommandResultStatus;
+}
+
+export type OwnerCommandResultStatus = "committed" | "unknown";

@@ -123,7 +123,7 @@ func run(args []string) (protocol.CommandResult, error) {
 		if len(raw) > wire.Limit || !json.Valid(raw) {
 			return result, fmt.Errorf("invalid or oversized input JSON")
 		}
-		req.Name = protocol.Name(name)
+		req.Name = protocol.CommandEnvelopeName(name)
 		req.Payload = raw
 	} else if *input != "" {
 		return result, fmt.Errorf("retry/status cannot read replacement input")

@@ -252,5 +252,89 @@
       "dispatches": [],
       "operations": []
     }
+  },
+  {
+    "name": "Owner exact proposal command",
+    "schema": "OwnerCommand",
+    "valid": true,
+    "value": {
+      "schema_version": 1,
+      "request_id": "request",
+      "scope_id": "task",
+      "expected_control_version": 1,
+      "name": "confirm_proposal",
+      "payload": {
+        "proposal_id": "proposal",
+        "content_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      }
+    }
+  },
+  {
+    "name": "Owner caller cannot supply principal",
+    "schema": "OwnerCommand",
+    "valid": false,
+    "value": {
+      "schema_version": 1,
+      "request_id": "request",
+      "scope_id": "task",
+      "expected_control_version": 1,
+      "name": "confirm_proposal",
+      "payload": {
+        "proposal_id": "proposal",
+        "content_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      "principal": "owner"
+    }
+  },
+  {
+    "name": "Owner unsupported version",
+    "schema": "OwnerCommand",
+    "valid": false,
+    "value": {
+      "schema_version": 2,
+      "request_id": "request",
+      "scope_id": "task",
+      "expected_control_version": 1,
+      "name": "confirm_proposal",
+      "payload": {
+        "proposal_id": "proposal",
+        "content_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      }
+    }
+  },
+  {
+    "name": "Owner confirmation requires exact digest",
+    "schema": "OwnerCommand",
+    "valid": false,
+    "value": {
+      "schema_version": 1,
+      "request_id": "request",
+      "scope_id": "task",
+      "expected_control_version": 1,
+      "name": "confirm_proposal",
+      "payload": {
+        "proposal_id": "proposal"
+      }
+    }
+  },
+  {
+    "name": "Owner committed result requires confirmation",
+    "schema": "OwnerCommandResult",
+    "valid": false,
+    "value": {
+      "schema_version": 1,
+      "request_id": "request",
+      "status": "committed"
+    }
+  },
+  {
+    "name": "Owner unknown receipt",
+    "schema": "OwnerCommandResult",
+    "valid": true,
+    "value": {
+      "schema_version": 1,
+      "request_id": "request",
+      "status": "unknown"
+    }
   }
 ]

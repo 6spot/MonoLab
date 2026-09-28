@@ -31,13 +31,15 @@ const get = (name, auth, parameters = []) => ({ security: [{ [auth]: [] }], para
 artifacts.set('generated/openapi.json', `${JSON.stringify({
   openapi: '3.1.0', info: { title: 'MonoLab boundary probe', version: '1.0.0' },
   paths: {
+    '/v1/owner/commands': { post: { security: [{ OwnerAuth: [] }], requestBody: { required: true, content: { 'application/json': { schema: reference('OwnerCommand') } } }, responses: responses('OwnerCommandResult') } },
+    '/v1/owner/scopes/{scope_id}/commands/{request_id}': { get: get('OwnerCommandResult', 'OwnerAuth', ['scope_id', 'request_id']) },
     '/v1/commands': { post: { security: [{ AttemptAuth: [] }], requestBody: { required: true, content: { 'application/json': { schema: reference('CommandSubmission') } } }, responses: responses('CommandResult') } },
     '/v1/commands/{request_id}': { get: get('CommandResult', 'AttemptAuth', ['request_id']) },
     '/v1/runner/inventory': { get: { ...get('RunnerInventory', 'RunnerAuth'), parameters: Object.entries(schema.definitions.InventoryQuery.properties).map(([name, shape]) => ({ name, in: 'query', required: false, description: 'Cursor and snapshot_id must be supplied together; restart the entire scan on snapshot conflict.', schema: JSON.parse(JSON.stringify(shape).replaceAll('#/definitions/', '#/components/schemas/')) })) } },
     '/v1/recovery/attempts/{attempt_id}/commands/{request_id}': { get: get('CommandResult', 'RunnerAuth', ['attempt_id', 'request_id']) },
     '/v1/recovery/operations/{operation_id}': { get: get('Operation', 'RunnerAuth', ['operation_id']) },
   },
-  components: { schemas: JSON.parse(JSON.stringify(schema.definitions).replaceAll('#/definitions/', '#/components/schemas/')), securitySchemes: { AttemptAuth: { type: 'http', scheme: 'bearer', description: 'Attempt-scoped credential; never a Runner token.' }, RunnerAuth: { type: 'http', scheme: 'bearer', description: 'Service-private enrolled Runner identity.' } } },
+  components: { schemas: JSON.parse(JSON.stringify(schema.definitions).replaceAll('#/definitions/', '#/components/schemas/')), securitySchemes: { OwnerAuth: { type: 'http', scheme: 'bearer', description: 'Opaque Owner session; neither Runner nor Attempt credentials are accepted.' }, AttemptAuth: { type: 'http', scheme: 'bearer', description: 'Attempt-scoped credential; never a Runner token.' }, RunnerAuth: { type: 'http', scheme: 'bearer', description: 'Service-private enrolled Runner identity.' } } },
 }, null, 2)}\n`);
 for (const [relative, content] of artifacts) {
   const path = new URL(relative, base);

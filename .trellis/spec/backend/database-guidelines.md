@@ -8,7 +8,7 @@ Commands, claims, migrations, completion and delivery persistence. PostgreSQL is
 
 ## 2. Signatures
 
-Probe records in [migrations](../../../packages/db/migrations/0001_boundary_probe.sql) include `runners`, `tasks`, immutable specification/plan rows, `nodes`, `attempts`, `command_receipts`, `operations`, `outbox`, `runtime_events` and `task_events`. API contracts are not ORM rows. Full Owner authorization/delivery records remain future work.
+Probe records in [migrations](../../../packages/db/migrations/0001_boundary_probe.sql) include `runners`, `tasks`, immutable specification/plan rows, `nodes`, `attempts`, `command_receipts`, `operations`, `outbox`, `runtime_events` and `task_events`. API contracts are not ORM rows. Task-scoped Owner confirmation records are implemented in migration 4; domain execution and delivery records remain separate work.
 
 `BoundaryService.admit(token, submission)` and `finishOperation(runnerId, incarnation, result)` use `transaction(db, action)`. `inventory(runnerId, after?, snapshotId?)` reads a consistent page while holding the Runner lock. All inventory-changing writers, including local operation retry, must take that lock first.
 

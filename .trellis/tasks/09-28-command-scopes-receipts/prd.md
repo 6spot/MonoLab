@@ -6,7 +6,7 @@ Extend probe contracts into authenticated product command admission and immutabl
 
 ## Planning status
 
-Roadmap level: **subtask**. Status: **planning / backlog**, not implementation-ready. The Owner approved the three-level roadmap structure on 2026-09-28. This PRD records scope and acceptance, not approval to start implementation.
+Roadmap level: **subtask**. Status: **implementation-ready under the Owner’s sequential-development instruction**. The Owner approved the three-level roadmap structure on 2026-09-28. Owner authorized proceeding through the existing roadmap autonomously, with Runtime acceptance deferred.
 
 ## Background and scope
 
@@ -18,7 +18,7 @@ Architecture modules remain authoritative. The existing boundary probe implement
 
 - [Stage 0: Feasibility gates](../09-28-stage-0-feasibility/prd.md)
 
-These are completion/evidence gates, not automatic scheduler dependencies. Parent/child links express scope ownership only. Evidence inspection and planning may proceed earlier; implementation must resolve upstream failures first.
+These are completion/evidence gates, not automatic scheduler dependencies. Parent/child links express scope ownership only. Evidence inspection and planning may proceed earlier; PostgreSQL and GitHub leaves passed; the Owner explicitly deferred the remaining Runtime tests without treating them as passed.
 
 ## Child tasks
 
@@ -26,9 +26,9 @@ This is the intended implementation leaf. Split again only if design reveals mor
 
 ## Acceptance criteria
 
-- [ ] Owner, Runner and Attempt scopes cannot impersonate one another.
-- [ ] Same request identity/content replays the existing outcome; conflicting content is rejected.
-- [ ] Exact-content confirmation rejects stale or mismatched bases; command failures are distinct from admitted-operation failure.
+- [x] Owner, Runner and Attempt scopes cannot impersonate one another.
+- [x] Same request identity/content replays the existing outcome; conflicting content is rejected.
+- [x] Exact-content confirmation rejects stale or mismatched bases; command failures are distinct from admitted-operation failure.
 
 ## Out of scope
 
@@ -45,3 +45,13 @@ Review upstream evidence and the current source, refine leaf boundaries and obse
 - [Readiness gates](../../../docs/10-architecture-readiness.md)
 - [Invariants](../../../docs/08-principles-and-non-goals.md)
 - [Engineering specs](../../spec/index.md)
+
+## Concrete first command boundary
+
+Add task-scoped Owner confirmation of server-prepared immutable proposals, with
+independent opaque session authentication and immutable Owner command receipts.
+Bind confirmations to proposal action, canonical content digest and current Task
+control/Specification/Plan basis. Expose transaction-local confirmation consumption
+for subsequent Task-control/delivery modules. Session issuance stays an internal
+bootstrap/login primitive; interactive login/settings are owned by the later
+Owner-configuration task. Existing Attempt/Runner behavior and receipts remain.

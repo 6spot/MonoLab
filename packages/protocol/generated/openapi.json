@@ -5,6 +5,96 @@
     "version": "1.0.0"
   },
   "paths": {
+    "/v1/owner/commands": {
+      "post": {
+        "security": [
+          {
+            "OwnerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OwnerCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Authenticated response; admission is distinct from completed effects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OwnerCommandResult"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Deterministic protocol error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/owner/scopes/{scope_id}/commands/{request_id}": {
+      "get": {
+        "security": [
+          {
+            "OwnerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "scope_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Id"
+            }
+          },
+          {
+            "name": "request_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Authenticated response; admission is distinct from completed effects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OwnerCommandResult"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Deterministic protocol error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/commands": {
       "post": {
         "security": [
@@ -1286,9 +1376,132 @@
             "after"
           ]
         }
+      },
+      "TaskProposalAction": {
+        "type": "string",
+        "enum": [
+          "apply_specification_revision",
+          "apply_rework",
+          "accept_delivery"
+        ]
+      },
+      "OwnerCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "schema_version",
+          "request_id",
+          "scope_id",
+          "expected_control_version",
+          "name",
+          "payload"
+        ],
+        "properties": {
+          "schema_version": {
+            "type": "integer",
+            "const": 1
+          },
+          "request_id": {
+            "$ref": "#/components/schemas/Id"
+          },
+          "scope_id": {
+            "$ref": "#/components/schemas/Id"
+          },
+          "expected_control_version": {
+            "$ref": "#/components/schemas/Counter"
+          },
+          "name": {
+            "type": "string",
+            "const": "confirm_proposal"
+          },
+          "payload": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "proposal_id",
+              "content_digest"
+            ],
+            "properties": {
+              "proposal_id": {
+                "$ref": "#/components/schemas/Id"
+              },
+              "content_digest": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              }
+            }
+          }
+        }
+      },
+      "OwnerCommandResult": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "schema_version",
+          "request_id",
+          "status"
+        ],
+        "properties": {
+          "schema_version": {
+            "type": "integer",
+            "const": 1
+          },
+          "request_id": {
+            "$ref": "#/components/schemas/Id"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "committed",
+              "unknown"
+            ]
+          },
+          "confirmation_id": {
+            "$ref": "#/components/schemas/Id"
+          },
+          "proposal_id": {
+            "$ref": "#/components/schemas/Id"
+          }
+        },
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "status": {
+                  "const": "committed"
+                }
+              }
+            },
+            "then": {
+              "required": [
+                "confirmation_id",
+                "proposal_id"
+              ],
+              "properties": {
+                "confirmation_id": {
+                  "$ref": "#/components/schemas/Id"
+                },
+                "proposal_id": {
+                  "$ref": "#/components/schemas/Id"
+                }
+              }
+            },
+            "else": {
+              "properties": {
+                "confirmation_id": false,
+                "proposal_id": false
+              }
+            }
+          }
+        ]
       }
     },
     "securitySchemes": {
+      "OwnerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Opaque Owner session; neither Runner nor Attempt credentials are accepted."
+      },
       "AttemptAuth": {
         "type": "http",
         "scheme": "bearer",

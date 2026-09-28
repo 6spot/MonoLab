@@ -1057,6 +1057,124 @@
           "after"
         ]
       }
+    },
+    "TaskProposalAction": {
+      "type": "string",
+      "enum": [
+        "apply_specification_revision",
+        "apply_rework",
+        "accept_delivery"
+      ]
+    },
+    "OwnerCommand": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "request_id",
+        "scope_id",
+        "expected_control_version",
+        "name",
+        "payload"
+      ],
+      "properties": {
+        "schema_version": {
+          "type": "integer",
+          "const": 1
+        },
+        "request_id": {
+          "$ref": "#/definitions/Id"
+        },
+        "scope_id": {
+          "$ref": "#/definitions/Id"
+        },
+        "expected_control_version": {
+          "$ref": "#/definitions/Counter"
+        },
+        "name": {
+          "type": "string",
+          "const": "confirm_proposal"
+        },
+        "payload": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "proposal_id",
+            "content_digest"
+          ],
+          "properties": {
+            "proposal_id": {
+              "$ref": "#/definitions/Id"
+            },
+            "content_digest": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          }
+        }
+      }
+    },
+    "OwnerCommandResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "request_id",
+        "status"
+      ],
+      "properties": {
+        "schema_version": {
+          "type": "integer",
+          "const": 1
+        },
+        "request_id": {
+          "$ref": "#/definitions/Id"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "committed",
+            "unknown"
+          ]
+        },
+        "confirmation_id": {
+          "$ref": "#/definitions/Id"
+        },
+        "proposal_id": {
+          "$ref": "#/definitions/Id"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "committed"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "confirmation_id",
+              "proposal_id"
+            ],
+            "properties": {
+              "confirmation_id": {
+                "$ref": "#/definitions/Id"
+              },
+              "proposal_id": {
+                "$ref": "#/definitions/Id"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "confirmation_id": false,
+              "proposal_id": false
+            }
+          }
+        }
+      ]
     }
   }
 }
