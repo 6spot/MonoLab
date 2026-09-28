@@ -1,0 +1,4 @@
+{"file": ".trellis/spec/backend/delivery-contracts.md", "reason": "Version-bound delivery and uncertainty"}
+{"file": "docs/04-workspace-and-git.md", "reason": "Remote truth and no duplicate effects"}
+{"file": ".trellis/tasks/09-28-github-head-checks/research/verification.md", "reason": "Existing synthetic fixture authorization and observed provider behavior"}
+{"file": ".trellis/tasks/09-28-github-uncertain-effects/design.md", "reason": "Response-loss fault and recovery contracts"}

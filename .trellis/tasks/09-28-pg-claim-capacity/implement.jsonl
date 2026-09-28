@@ -1,0 +1,6 @@
+{"file": ".trellis/spec/backend/index.md", "reason": "Backend ownership and quality gate"}
+{"file": ".trellis/spec/backend/database-guidelines.md", "reason": "Claim lock ordering, uniqueness and physical-owner retention"}
+{"file": ".trellis/spec/backend/quality-guidelines.md", "reason": "Real PostgreSQL evidence and isolation"}
+{"file": ".trellis/spec/protocol/commands.md", "reason": "Stale authority and immutable replay"}
+{"file": ".trellis/tasks/09-28-stage-a-boundary-probe/research/acceptance-status.md", "reason": "Upstream evidence and explicit outstanding Runtime gates"}
+{"file": ".trellis/tasks/09-28-pg-claim-capacity/design.md", "reason": "Inspected claim implementation and process-independent test design"}

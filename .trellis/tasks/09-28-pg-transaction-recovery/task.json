@@ -1,0 +1,30 @@
+{
+  "id": "pg-transaction-recovery",
+  "name": "pg-transaction-recovery",
+  "title": "Verify atomic receipts and effect recovery",
+  "description": "Prove transactional command intent and recovery remain consistent across database worker failure.",
+  "status": "in_progress",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P1",
+  "creator": "me",
+  "assignee": "me",
+  "createdAt": "2026-09-28",
+  "completedAt": null,
+  "branch": "feat/stage-a-boundary-probe",
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": "cef301d",
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": "09-28-gate-postgres",
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {
+    "roadmap_level": "subtask",
+    "planning_maturity": "implemented",
+    "verification": "passed: 3 recovery cases; full PostgreSQL suite 25/25"
+  }
+}

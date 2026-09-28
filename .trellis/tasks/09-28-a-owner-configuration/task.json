@@ -1,0 +1,29 @@
+{
+  "id": "a-owner-configuration",
+  "name": "a-owner-configuration",
+  "title": "Owner access and minimum configuration",
+  "description": "Allow one authenticated Owner to configure the minimum Project, Role, Runtime and delivery prerequisites.",
+  "status": "planning",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P2",
+  "creator": "me",
+  "assignee": "me",
+  "createdAt": "2026-09-28",
+  "completedAt": null,
+  "branch": null,
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": "09-28-stage-a-product-loop",
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {
+    "roadmap_level": "work-package",
+    "planning_maturity": "backlog"
+  }
+}

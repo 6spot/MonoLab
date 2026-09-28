@@ -1,0 +1,37 @@
+{
+  "id": "stage-a-product-loop",
+  "name": "stage-a-product-loop",
+  "title": "Stage A: Single-Node product loop",
+  "description": "Deliver the complete capture-to-reviewed-delivery loop with one Runner, repository and Node.",
+  "status": "planning",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P2",
+  "creator": "me",
+  "assignee": "me",
+  "createdAt": "2026-09-28",
+  "completedAt": null,
+  "branch": null,
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [
+    "09-28-a-command-foundation",
+    "09-28-a-owner-configuration",
+    "09-28-a-capture-discussion",
+    "09-28-a-runtime-integration",
+    "09-28-a-task-execution",
+    "09-28-a-review-delivery",
+    "09-28-a-integration-acceptance"
+  ],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {
+    "roadmap_level": "stage",
+    "planning_maturity": "backlog"
+  }
+}

@@ -1,0 +1,4 @@
+{"file": ".trellis/spec/backend/delivery-contracts.md", "reason": "Acceptance bound to expected result and required checks"}
+{"file": ".trellis/spec/backend/error-handling.md", "reason": "Provider errors and uncertain results"}
+{"file": "docs/04-workspace-and-git.md", "reason": "Delivery ownership and exact-head contracts"}
+{"file": ".trellis/tasks/09-28-github-head-checks/design.md", "reason": "Authorized synthetic-repository experiment"}

@@ -1,0 +1,30 @@
+{
+  "id": "github-uncertain-effects",
+  "name": "github-uncertain-effects",
+  "title": "Verify uncertain GitHub create and merge recovery",
+  "description": "Demonstrate remote-truth reconciliation after lost PR creation and merge responses.",
+  "status": "in_progress",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P1",
+  "creator": "me",
+  "assignee": "me",
+  "createdAt": "2026-09-28",
+  "completedAt": null,
+  "branch": "feat/stage-a-boundary-probe",
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": "cef301d",
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": "09-28-gate-github",
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {
+    "roadmap_level": "subtask",
+    "planning_maturity": "backlog",
+    "verification": "passed: see research/verification.md"
+  }
+}

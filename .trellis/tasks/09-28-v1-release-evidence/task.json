@@ -1,0 +1,29 @@
+{
+  "id": "v1-release-evidence",
+  "name": "v1-release-evidence",
+  "title": "Single-host release acceptance",
+  "description": "Run and retain the full single-host V1 acceptance matrix.",
+  "status": "planning",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P2",
+  "creator": "me",
+  "assignee": "me",
+  "createdAt": "2026-09-28",
+  "completedAt": null,
+  "branch": null,
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": "09-28-stage-v1-release",
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {
+    "roadmap_level": "work-package",
+    "planning_maturity": "backlog"
+  }
+}

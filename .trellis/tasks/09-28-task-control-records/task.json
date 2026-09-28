@@ -1,0 +1,29 @@
+{
+  "id": "task-control-records",
+  "name": "task-control-records",
+  "title": "Task control and revision records",
+  "description": "Persist product Task control and immutable revision identities under explicit activation guards.",
+  "status": "planning",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P2",
+  "creator": "me",
+  "assignee": "me",
+  "createdAt": "2026-09-28",
+  "completedAt": null,
+  "branch": null,
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": "09-28-a-command-foundation",
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {
+    "roadmap_level": "subtask",
+    "planning_maturity": "backlog"
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "id": "stage-b-v1-capabilities",
+  "name": "stage-b-v1-capabilities",
+  "title": "Stage B: Remaining V1 execution capabilities",
+  "description": "Extend the accepted single-Node loop to the remaining V1 execution and delivery capabilities.",
+  "status": "planning",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P2",
+  "creator": "me",
+  "assignee": "me",
+  "createdAt": "2026-09-28",
+  "completedAt": null,
+  "branch": null,
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [
+    "09-28-b-runtime-fallback",
+    "09-28-b-serial-graphs",
+    "09-28-b-planner-replan",
+    "09-28-b-parallel-workspaces",
+    "09-28-b-delivery-modes"
+  ],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {
+    "roadmap_level": "stage",
+    "planning_maturity": "backlog"
+  }
+}

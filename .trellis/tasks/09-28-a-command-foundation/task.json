@@ -1,0 +1,34 @@
+{
+  "id": "a-command-foundation",
+  "name": "a-command-foundation",
+  "title": "Command and persistence foundation",
+  "description": "Establish authenticated formal commands, canonical control records and durable scheduling primitives.",
+  "status": "planning",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P2",
+  "creator": "me",
+  "assignee": "me",
+  "createdAt": "2026-09-28",
+  "completedAt": null,
+  "branch": null,
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [
+    "09-28-command-scopes-receipts",
+    "09-28-task-control-records",
+    "09-28-durable-dispatch-events",
+    "09-28-read-projections-cursors"
+  ],
+  "parent": "09-28-stage-a-product-loop",
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {
+    "roadmap_level": "work-package",
+    "planning_maturity": "backlog"
+  }
+}

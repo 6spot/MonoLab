@@ -1,0 +1,6 @@
+{"file": ".trellis/spec/backend/database-guidelines.md", "reason": "Atomic admission and lock contracts"}
+{"file": ".trellis/spec/backend/error-handling.md", "reason": "Uncertain outcomes and recovery"}
+{"file": ".trellis/spec/backend/quality-guidelines.md", "reason": "Test isolation and evidence"}
+{"file": ".trellis/spec/protocol/commands.md", "reason": "Replay and stale authority"}
+{"file": ".trellis/tasks/09-28-pg-claim-capacity/research/verification.md", "reason": "Passed independent worker prerequisite"}
+{"file": ".trellis/tasks/09-28-pg-transaction-recovery/design.md", "reason": "Crash checkpoint and recovery verification design"}

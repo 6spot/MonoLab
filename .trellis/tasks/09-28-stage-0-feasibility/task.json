@@ -1,0 +1,33 @@
+{
+  "id": "stage-0-feasibility",
+  "name": "stage-0-feasibility",
+  "title": "Stage 0: Feasibility gates",
+  "description": "Establish observed Runtime, PostgreSQL and GitHub behavior before broad product implementation.",
+  "status": "planning",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P1",
+  "creator": "me",
+  "assignee": "me",
+  "createdAt": "2026-09-28",
+  "completedAt": null,
+  "branch": null,
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [
+    "09-28-gate-runtime",
+    "09-28-gate-postgres",
+    "09-28-gate-github"
+  ],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {
+    "roadmap_level": "stage",
+    "planning_maturity": "backlog"
+  }
+}

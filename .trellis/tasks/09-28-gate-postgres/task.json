@@ -1,0 +1,32 @@
+{
+  "id": "gate-postgres",
+  "name": "gate-postgres",
+  "title": "PostgreSQL concurrency feasibility",
+  "description": "Verify cross-worker ownership and transactional intent under contention and crash recovery.",
+  "status": "planning",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P1",
+  "creator": "me",
+  "assignee": "me",
+  "createdAt": "2026-09-28",
+  "completedAt": null,
+  "branch": null,
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [
+    "09-28-pg-claim-capacity",
+    "09-28-pg-transaction-recovery"
+  ],
+  "parent": "09-28-stage-0-feasibility",
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {
+    "roadmap_level": "work-package",
+    "planning_maturity": "backlog"
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "id": "pg-claim-capacity",
+  "name": "pg-claim-capacity",
+  "title": "Verify cross-worker claims and capacity",
+  "description": "Prove a shared PostgreSQL scheduler claim cannot be duplicated or exceed configured capacity.",
+  "status": "in_progress",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P1",
+  "creator": "me",
+  "assignee": "me",
+  "createdAt": "2026-09-28",
+  "completedAt": null,
+  "branch": "feat/stage-a-boundary-probe",
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": "cef301d",
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": "09-28-gate-postgres",
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {
+    "roadmap_level": "subtask",
+    "planning_maturity": "implemented",
+    "verification": "passed: 6 independent-process tests plus 16 existing PostgreSQL tests"
+  }
+}

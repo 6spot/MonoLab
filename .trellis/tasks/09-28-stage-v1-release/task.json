@@ -1,0 +1,32 @@
+{
+  "id": "stage-v1-release",
+  "name": "stage-v1-release",
+  "title": "V1: Single-host release",
+  "description": "Make the full V1 installable, operable and demonstrably recoverable on one Linux host.",
+  "status": "planning",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P2",
+  "creator": "me",
+  "assignee": "me",
+  "createdAt": "2026-09-28",
+  "completedAt": null,
+  "branch": null,
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [
+    "09-28-v1-install-operations",
+    "09-28-v1-release-evidence"
+  ],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {
+    "roadmap_level": "stage",
+    "planning_maturity": "backlog"
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "id": "a-review-delivery",
+  "name": "a-review-delivery",
+  "title": "GitHub review and correction",
+  "description": "Expose the exact local result, prepare a controlled PR and complete Owner-approved delivery with correction and recovery.",
+  "status": "planning",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P2",
+  "creator": "me",
+  "assignee": "me",
+  "createdAt": "2026-09-28",
+  "completedAt": null,
+  "branch": null,
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": "09-28-stage-a-product-loop",
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {
+    "roadmap_level": "work-package",
+    "planning_maturity": "backlog"
+  }
+}
