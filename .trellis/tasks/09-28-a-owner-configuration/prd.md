@@ -6,7 +6,7 @@ Allow one authenticated Owner to configure the minimum Project, Role, Runtime an
 
 ## Planning status
 
-Roadmap level: **work-package**. Status: **planning / backlog**, not implementation-ready. The Owner approved the three-level roadmap structure on 2026-09-28. This PRD records scope and acceptance, not approval to start implementation.
+Roadmap level: **work-package**. All four sequential leaves passed their scoped acceptance on 2026-09-29 under the Owner's autonomous authorization. Integrated acceptance is recorded in `verification.md`; real Runtime/provider execution gates remain separate.
 
 ## Background and scope
 
@@ -33,8 +33,8 @@ The Owner authorized autonomous sequencing and decisions on 2026-09-29; no sub-a
 
 ## Acceptance criteria
 
-- [ ] Protected UI/API and separate Runner enrollment enforce their credential boundaries.
-- [ ] Owner can configure one Project/repository, reusable Role, installed Runtime and GitHub integration without database edits; no CLI auto-install/login.
+- [x] Protected UI/API and separate Runner enrollment enforce their credential boundaries.
+- [x] Owner can configure one Project/repository, reusable Role, installed Runtime and GitHub integration without database edits; no CLI auto-install/login.
 
 ## Out of scope
 

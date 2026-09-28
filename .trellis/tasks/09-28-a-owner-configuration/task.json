@@ -3,7 +3,7 @@
   "name": "a-owner-configuration",
   "title": "Owner access and minimum configuration",
   "description": "Allow one authenticated Owner to configure the minimum Project, Role, Runtime and delivery prerequisites.",
-  "status": "planning",
+  "status": "in_progress",
   "dev_type": null,
   "scope": null,
   "package": null,
@@ -12,7 +12,7 @@
   "assignee": "me",
   "createdAt": "2026-09-28",
   "completedAt": null,
-  "branch": null,
+  "branch": "feat/stage-a-boundary-probe",
   "base_branch": "main",
   "worktree_path": null,
   "commit": null,
@@ -26,9 +26,9 @@
   ],
   "parent": "09-28-stage-a-product-loop",
   "relatedFiles": [],
-  "notes": "",
+  "notes": "All four configuration leaves accepted. Actual CLI installation observation verified; Runtime model/tool/reboot and production execution integration remain outside this completed configuration package.",
   "meta": {
     "roadmap_level": "work-package",
-    "planning_maturity": "backlog"
+    "planning_maturity": "accepted"
   }
 }

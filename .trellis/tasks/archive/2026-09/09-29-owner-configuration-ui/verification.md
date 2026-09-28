@@ -14,7 +14,7 @@ the main session under Owner authorization; no sub-agents or permission prompts.
 | Local Vitest | 75 passed; 72 DB-gated cases intentionally skipped locally |
 | Protocol generation drift | Current |
 | Native TypeScript and compiled backend imports | Passed |
-| Real PostgreSQL test entrypoint on Linux | 74 passed across 10 files |
+| Real PostgreSQL test entrypoint on Linux | 74 passed across 10 files (72 DB + two pure cases) |
 | Playwright against actual backend + isolated PostgreSQL | 6 passed in 16.2 seconds |
 | Linux Go tests with race detector and vet | Passed |
 | Vite production build | JS 468.53 kB / 141.96 kB gzip; CSS 25.60 kB / 6.54 kB gzip |
