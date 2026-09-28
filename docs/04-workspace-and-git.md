@@ -103,34 +103,53 @@ A →  ├
 
 The system may isolate concurrent Nodes even when one later turns out to be read-only. Avoid adding a read/write taxonomy merely to optimize away a cheap Worktree.
 
-## Node completion and Git boundaries
+## Node completion and durable boundary
 
-When `complete_node(summary)` succeeds, the system finalizes the Node's workspace state.
+`complete_node(summary)` is the durability boundary between transient Runner work and formal completed work.
 
-For a Git workspace, record:
+A Node must not become COMPLETED while its only authoritative code result still exists on one Runner's local filesystem.
 
-- start revision;
-- completion revision;
-- dirty changes that must be persisted.
+When completion begins, Workspace Manager must:
 
-The Agent is not required to create commits itself.
+1. verify the current Attempt ownership / fencing generation;
+2. prevent that Attempt from continuing to mutate the workspace being finalized;
+3. freeze/finalize the Node workspace state;
+4. persist a durable checkpoint outside the disposable Runner execution environment;
+5. integrate that result into the Task Workspace when integration is required;
+6. persist the resulting durable Task Workspace state;
+7. only then allow the formal Node COMPLETED transition and downstream scheduling.
 
-If the Agent has already committed during work, keep those commits.
+The exact checkpoint representation is infrastructure, not a new product/domain object. For Git work it may use durable Git objects/commits/bundles or equivalent backing storage managed by Workspace Manager. Do not require every Node completion to push a user-visible remote branch merely for durability.
 
-If dirty changes remain at completion, the system may create a completion commit/snapshot.
-
-The important boundary is:
+The invariant is:
 
 ~~~text
-start_revision → completion_revision
+Node COMPLETED
+⇒ completed result can be reconstructed without the Runner that executed it
 ~~~
 
-not "exactly one commit per Node".
+For a Git workspace, preserve enough information to reconstruct at least:
 
+- start revision;
+- completion revision / finalized dirty changes;
+- the integrated Task Workspace revision after completion when applicable.
+
+The Agent is not required to create commits itself. If it already committed during work, keep those commits. If dirty changes remain, Workspace Manager may create an internal completion commit/checkpoint.
+
+The important boundary is the reproducible code state, not "exactly one commit per Node".
+
+If durable persistence or required integration fails, `complete_node()` fails and the Node must not be marked COMPLETED.
+
+A failed/incomplete Attempt may lose uncheckpointed intermediate edits when its Runner is permanently lost. That is acceptable because those edits never crossed the formal completion boundary.
+
+A COMPLETED Node's result must never depend on that Runner remaining available.
 ## Parallel integration
 
 Parallel Node results are integrated into the Task Workspace by deterministic program logic.
 
+For a Node whose result must affect downstream repository state, required integration is part of the completion boundary. Downstream Nodes must not be unlocked until the completed result is durably integrated into the Task Workspace.
+
+If integration conflicts, do not first mark the Node COMPLETED and then discover that its result cannot be used. Preserve the Attempt/log/checkpoint as history, rebuild the same Node workspace from the latest Task Workspace, and reactivate/retry the same Node according to the conflict recovery path.
 If integration succeeds without conflict, continue automatically.
 
 If a later integration conflicts with an already-integrated result, do not create a permanent "merge-agent" business concept.
