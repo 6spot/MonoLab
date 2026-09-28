@@ -94,3 +94,25 @@ Added durable selected Attempt queue, atomic capacity promotion, monotonic fenci
 ### Status
 
 [OK] **Completed**
+
+
+## Session 5: Complete canonical reads and command foundation
+<!-- trellis-session: v=2 fp=559ba2d654b68018 -->
+
+**Date**: 2026-09-29
+**Task**: Complete canonical reads and command foundation
+**Branch**: `feat/stage-a-boundary-probe`
+
+### Summary
+
+Owner overview and formal-event cursor APIs passed 55 DB-entrypoint cases, 56 local tests and Linux Go race/vet. All four command-foundation leaves are complete; reviewing parent acceptance before Owner access/configuration.
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `2c1bfd6` | feat: expose canonical Task reads and resumable event cursors |
+
+### Status
+
+[OK] **Completed**
