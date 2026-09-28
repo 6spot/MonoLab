@@ -15,7 +15,7 @@ The deterministic driver makes the sequence reproducible. This establishes
 tool/transport compatibility, not autonomous semantic planning quality.
 
 Before each real trial the harness rechecks the installed model catalog and
-requires zero input/output/cache pricing for `opencode/mimo-v2.6-flash-free`.
+requires zero input/output/cache pricing for `opencode/longcat-2.5-preview-free`.
 An unavailable/changed catalog fails; there is no paid fallback. It does not
 install or log into any Runtime. Driver and root evidence files refuse overwrite,
 so failures cannot disappear behind a rerun with the same trial ID.

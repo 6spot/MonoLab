@@ -16,7 +16,7 @@ const freeCost = `{"input":0,"output":0,"cache":{"read":0,"write":0}}`
 
 func catalog(cost string) string {
 	return "Models cache refreshed\n" + host.FreeModel + "\n" +
-		`{"id":"mimo-v2.6-flash-free","providerID":"opencode","status":"active","capabilities":{"toolcall":true},"cost":` + cost + "}\n"
+		`{"id":"longcat-2.5-preview-free","providerID":"opencode","status":"active","capabilities":{"toolcall":true},"cost":` + cost + "}\n"
 }
 
 func TestCatalogRequiresExactAvailableFreeToolModel(t *testing.T) {

@@ -20,7 +20,7 @@ const Helper = "/usr/local/libexec/monolab-probe-launch"
 const Worker = "/usr/local/libexec/monolab-probe-exec"
 const CLI = "/usr/local/bin/monolab"
 const Runtime = "/home/linuxbrew/.linuxbrew/bin/opencode"
-const FreeModel = "opencode/mimo-v2.6-flash-free"
+const FreeModel = "opencode/longcat-2.5-preview-free"
 
 var idPattern = regexp.MustCompile(`^[A-Za-z0-9_-]{1,128}$`)
 

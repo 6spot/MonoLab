@@ -50,7 +50,7 @@ export async function createAttemptFixture(db: Database, input: AttemptFixture):
     const launch: Dispatch = {
       dispatch_id: randomUUID(), attempt_id: input.attempt_id, runner_id: input.runner_id, task_id: input.task_id,
       ...(nodeId ? { node_id: nodeId } : {}), kind: input.kind, fencing_generation: 1, node_activation: nodeId ? 1 : 0,
-      control_version: Number(task.control_version), resource_id: input.resource_id, runtime_id: 'opencode', model: 'opencode/mimo-v2.6-flash-free',
+      control_version: Number(task.control_version), resource_id: input.resource_id, runtime_id: 'opencode', model: 'opencode/longcat-2.5-preview-free',
       prompt: input.prompt, source_watermark: 1, mutation_allowed: true, process_released: false,
     };
     validate('Dispatch', launch);

@@ -109,7 +109,7 @@ export interface Dispatch {
 
 export type DispatchKind = "node" | "planner";
 
-export type Model = "opencode/mimo-v2.6-flash-free";
+export type Model = "opencode/mimo-v2.6-flash-free" | "opencode/longcat-2.5-preview-free";
 
 export type RuntimeID = "opencode";
 

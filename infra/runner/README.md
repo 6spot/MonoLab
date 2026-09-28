@@ -6,7 +6,7 @@ replace Owner configuration, publish Git repositories, or reboot the host.
 
 Prerequisites: Linux cgroup v2, systemd, `git`, Debian `sudo`, the existing `me`
 account, OpenCode 1.18.30 at `/home/linuxbrew/.linuxbrew/bin/opencode`, and the
-explicit zero-cost `opencode/mimo-v2.6-flash-free` model. Build needs Go 1.26+
+explicit zero-cost `opencode/longcat-2.5-preview-free` model. Build needs Go 1.26+
 and a C compiler. A task-owned Docker Go build image can provide these without
 changing the host toolchain. SQLite is statically compiled by its Go driver.
 

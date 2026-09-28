@@ -1125,7 +1125,8 @@
           "model": {
             "type": "string",
             "enum": [
-              "opencode/mimo-v2.6-flash-free"
+              "opencode/mimo-v2.6-flash-free",
+              "opencode/longcat-2.5-preview-free"
             ]
           },
           "prompt": {

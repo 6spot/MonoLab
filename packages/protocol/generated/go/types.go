@@ -414,7 +414,8 @@ const (
 type Model string
 
 const (
-	OpencodeMIMOV26FlashFree Model = "opencode/mimo-v2.6-flash-free"
+	OpencodeLongcat25PreviewFree Model = "opencode/longcat-2.5-preview-free"
+	OpencodeMIMOV26FlashFree     Model = "opencode/mimo-v2.6-flash-free"
 )
 
 type RuntimeID string

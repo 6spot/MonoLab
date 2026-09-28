@@ -130,14 +130,14 @@ func TestPrivilegeConfigurationIsNotCallerControlled(t *testing.T) {
 	}
 }
 func TestDispatchIdentityMustMatchHelperRequest(t *testing.T) {
-	d := protocol.Dispatch{AttemptID: "other", RuntimeID: protocol.Opencode, Model: protocol.OpencodeMIMOV26FlashFree}
+	d := protocol.Dispatch{AttemptID: "other", RuntimeID: protocol.Opencode, Model: FreeModel}
 	if ValidateRequest(Request{Action: "start", AttemptID: "a", Dispatch: &d}) == nil {
 		t.Fatal("accepted cross-attempt start")
 	}
 }
 
 func TestRevocationTombstoneRejectsLateStartAndOwnershipReplacement(t *testing.T) {
-	d := protocol.Dispatch{AttemptID: "a", DispatchID: "d", RunnerID: "runner", TaskID: "task", ResourceID: "repo", Kind: protocol.Node, RuntimeID: protocol.Opencode, Model: protocol.OpencodeMIMOV26FlashFree, Prompt: "probe"}
+	d := protocol.Dispatch{AttemptID: "a", DispatchID: "d", RunnerID: "runner", TaskID: "task", ResourceID: "repo", Kind: protocol.Node, RuntimeID: protocol.Opencode, Model: FreeModel, Prompt: "probe"}
 	if err := ValidateRequest(Request{Action: "tombstone", AttemptID: "a", Dispatch: &d}); err != nil {
 		t.Fatal(err)
 	}

@@ -19,7 +19,7 @@ import urllib.request
 
 ROOT = pathlib.Path("/var/lib/monolab-probe")
 CONFIG = pathlib.Path("/etc/monolab-probe/runner.json")
-MODEL = "opencode/mimo-v2.6-flash-free"
+MODEL = "opencode/longcat-2.5-preview-free"
 ID = re.compile(r"^[A-Za-z0-9_-]{1,80}$")
 COMMON_CHECKS = {"bundled_help", "forged_hints_denied", "forged_environment_keeps_own_result", "workspace_command", "retry_ignores_changed_file", "same_id_changed_payload_conflicts", "long_payload_retained_before_send", "long_payload_changed_content_conflicts"}
 KIND_CHECKS = {
@@ -135,7 +135,7 @@ class Probe:
         print(json.dumps({"evidence": str(path), "outcome": value.get("outcome", "recorded")}))
 
     def catalog(self):
-        output = self.call(["runuser", "-u", "me", "--", "/home/linuxbrew/.linuxbrew/bin/opencode", "models", "opencode", "--verbose"], timeout=60, cwd="/home/me")
+        output = self.call(["runuser", "-u", "me", "--", "/home/linuxbrew/.linuxbrew/bin/opencode", "models", "opencode", "--pure", "--refresh", "--verbose"], timeout=60, cwd="/home/me")
         output = re.sub(r"\x1b\[[0-?]*[ -/]*[@-~]", "", output)
         header = re.search(r"(?m)^" + re.escape(MODEL) + r"\s*$", output)
         if header is None:

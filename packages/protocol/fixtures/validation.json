@@ -589,5 +589,71 @@
       "remote_preparation": "automatic",
       "provider": "github"
     }
+  },
+  {
+    "name": "selected LongCat dispatch",
+    "schema": "Dispatch",
+    "valid": true,
+    "value": {
+      "dispatch_id": "dispatch-a",
+      "attempt_id": "attempt-a",
+      "runner_id": "runner-a",
+      "task_id": "task-a",
+      "kind": "planner",
+      "fencing_generation": 1,
+      "node_activation": 0,
+      "control_version": 0,
+      "resource_id": "fixture-repo",
+      "runtime_id": "opencode",
+      "model": "opencode/longcat-2.5-preview-free",
+      "prompt": "fixture only",
+      "source_watermark": 1,
+      "mutation_allowed": true,
+      "process_released": false
+    }
+  },
+  {
+    "name": "historical MiMo dispatch",
+    "schema": "Dispatch",
+    "valid": true,
+    "value": {
+      "dispatch_id": "dispatch-a",
+      "attempt_id": "attempt-a",
+      "runner_id": "runner-a",
+      "task_id": "task-a",
+      "kind": "planner",
+      "fencing_generation": 1,
+      "node_activation": 0,
+      "control_version": 0,
+      "resource_id": "fixture-repo",
+      "runtime_id": "opencode",
+      "model": "opencode/mimo-v2.6-flash-free",
+      "prompt": "fixture only",
+      "source_watermark": 1,
+      "mutation_allowed": true,
+      "process_released": false
+    }
+  },
+  {
+    "name": "unapproved model dispatch",
+    "schema": "Dispatch",
+    "valid": false,
+    "value": {
+      "dispatch_id": "dispatch-a",
+      "attempt_id": "attempt-a",
+      "runner_id": "runner-a",
+      "task_id": "task-a",
+      "kind": "planner",
+      "fencing_generation": 1,
+      "node_activation": 0,
+      "control_version": 0,
+      "resource_id": "fixture-repo",
+      "runtime_id": "opencode",
+      "model": "opencode/paid-model",
+      "prompt": "fixture only",
+      "source_watermark": 1,
+      "mutation_allowed": true,
+      "process_released": false
+    }
   }
 ]

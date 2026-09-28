@@ -92,7 +92,7 @@ class IdentityTests(unittest.TestCase):
 class CatalogTests(unittest.TestCase):
     def setUp(self):
         self.instance = probe.Probe.__new__(probe.Probe)
-        self.model = {"id": "mimo-v2.6-flash-free", "status": "active", "cost": {"input": 0, "output": 0, "cache": {"read": 0, "write": 0}}, "capabilities": {"toolcall": True}}
+        self.model = {"id": "longcat-2.5-preview-free", "status": "active", "cost": {"input": 0, "output": 0, "cache": {"read": 0, "write": 0}}, "capabilities": {"toolcall": True}}
 
     def catalog(self, model):
         self.instance.call = Mock(return_value="\x1b[32m" + probe.MODEL + "\x1b[0m\n" + json.dumps(model))

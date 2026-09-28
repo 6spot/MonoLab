@@ -88,3 +88,16 @@ Define the actual Linux harness command and its fixture/real-runtime/reboot mode
 - Stop/reconcile before cleanup or workspace reuse. Preserve unresolved command/effect journals and operation refs on any test failure.
 - Credentials remain on the test host; neither SSH passwords nor provider tokens belong in task files, test output or commits.
 - Provider, permission or syscall incompatibility is a probe finding. The Owner explicitly authorized the current OpenCode/free-model substitution; do not silently substitute another paid Runtime/model, weaken the boundary or declare fake tests equivalent to real evidence.
+
+
+## Runtime acceptance resumption — 2026-09-29
+
+Owner explicitly resumed Runtime acceptance after configuration archival. Continue
+inside this existing task in the main session, without sub-agents. Selected new
+trials use LongCat 2.5 Preview Free; recheck zero prices and tools before dispatch
+and inside each Attempt environment. Retain MiMo in the wire schema for historical
+dispatch decoding, but do not launch or silently fall back to it. Build/check all
+consumers before updating the task-owned idle backend/Runner and preserve backups.
+Order: fresh Node, fresh Planner, permissions/expired receipt recovery, concurrent
+live service restart, then whole-host reboot once its shared-host impact/window is
+resolved. No unrelated Chronicle services are part of task-scoped restarts.
