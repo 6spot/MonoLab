@@ -6,7 +6,7 @@ Establish authenticated formal commands, canonical control records and durable s
 
 ## Planning status
 
-Roadmap level: **work-package**. Status: **planning / backlog**, not implementation-ready. The Owner approved the three-level roadmap structure on 2026-09-28. This PRD records scope and acceptance, not approval to start implementation.
+Roadmap level: **work-package**. Status: **completed at the foundation boundary; all four leaves verified**. The Owner approved the three-level roadmap structure on 2026-09-28. This PRD records scope and acceptance, not approval to start implementation.
 
 ## Background and scope
 
@@ -29,8 +29,8 @@ These are completion/evidence gates, not automatic scheduler dependencies. Paren
 
 ## Acceptance criteria
 
-- [ ] Scope and exact-content confirmation guards are enforced by the backend.
-- [ ] Task/Plan/Node/Attempt records, event order, outbox and read projections survive duplicate commands and restart.
+- [x] Scope and exact-content confirmation guards are enforced by the backend.
+- [x] Task/Plan/Node/Attempt records, event order, outbox and read projections survive duplicate commands and restart.
 
 ## Out of scope
 
@@ -47,3 +47,17 @@ Review upstream evidence and the current source, refine leaf boundaries and obse
 - [Readiness gates](../../../docs/10-architecture-readiness.md)
 - [Invariants](../../../docs/08-principles-and-non-goals.md)
 - [Engineering specs](../../spec/index.md)
+
+## Integrated acceptance — 2026-09-29
+
+The four child leaves are implemented and archived. Final combined source passed
+55 database-entrypoint cases (including independent-process claim/admission/promotion
+crashes), 56 local cases, protocol generation, build, native app import and Linux
+Go race/vet. Work commits: `5aec445`, `cb429d0`, `3bda81d`, `2c1bfd6`.
+
+Implemented foundation: separate Owner/Runner/Attempt credentials, immutable exact
+confirmation and receipts, canonical revision/activation records, durable selected
+Attempt dispatch and physical claims, and authenticated rebuildable reads/cursors.
+Public Owner login, product configuration, Task creation/Start/conversation,
+semantic planning, UI/SSE and actual delivery remain owned by subsequent packages.
+Deferred Runtime feasibility is still outstanding and is not counted as passed.
