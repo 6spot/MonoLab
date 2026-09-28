@@ -28,3 +28,25 @@ Implemented and verified 6 independent PostgreSQL claim cases, 3 process-crash r
 ### Status
 
 [OK] **Completed**
+
+
+## Session 2: Complete Owner command foundation
+<!-- trellis-session: v=2 fp=178f043002dd5ad2 -->
+
+**Date**: 2026-09-29
+**Task**: Complete Owner command foundation
+**Branch**: `feat/stage-a-boundary-probe`
+
+### Summary
+
+Recovered prior session; verified and completed Task-scoped Owner sessions, immutable confirmations and receipts. 51 local tests, 32 PostgreSQL tests and Linux Go race/vet passed. Continue with Task control and revision records; Runtime acceptance remains deferred.
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `5aec445` | feat: add task-scoped Owner confirmations and receipts |
+
+### Status
+
+[OK] **Completed**
