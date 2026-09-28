@@ -116,3 +116,29 @@ Owner overview and formal-event cursor APIs passed 55 DB-entrypoint cases, 56 lo
 ### Status
 
 [OK] **Completed**
+
+
+## Session 6: Complete Owner access and configuration
+<!-- trellis-session: v=2 fp=bf353e835bfb8d53 -->
+
+**Date**: 2026-09-29
+**Task**: Complete Owner access and configuration
+**Branch**: `feat/stage-a-boundary-probe`
+
+### Summary
+
+Recovered the requested session and completed four sequential leaves without sub-agents: Owner login/session lifecycle, Project/Role configuration, Runtime/provider configuration and protected responsive Web UI. Parent package accepted and archived. Final checks: 75 local tests, 74 DB-entrypoint cases (72 database and two pure), six browser tests, lint/typecheck/schema/build/native imports, Linux Go race/vet and production image serving/auth smoke passed. Follow-up fixed Playwright graceful shutdown and verified zero residual test schemas. No running services or installed binaries replaced. Runtime real model/tool/Stop/reboot acceptance remains Owner-deferred; Production Runtime integration and then Capture/Discussion must wait for that prerequisite. Future necessary model trials retain the Owner-selected LongCat free model and require a fresh zero-price check.
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `4155e22` | feat: add single Owner login and revocable browser sessions |
+| `edb8fd5` | feat: persist versioned Project and reusable Role configuration |
+| `e8ed99b` | feat: configure execution policies and protected GitHub access |
+| `d5e3761` | feat: add protected Owner configuration web interface |
+| `2bac382` | docs: accept integrated Owner configuration work package |
+
+### Status
+
+[OK] **Completed**

@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 5
+- **Total Sessions**: 6
 - **Last Active**: 2026-09-29
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~118 | Active |
+| `journal-1.md` | ~144 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 6 | 2026-09-29 | Complete Owner access and configuration | `4155e22`, `edb8fd5`, `e8ed99b`, `d5e3761`, `2bac382` | `feat/stage-a-boundary-probe` |
 | 5 | 2026-09-29 | Complete canonical reads and command foundation | `2c1bfd6` | `feat/stage-a-boundary-probe` |
 | 4 | 2026-09-29 | Complete durable dispatch and event ingestion | `3bda81d` | `feat/stage-a-boundary-probe` |
 | 3 | 2026-09-29 | Complete Task control and revision records | `cb429d0` | `feat/stage-a-boundary-probe` |
