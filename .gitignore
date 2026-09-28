@@ -9,3 +9,5 @@ coverage/
 infra/compose/private/
 __pycache__/
 *.pyc
+apps/web/test-results/
+apps/web/playwright-report/

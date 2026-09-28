@@ -36,8 +36,10 @@ Five failed password attempts in a minute throttle further login with HTTP 429 a
 Retry-After. This is persisted across backend restarts. Login/session responses are
 no-store. Passwords are bounded to at least 12 characters and at most 1024 UTF-8 bytes.
 
-This backend leaf does not yet add the configuration UI or automatically configure
-the deployed host's Owner credentials.
+Build with `pnpm build` and open the backend HTTPS origin to use the protected
+configuration UI. The server serves its built assets from `apps/web/dist`; container
+builds include them automatically. See `apps/web/README.md` for development/testing.
+Owner credentials must still be initialized through the local management command.
 
 ## Minimum configuration APIs
 

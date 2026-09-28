@@ -29,3 +29,21 @@ Provisional stream content is separate from committed Planner replies. Deduplica
 ## Tests
 
 Exercise scope changes, repeated mount/unmount, reconnect after cursor gap, lost mutation response and double submission. Assert retained drafts and one canonical result. Query cancellation must not become a Task cancellation.
+
+
+## Configuration and session reference
+
+`useCommand` holds one immutable pending configuration command; an in-flight ref
+blocks same-tick duplicate submits. Malformed or unavailable receipt reads retain
+uncertainty. Replay occurs only after an authoritative unknown receipt; a definitive
+replay rejection may release the pending command while retaining its editor draft.
+Commit recovery clears the same record/secret draft as an immediate receipt.
+
+On logout/revocation, cancel reads, update the existing session query to unauthenticated
+and remove private queries. Do not clear the session query itself before updating it:
+removing its active observer can leave the authenticated view subscribed to old data.
+A temporary session revalidation failure must preserve mounted editors/drafts;
+authoritative unauthorized responses unmount them. Recheck sessions on window focus.
+
+Hash navigation updates the selected view in the click handler and handles history
+changes. The keyboard skip link focuses the main region without changing the view.

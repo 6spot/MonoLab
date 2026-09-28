@@ -10,6 +10,8 @@ import { OwnerReads } from './owner-reads.ts';
 import { OwnerAccess } from './owner-access.ts';
 import { Configuration } from './configuration.ts';
 import { GitHub } from './github.ts';
+import fastifyStatic from '@fastify/static';
+import { join } from 'node:path';
 
 function bearer(request: { headers: { authorization?: string } }): string {
   const match = /^Bearer ([^\s]+)$/.exec(request.headers.authorization ?? '');
@@ -41,9 +43,13 @@ function errorResult(error: unknown): CommandResult {
   return { schema_version: 1, status: 'error', error: error instanceof CommandError ? error.detail : { code: 'internal_error', message: 'Internal operation failed; reconcile existing request before retry' } };
 }
 
-export function createApp(service: BoundaryService, tls?: { key: Buffer; cert: Buffer }) {
+export function createApp(service: BoundaryService, tls?: { key: Buffer; cert: Buffer }, webRoot?: string) {
   const app = Fastify({ ...(tls ? { https: tls } : {}), bodyLimit: MAX_BODY_BYTES, logger: { level: 'warn', redact: ['req.headers.authorization', 'req.headers.cookie', 'res.headers.set-cookie'] }, disableRequestLogging: true });
-  app.setErrorHandler((error: unknown, _request: FastifyRequest, reply: FastifyReply) => {
+  app.setErrorHandler((error: unknown, request: FastifyRequest, reply: FastifyReply) => {
+    if (webRoot && (request.url === '/' || request.url.startsWith('/assets/')) && error && typeof error === 'object' && 'statusCode' in error && typeof error.statusCode === 'number' && [400, 403, 404].includes(error.statusCode)) {
+      void reply.header('Cache-Control', 'no-store').code(error.statusCode).send({ error: 'Static resource unavailable' });
+      return;
+    }
     const result = errorResult(error);
     const code = result.error!.code;
     if (code === 'rate_limited') void reply.header('Retry-After', '60');
@@ -55,6 +61,10 @@ export function createApp(service: BoundaryService, tls?: { key: Buffer; cert: B
   const reads = new OwnerReads(service.db);
   const access = new OwnerAccess(service.db);
   const configuration = new Configuration(service.db, new GitHub(service.options.signingKey));
+  if (webRoot) {
+    void app.register(fastifyStatic, { root: join(webRoot, 'assets'), prefix: '/assets/', index: false, dotfiles: 'deny', immutable: true, maxAge: '1y' });
+    app.get('/', async (_request, reply) => reply.header('Cache-Control', 'no-store').sendFile('index.html', webRoot, { cacheControl: false }));
+  }
   app.get('/v1/owner/configuration', async (request) => configuration.read(ownerCredential(request)));
   app.get('/v1/owner/infrastructure', async (request) => configuration.infrastructure(ownerCredential(request), service.instanceId));
   app.get<{ Querystring: { page?: string } }>('/v1/owner/github/repositories', async (request) => {

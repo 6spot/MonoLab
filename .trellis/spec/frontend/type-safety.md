@@ -4,7 +4,7 @@ Sources: [wire schemas](../../../docs/11-technology-and-deployment.md), [command
 
 ## Authority
 
-Generate transport types from versioned JSON Schemas in the future `packages/protocol`. Keep feature-only props/view models local. Do not copy DB types, manually duplicate wire enums or introduce a second schema authority.
+Generate transport types from versioned JSON Schemas in `packages/protocol`. Keep feature-only props/view models local. Do not copy DB types, manually duplicate wire enums or introduce a second schema authority.
 
 Treat network/stream data as unknown until validated at the API adapter boundary. Types do not validate JSON at runtime. Use the chosen schema validator and generated contracts; do not add another validator merely for a form.
 
@@ -21,3 +21,12 @@ Use explicit component props and inferred types from validated values. Avoid `an
 ## Tests
 
 Verify malformed/unsupported payload handling, optional fields, stale-version errors and every UI result variant. Type-check generated contracts and app together once scaffolded; record the actual command then.
+
+
+## Implemented browser boundary
+
+Import generated types and `packages/protocol/src/validation.ts` only. The server
+entry `src/index.ts` also provides Node crypto/canonicalization and must never enter
+the browser bundle. Both entries share AJV and the same JSON Schema; encoded byte
+limits use TextEncoder. Web uses its own bundler tsconfig and root typecheck invokes
+it separately. Keep native Node JSON import attributes valid as well as Vite builds.

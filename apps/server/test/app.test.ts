@@ -1,4 +1,7 @@
 import { once } from 'node:events';
+import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import type { AddressInfo } from 'node:net';
 import { WebSocket } from 'ws';
 import { expect, it, vi } from 'vitest';
@@ -6,6 +9,27 @@ import { database } from '../../../packages/db/src/index.ts';
 import { MAX_BODY_BYTES } from '../../../packages/protocol/src/index.ts';
 import { createApp } from '../src/app.ts';
 import { BoundaryService } from '../src/service.ts';
+
+it('serves only the shell and hashed assets with separate cache rules', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'monolab-web-'));
+  await mkdir(join(root, 'assets'));
+  await writeFile(join(root, 'index.html'), '<!doctype html><title>MonoLab</title>');
+  await writeFile(join(root, 'assets/app-hash.js'), 'export const ready = true;');
+  const db = database('postgres://unused:unused@127.0.0.1:1/unused');
+  const app = createApp(new BoundaryService(db, { signingKey: 'test-only-signing-key-never-for-deployment' }), undefined, root);
+  try {
+    const shell = await app.inject('/');
+    expect(shell.statusCode).toBe(200); expect(shell.headers['cache-control']).toBe('no-store');
+    expect(shell.headers['content-type']).toContain('text/html');
+    const asset = await app.inject('/assets/app-hash.js');
+    expect(asset.statusCode).toBe(200); expect(asset.headers['cache-control']).toContain('immutable');
+    expect(asset.headers['content-type']).toContain('javascript');
+    for (const path of ['/assets/%2e%2e/index.html', '/assets/.env', '/src/main.tsx', '/v1/unknown']) {
+      expect([403, 404]).toContain((await app.inject(path)).statusCode);
+    }
+    expect((await app.inject('/v1/owner/configuration')).statusCode).toBe(401);
+  } finally { await app.close(); await db.pool.end(); await rm(root, { recursive: true, force: true }); }
+});
 
 it('rejects malformed, oversized and unsupported HTTP bodies without an internal-error result', async () => {
   // These fail before admission; there is deliberately no live database here.

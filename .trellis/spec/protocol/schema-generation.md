@@ -11,7 +11,7 @@ Every command, dispatch, normalized Runtime event, recovery page or backend/Runn
 - Authority: [schemas/v1/contracts.json](../../../packages/protocol/schemas/v1/contracts.json), JSON Schema draft 7.
 - Generator: [generate.mjs](../../../packages/protocol/scripts/generate.mjs), pinned `quicktype-core` from the root manifest; `pnpm protocol:generate` updates TS, Go, embedded Go schema and OpenAPI together.
 - Drift gate: `pnpm protocol:check`; never hand-edit `packages/protocol/generated`.
-- Runtime validation: [protocol/src/index.ts](../../../packages/protocol/src/index.ts) uses AJV; [wire.go](../../../runner/internal/wire/wire.go) validates against the same embedded schema before decoding Go structs.
+- Runtime validation: browser-safe [protocol/src/validation.ts](../../../packages/protocol/src/validation.ts) uses AJV and TextEncoder byte limits; Node-only canonicalization/crypto stays in [protocol/src/index.ts](../../../packages/protocol/src/index.ts); [wire.go](../../../runner/internal/wire/wire.go) validates against the same embedded schema before decoding Go structs.
 - `RunnerInventory { schema_version, snapshot_id, dispatches, operations, next_cursor? }`; `InventoryQuery { after?, snapshot_id? }` requires both query fields together.
 - `OperationResult { operation_id, attempt_id, success, result, failure_kind? }`; failure classification is forbidden on success.
 

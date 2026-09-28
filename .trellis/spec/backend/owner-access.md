@@ -70,3 +70,13 @@ all earlier Owner/Runner/Attempt scope and protocol fixtures.
 Wrong: open an unauthenticated setup endpoint or put a password in a shell argument.
 Correct: trusted local stdin bootstrap, authenticated same-origin login, and opaque
 server-validated sessions.
+
+
+## Same-origin Web serving
+
+`createApp(service, tls?, webRoot?)` optionally serves the built SPA shell at `/`
+with no-store and hashed files under `/assets/` with immutable caching. Use the
+static plugin's bounded root/path handling; never serve the source tree or use SPA
+fallback for API routes. Preserve 400/403/404 for denied/missing static paths without
+exposing filesystem diagnostics. Production `main.ts` points at `apps/web/dist`;
+Docker builds the SPA before copying its output to the server image.

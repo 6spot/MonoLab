@@ -28,7 +28,7 @@ Follow the selected Base UI component's current API. Do not copy Radix-only `asC
 </Dialog>
 ```
 
-This illustrates the official API; no such local component exists yet. Import from the generated local UI modules after scaffolding.
+This illustrates the official API; only `components/ui/button.tsx` is currently installed. Add other primitives only when needed. `components.json` records the explicit `base-nova` preset.
 
 ## Interaction and accessibility
 

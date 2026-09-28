@@ -4,7 +4,19 @@ Sources: [UI contract](../../../docs/07-owner-review-and-ui.md), [Stage A](../..
 
 ## Current status
 
-The repository has no Web package, lint configuration or UI tests. Vitest and Playwright are the selected tools. Scaffolding establishes runnable scripts and reference tests; this file does not claim they exist.
+`apps/web` uses root lint, a separate TypeScript check, Vite production build,
+Vitest API-boundary tests and Playwright interaction tests. Run `pnpm lint`,
+`pnpm typecheck`, `pnpm test`, `pnpm protocol:check`, `pnpm build` and
+`pnpm --filter @monolab/web test:e2e` with `MONOLAB_TEST_WEB_DATABASE_URL` set privately.
+The browser fixture migrates a unique test schema, uses synthetic credentials,
+serves the built SPA from the actual backend and drops only its own schema.
+See `apps/web/README.md`; screenshots/traces are ignored test artifacts.
+
+Implemented evidence covers login/logout/revocation, Role/Project/policy/provider
+persistence, record/view drafts, two-tab version conflict, repeated submit,
+interrupted write/receipt recovery, keyboard navigation and mobile overflow.
+Provider repository responses are explicit fixtures, not live GitHub evidence.
+The following Todo/Task matrix remains for future packages.
 
 ## Required interaction evidence
 

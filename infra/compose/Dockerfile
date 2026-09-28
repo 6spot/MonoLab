@@ -4,13 +4,16 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.json tsconfig.build.json eslint.config.mjs ./
 COPY packages ./packages
 COPY apps/server ./apps/server
+COPY apps/web ./apps/web
 COPY scripts ./scripts
 COPY infra/compose/test-db.mjs ./infra/compose/test-db.mjs
 
 FROM source AS test
 RUN pnpm install --frozen-lockfile
+RUN pnpm --filter @monolab/web build
 CMD ["node", "infra/compose/test-db.mjs"]
 
 FROM source AS server
 RUN pnpm install --prod --frozen-lockfile
+COPY --from=test /app/apps/web/dist ./apps/web/dist
 CMD ["node", "--experimental-strip-types", "apps/server/src/main.ts"]

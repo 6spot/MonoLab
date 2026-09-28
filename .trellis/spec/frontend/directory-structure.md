@@ -4,19 +4,19 @@ Sources: [layout](../../../docs/11-technology-and-deployment.md), [information a
 
 ## Destination and ownership
 
-Web belongs in future `apps/web`: a React/Vite TypeScript SPA served by the backend under the same origin. It consumes API contracts from `packages/protocol`, never `packages/db`, server secrets or Runner filesystem paths.
+Web lives in `apps/web`: a React/Vite TypeScript SPA served by the backend under the same origin. It consumes API contracts from `packages/protocol`, never `packages/db`, server secrets or Runner filesystem paths.
 
-Suggested internal organization for scaffolding, not existing paths:
+Current organization:
 
 ```text
 apps/web/src/
   app/             # providers, navigation, route composition
-  features/        # todos, tasks, projects, settings
+  features/        # projects, roles, execution policies, GitHub
   components/ui/   # owned shadcn Base UI source
   lib/             # API/stream adapters and genuinely shared utilities
 ```
 
-Choose route/file conventions during scaffolding; add actual references here. Keep feature queries, local components and behavior together. Extract shared components only for stable repeated contracts.
+The four settings views use URL hash navigation in `app/app.tsx`. Hidden mounted views preserve scoped drafts. `lib/api.ts` validates reads/receipts and `lib/use-command.ts` retains pending commands. Keep feature queries, local components and behavior together. Extract shared components only for stable repeated contracts.
 
 ## Product surfaces
 

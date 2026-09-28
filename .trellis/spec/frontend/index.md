@@ -1,6 +1,6 @@
 # Frontend Development
 
-Status: design baseline; no Web implementation exists. Sources: [UI](../../../docs/07-owner-review-and-ui.md), [technology](../../../docs/11-technology-and-deployment.md).
+Status: protected Owner configuration is implemented in `apps/web`; Todo/Task surfaces remain planned. Sources: [UI](../../../docs/07-owner-review-and-ui.md), [technology](../../../docs/11-technology-and-deployment.md).
 
 ## Pre-Development Checklist
 

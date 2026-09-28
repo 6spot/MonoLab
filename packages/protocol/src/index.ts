@@ -1,34 +1,10 @@
 import { createHash } from 'node:crypto';
-import { readFileSync } from 'node:fs';
-import { Ajv } from 'ajv';
 import canonicalize from 'canonicalize';
 import type { CommandEnvelope, CommandSubmission, Frame } from '../generated/types.ts';
 
 export * from '../generated/types.ts';
-export const MAX_BODY_BYTES = 2 * 1024 * 1024;
-export const MAX_FRAME_BYTES = 1024 * 1024;
-// Leave room for the inventory page/cursor or dispatch/result frame wrapper.
-export const MAX_ITEM_BYTES = MAX_FRAME_BYTES - 4096;
-export const schema = JSON.parse(readFileSync(new URL('../schemas/v1/contracts.json', import.meta.url), 'utf8'));
-const ajv = new Ajv({ strict: true, allErrors: false });
-ajv.addSchema(schema);
-const validators = new Map<string, ReturnType<typeof ajv.compile>>();
-
-export class ProtocolVersionError extends Error {}
-export class ProtocolValidationError extends Error {}
-
-export function validate<T>(name: string, value: unknown): T {
-  if (['Frame', 'CommandEnvelope', 'OwnerCommand', 'OwnerLogin', 'ConfigurationCommand'].includes(name) && value && typeof value === 'object' && 'schema_version' in value && value.schema_version !== 1) throw new ProtocolVersionError('Unsupported schema version');
-  let validator = validators.get(name);
-  if (!validator) {
-    validator = ajv.compile({ $ref: `${schema.$id}#/definitions/${name}` });
-    validators.set(name, validator);
-  }
-  if (!validator(value)) throw new ProtocolValidationError(`Invalid ${name}: ${ajv.errorsText(validator.errors, { dataVar: 'body' })}`);
-  const limit = ['Frame', 'RunnerInventory'].includes(name) ? MAX_FRAME_BYTES : ['Dispatch', 'Operation', 'OperationResult'].includes(name) ? MAX_ITEM_BYTES : undefined;
-  if (limit !== undefined && Buffer.byteLength(JSON.stringify(value)) > limit) throw new ProtocolValidationError(`${name} exceeds the encoded wire byte limit`);
-  return value as T;
-}
+export * from './validation.ts';
+import { validate, ProtocolValidationError } from './validation.ts';
 
 export function canonicalJSON(value: unknown): string {
   // RFC 8785 requires Unicode scalar values. JSON.stringify would preserve lone

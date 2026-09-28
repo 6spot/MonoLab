@@ -32,3 +32,13 @@ Correct: show the admitted operation, then reflect the authoritative final deliv
 ## Verification
 
 Test two tabs racing Accept/message, stale projections, correction during delivery, pending conversation after completion and partial failure. Client refresh/navigation never advances lifecycle.
+
+
+## Configuration drafts
+
+Project/Role drafts are keyed by stable IDs, retain their original control version,
+and survive record/view switches. Policy/provider drafts are scoped to their form.
+A snapshot refresh never rebases an edited draft. Conflict refreshes canonical data;
+only explicit Reload saved version discards a draft. No browser persistent storage
+contains passwords, keys, session tokens or pending commands. Secrets clear on
+committed save (including recovered receipts), logout and session revocation.
