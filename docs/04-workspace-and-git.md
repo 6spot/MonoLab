@@ -80,6 +80,7 @@ Workspace Manager owns:
 
 Inside the returned workspace, the Runtime's native coding tools may freely read/write files, run shell commands, build, test, and search.
 
+Workspace access must respect current execution ownership. A superseded Attempt must not be allowed to finalize/integrate Workspace state after a successor Attempt has taken ownership. If Workspace storage is shared across Runners, fencing must also protect system-managed finalize/integration operations from stale writers.
 ## Serial and parallel execution
 
 Serial Nodes normally share the Task Workspace.
