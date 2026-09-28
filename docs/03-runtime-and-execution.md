@@ -12,7 +12,9 @@ It is responsible for deterministic runtime infrastructure: discover installed A
 
 Clients do not own execution. Web/Mobile may disconnect without affecting running work.
 
-V1 may operate with a single Runner, but placement must not be hard-coded to a single-machine architecture. When placement is Auto, the system should prefer to keep an Execution Task on the Runner where its Task Workspace has already been created. This task-level stickiness avoids unnecessary Workspace migration. Explicit Runner pinning overrides Auto placement.
+V1 uses one Runner. Runtime execution, Task Workspace, Node worktrees, and local execution state all live on that Runner.
+
+Keep Runner identity explicit in the architecture so future multi-Runner support does not require rewriting Node / Attempt / Runtime boundaries, but do not implement cross-Runner Workspace migration, recovery, or placement in V1.
 
 ## Runtime
 
@@ -165,24 +167,13 @@ target unavailable / execution failed
 → evaluate ordered fallback
 ~~~
 
-### Auto Runner placement
+### Runner placement in V1
 
-For `runner_id = null` (Auto), Runner placement is resolved when the Attempt can actually be dispatched rather than permanently binding a queued Attempt too early.
+V1 has a single Runner. `runner_id` remains part of ExecutionTarget/Attempt facts for architectural continuity and diagnostics, but Auto resolves to that one configured Runner.
 
-Candidate selection is deterministic:
+Do not implement cross-Runner Workspace materialization, Task migration, Runner balancing, or failover in V1.
 
-1. Runner is online;
-2. requested Runtime is available there;
-3. Workspace Manager confirms required Task/Node workspace state can be safely provided there;
-4. Runner has an available execution slot.
-
-Prefer the Runner that already owns the Task Workspace when it remains a valid candidate. If another compatible Runner can safely provide the required workspace state and becomes available first, Auto placement may use it.
-
-If the workspace cannot safely move/materialize elsewhere, other Runners are not valid candidates and the Attempt waits for the compatible Runner rather than silently changing execution semantics.
-
-For Auto placement, a QUEUED Attempt may keep `runner_id = null` until dispatch. At dispatch, set the concrete Runner and keep that Runner fixed for the lifetime of that Attempt.
-
-For an explicitly pinned target, the queued Attempt is bound to that Runner and waits only for that Runner. Switching Runner always ends the current Attempt and creates another.
+If the Runner has no free execution slot, the Attempt remains QUEUED. If the Runner is unavailable, work waits for that Runner to return unless the Runtime failure itself can be handled on the same Runner through another installed Runtime.
 
 ### Execution ownership and fencing
 
@@ -212,28 +203,19 @@ This prevents a recovered old Runner from publishing a Plan, completing a Node, 
 
 The lock granularity is the execution owner, not the whole Execution Task. Independent Nodes in the same Task may legitimately run on different Runners at the same time.
 
-### Runner loss and reconciliation
+### Runner loss in V1
 
-Runner heartbeat loss is a connectivity fact, not proof that an active Runtime process ended.
+V1 does not fail over execution to another Runner.
 
-When a Runner becomes heartbeat-stale:
+Runner heartbeat loss is still only a connectivity fact and must not immediately terminalize active Attempts. Stop dispatching new work and wait for the same Runner to reconnect/reconcile.
 
-- stop dispatching new Attempts to it;
-- keep its already-running Attempts formally RUNNING while execution ownership is unresolved;
-- do not release their ownership merely because a timeout elapsed;
-- do not automatically start successor Attempts on another Runner while the old execution may still be alive.
+When the Runner returns:
 
-When the Runner reconnects, reconcile each active Attempt:
+- if the same Runtime process is still alive and can be reattached, continue the same Attempt;
+- if the process is confirmed dead, terminalize that Attempt and apply normal same-Runner Runtime fallback/retry rules;
+- if the Runner remains unavailable, the affected work waits rather than migrating to another machine.
 
-- if the same Runtime process/invocation is still alive and can be reliably reattached, continue the same Attempt;
-- if the process is confirmed dead, terminalize that Attempt with an objective failure reason and allow normal fallback/retry;
-- if the Runner is permanently lost, fence the old Attempt before a successor may start.
-
-For Node work, cross-Runner recovery is allowed only when Workspace Manager can reconstruct the required durable workspace state. If it cannot, block the Node with Owner-facing attention rather than starting from guessed or incomplete state.
-
-Completed Nodes are recoverable from durable Workspace Manager state and must not be re-executed merely because the Runner that produced them disappeared.
-
-Heartbeat intervals and stale/offline thresholds are Runner infrastructure settings, not Task/Node states and not a new domain lifecycle.
+Heartbeat/stale thresholds remain infrastructure configuration, not Task/Node states.
 
 ## Owner start and initial planning
 
