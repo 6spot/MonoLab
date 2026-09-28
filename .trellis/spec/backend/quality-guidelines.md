@@ -54,3 +54,7 @@ Task record foundation adds `postgres-task-records.test.ts`: eight real database
 cases plus one pure graph test. Total: 52 local cases and 41 cases through the DB
 entrypoint (40 database cases plus that pure graph test). Check native module load
 in addition to Vitest; `erasableSyntaxOnly` prevents non-erasable runtime syntax.
+
+Dispatch foundation adds eight cases in `postgres-dispatch.test.ts`, including
+independent-process SIGKILL before/after promotion COMMIT. Total DB entrypoint:
+49 cases (48 database cases plus pure graph validation); local suite: 52 cases.

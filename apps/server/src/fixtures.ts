@@ -69,7 +69,7 @@ export async function revokeFixture(db: Database, attemptId: string): Promise<vo
     await tx.query('SELECT id FROM tasks WHERE id=$1 FOR UPDATE', [identity.task_id]);
     const attempt = (await tx.query<{ mutation_allowed: boolean; launch: Dispatch }>('SELECT * FROM attempts WHERE id=$1 FOR UPDATE', [attemptId])).rows[0]!;
     if (!attempt.mutation_allowed) return;
-    await tx.query('UPDATE attempts SET mutation_allowed=false WHERE id=$1', [attemptId]);
+    await tx.query("UPDATE attempts SET mutation_allowed=false,state='CANCELLED',end_reason='revoked' WHERE id=$1", [attemptId]);
     await tx.query("UPDATE tasks SET control_version=control_version+1,state=CASE WHEN $2::boolean THEN 'BLOCKED' ELSE state END WHERE id=$1", [identity.task_id, attempt.launch.kind === 'node']);
     await tx.query("UPDATE nodes SET state='BLOCKED' WHERE id=$1", [attempt.launch.node_id ?? null]);
     await tx.query("UPDATE outbox SET done=true WHERE attempt_id=$1 AND kind='start'", [attemptId]);

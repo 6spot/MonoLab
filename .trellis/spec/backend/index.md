@@ -5,6 +5,7 @@ Status: Stage A boundary-probe backend is implemented in `apps/server` with Post
 ## Pre-Development Checklist
 
 - Read [directory structure](directory-structure.md) for ownership.
+- For selected Attempt queue/promotion, read [dispatch queue](dispatch-queue.md).
 - For revision/activation publication, read [Task records](task-records.md).
 - For Owner sessions/proposal consumption, read [Owner commands](owner-commands.md).
 - For commands/persistence, read [database](database-guidelines.md), [errors](error-handling.md) and [protocol](../protocol/commands.md).

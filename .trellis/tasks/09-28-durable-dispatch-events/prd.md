@@ -6,7 +6,7 @@ Commit dispatch intent transactionally and ingest Runtime events idempotently.
 
 ## Planning status
 
-Roadmap level: **subtask**. Status: **planning / backlog**, not implementation-ready. The Owner approved the three-level roadmap structure on 2026-09-28. This PRD records scope and acceptance, not approval to start implementation.
+Roadmap level: **subtask**. Status: **implementation-ready under the Owner’s autonomous sequential-development instruction**. The Owner approved the three-level roadmap structure on 2026-09-28. The Owner authorized sequential implementation without sub-agents.
 
 ## Background and scope
 
@@ -27,9 +27,9 @@ This is the intended implementation leaf. Split again only if design reveals mor
 
 ## Acceptance criteria
 
-- [ ] Crash between admission and send preserves one durable dispatch identity.
-- [ ] Duplicate/reordered events do not duplicate effects or revive terminal work.
-- [ ] Two workers respect claim/capacity ownership and fake Runner locality rejects unsupported movement.
+- [x] Crash between admission and send preserves one durable dispatch identity.
+- [x] Duplicate/reordered events do not duplicate effects or revive terminal work.
+- [x] Two workers respect claim/capacity ownership and fake Runner locality rejects unsupported movement.
 
 ## Out of scope
 
@@ -46,3 +46,18 @@ Review upstream evidence and the current source, refine leaf boundaries and obse
 - [Readiness gates](../../../docs/10-architecture-readiness.md)
 - [Invariants](../../../docs/08-principles-and-non-goals.md)
 - [Engineering specs](../../spec/index.md)
+
+## Concrete dispatch foundation
+
+Persist selected queued Attempts separately from physical claims. Promote under
+Runner capacity and Task/Node/revision guards, preserving a stable dispatch ID and
+outbox intent across restart/lost replies. Pin a Task to its first execution Runner;
+unsupported movement fails explicitly. Queueing while capacity is full is healthy
+and does not block the Task. Reuse authenticated WSS outbox/event paths and exact
+per-event acknowledgements; no new transport or model invocation.
+
+Add explicit Attempt lifecycle and keep terminal status independent of physical
+process release. Test concurrent promotions, crash/lost replies, capacity waiting,
+old-owner settlement, stale queued bases, locality and late/duplicate events.
+Public Owner Start and semantic Runtime/context selection remain later work; this
+leaf accepts already selected immutable inputs through an internal system API.

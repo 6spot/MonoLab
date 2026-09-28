@@ -7,6 +7,7 @@ import type { CommandEnvelope, CommandResult, CommandSubmission, Dispatch, Effec
 import { authenticateAttempt, issueAttemptCredential } from './auth.ts';
 import type { AttemptIdentity } from './auth.ts';
 import { assertCurrentNode } from './task-records.ts';
+import { DispatchQueue } from './dispatch-queue.ts';
 
 interface RunnerRow { id: string; incarnation: string; connected: boolean; ready: boolean; available: boolean; capacity: number; connection_instance: string | null }
 interface TaskRow { id: string; resource_id: string; control_version: string }
@@ -14,6 +15,7 @@ interface AttemptRow {
   id: string; runner_id: string; task_id: string; node_id: string | null; dispatch_id: string;
   kind: 'node' | 'planner'; fencing_generation: string; node_activation: string;
   mutation_allowed: boolean; process_released: boolean; process_absent: boolean; started: boolean; launch: Dispatch;
+  state: 'QUEUED' | 'RUNNING' | 'SUCCEEDED' | 'FAILED' | 'CANCELLED';
 }
 interface OperationRow { id: string; attempt_id: string; schema_version: number; kind: Operation['kind']; request_id: string; state: Operation['state']; resource_id: string; result: EffectResult | null; failure_kind: OperationResult['failure_kind'] | null }
 interface ReceiptRow { digest: string; command_name: string; response: CommandResult; operation_id: string | null }
@@ -155,6 +157,7 @@ export class BoundaryService {
         : { schema_version: 1, request_id: command.request_id, status: 'admitted', operation_id: operationId };
       await tx.query('INSERT INTO command_receipts(attempt_id,scope_id,request_id,command_name,digest,schema_version,envelope_json,response,operation_id) VALUES($1,$2,$3,$4,$5,1,$6,$7,$8)', [attempt.id, task.id, command.request_id, command.name, submission.sha256, submission.envelope_json, response, operationId]);
       if (command.name === 'commit_task_turn') await taskEvent(tx, attempt, 'task_reply_committed', response.result, operationId);
+      if (command.name === 'commit_task_turn') await tx.query("UPDATE attempts SET state='SUCCEEDED' WHERE id=$1", [attempt.id]);
       this.options.beforeAdmissionCommit?.();
       return response;
     });
@@ -232,6 +235,7 @@ export class BoundaryService {
   }
 
   async pending(runnerId: string, incarnation: number): Promise<Frame[]> {
+    await new DispatchQueue(this.db).promoteNext(runnerId, this.instanceId, incarnation);
     return transaction(this.db, async (tx) => {
       const runner = await lockRunner(tx, runnerId);
       checkChannel(runner, incarnation);
@@ -263,6 +267,7 @@ export class BoundaryService {
       const { runner, attempt } = await lockAttempt(tx, event.attempt_id, runnerId);
       checkChannel(runner, incarnation);
       if (attempt.dispatch_id !== event.dispatch_id) throw new CommandError('denied_scope', 'Event dispatch mismatch');
+      if (attempt.state === 'QUEUED') throw new CommandError('unmet_precondition', 'Queued Attempt has not been dispatched');
       const hash = digest(canonicalJSON(event));
       const prior = (await tx.query<{ digest: string }>('SELECT digest FROM runtime_events WHERE attempt_id=$1 AND stream_id=$2 AND sequence=$3', [attempt.id, event.stream_id, event.sequence])).rows[0];
       if (prior) { if (prior.digest !== hash) throw new CommandError('payload_conflict', 'Stream sequence already has different content'); return; }
@@ -273,7 +278,7 @@ export class BoundaryService {
         // A late start after revocation retains the admitted stop operation and reservation.
       }
       if ((event.kind === 'exited' || event.kind === 'process_absent') && attempt.mutation_allowed) {
-        await tx.query('UPDATE attempts SET mutation_allowed=false WHERE id=$1', [attempt.id]);
+        await tx.query("UPDATE attempts SET mutation_allowed=false,state='FAILED',end_reason='missing_formal_outcome' WHERE id=$1", [attempt.id]);
         await tx.query("UPDATE nodes SET state='BLOCKED' WHERE id=$1", [attempt.node_id]);
         await tx.query("UPDATE tasks SET state=CASE WHEN $2::boolean THEN 'BLOCKED' ELSE state END,control_version=control_version+1 WHERE id=$1", [attempt.task_id, attempt.node_id !== null]);
         await admitEffect(tx, attempt, 'stop', randomUUID());
@@ -307,7 +312,7 @@ export class BoundaryService {
         if ((operation.kind === 'open_workspace' || operation.kind === 'inspect_repository') && (!message.result.workspace_id || !message.result.path)) throw new CommandError('unmet_precondition', 'Workspace identity and Runner-local locator are required');
         await tx.query("UPDATE operations SET state='succeeded',result=$2 WHERE id=$1", [operation.id, message.result]);
         await tx.query('UPDATE outbox SET done=true WHERE operation_id=$1', [operation.id]);
-        if (terminal) await tx.query('UPDATE attempts SET mutation_allowed=false,process_absent=true,process_released=true WHERE id=$1', [attempt.id]);
+        if (terminal) await tx.query("UPDATE attempts SET mutation_allowed=false,process_absent=true,process_released=true,state=CASE WHEN $2::boolean THEN 'SUCCEEDED' WHEN state='RUNNING' THEN 'CANCELLED' ELSE state END WHERE id=$1", [attempt.id, operation.kind === 'complete_node']);
         if (operation.kind === 'complete_node') {
           await assertCurrentNode(tx, { task_id: attempt.task_id, node_id: attempt.node_id!, node_activation: Number(attempt.node_activation) });
           const node = (await tx.query<{ activation: string; state: string }>('SELECT activation,state FROM nodes WHERE id=$1 FOR UPDATE', [attempt.node_id])).rows[0];
