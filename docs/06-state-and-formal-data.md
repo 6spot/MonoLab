@@ -102,7 +102,7 @@ For Node-owned Attempts, Attempt failure does not imply Node failure. For Planne
 
 Runner heartbeat loss alone does not transition an Attempt out of RUNNING. Attempt terminal state requires an objective execution outcome or a reliable fencing/reconciliation decision.
 
-Node COMPLETED carries a durability invariant: the formal completed result must be reconstructable without the Runner that executed it. Transient uncheckpointed edits from a non-completed Attempt are not formal state.
+For V1, Node COMPLETED guarantees that the result has been finalized/integrated into the Task Workspace on the single Runner. V1 does not promise survival of permanent Runner-disk loss; external/cross-Runner Workspace durability is deferred.
 ## Runtime capacity projection
 
 Runner execution capacity is configuration plus derived Attempt facts, not another domain state machine.
@@ -116,7 +116,7 @@ Running utilization is derived from RUNNING Attempts assigned to that Runner.
 
 `Attempt.QUEUED` may mean healthy compatible capacity is currently full. This is normal waiting, not BLOCKED and not a reason to change Task state.
 
-For Auto placement, `runner_id` may remain null while the Attempt is QUEUED and become concrete only when dispatch occurs. Once an Attempt starts, its concrete Runner does not change.
+V1 has one Runner, so Auto resolves to that Runner. `runner_id` remains an explicit execution fact for future extensibility; cross-Runner placement is not implemented in V1.
 
 ## State authority
 
