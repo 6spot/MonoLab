@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 2
+- **Total Sessions**: 3
 - **Last Active**: 2026-09-29
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~52 | Active |
+| `journal-1.md` | ~74 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 3 | 2026-09-29 | Complete Task control and revision records | `cb429d0` | `feat/stage-a-boundary-probe` |
 | 2 | 2026-09-29 | Complete Owner command foundation | `5aec445` | `feat/stage-a-boundary-probe` |
 | 1 | 2026-09-29 | Complete database and GitHub feasibility leaves | `cef301d`, `4c5ed0e` | `feat/stage-a-boundary-probe` |
 <!-- @@@/auto:session-history -->

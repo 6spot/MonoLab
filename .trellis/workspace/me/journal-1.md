@@ -50,3 +50,25 @@ Recovered prior session; verified and completed Task-scoped Owner sessions, immu
 ### Status
 
 [OK] **Completed**
+
+
+## Session 3: Complete Task control and revision records
+<!-- trellis-session: v=2 fp=0a6ebccdcfd9308f -->
+
+**Date**: 2026-09-29
+**Task**: Complete Task control and revision records
+**Branch**: `feat/stage-a-boundary-probe`
+
+### Summary
+
+Added immutable revisions, graph membership, activation/completion history and current-basis guards. 52 local tests and 41 DB-entrypoint checks passed; native type-erasure incompatibility fixed and enforced by typecheck. Proceeding to durable dispatch/events.
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `cb429d0` | feat: persist immutable Task revisions and activation history |
+
+### Status
+
+[OK] **Completed**
