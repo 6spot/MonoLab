@@ -212,6 +212,28 @@ This prevents a recovered old Runner from publishing a Plan, completing a Node, 
 
 The lock granularity is the execution owner, not the whole Execution Task. Independent Nodes in the same Task may legitimately run on different Runners at the same time.
 
+### Runner loss and reconciliation
+
+Runner heartbeat loss is a connectivity fact, not proof that an active Runtime process ended.
+
+When a Runner becomes heartbeat-stale:
+
+- stop dispatching new Attempts to it;
+- keep its already-running Attempts formally RUNNING while execution ownership is unresolved;
+- do not release their ownership merely because a timeout elapsed;
+- do not automatically start successor Attempts on another Runner while the old execution may still be alive.
+
+When the Runner reconnects, reconcile each active Attempt:
+
+- if the same Runtime process/invocation is still alive and can be reliably reattached, continue the same Attempt;
+- if the process is confirmed dead, terminalize that Attempt with an objective failure reason and allow normal fallback/retry;
+- if the Runner is permanently lost, fence the old Attempt before a successor may start.
+
+For Node work, cross-Runner recovery is allowed only when Workspace Manager can reconstruct the required durable workspace state. If it cannot, block the Node with Owner-facing attention rather than starting from guessed or incomplete state.
+
+Completed Nodes are recoverable from durable Workspace Manager state and must not be re-executed merely because the Runner that produced them disappeared.
+
+Heartbeat intervals and stale/offline thresholds are Runner infrastructure settings, not Task/Node states and not a new domain lifecycle.
 
 ## Owner start and initial planning
 
