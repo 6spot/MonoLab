@@ -6,7 +6,7 @@ Expose canonical execution facts through rebuildable projections and resumable r
 
 ## Planning status
 
-Roadmap level: **subtask**. Status: **planning / backlog**, not implementation-ready. The Owner approved the three-level roadmap structure on 2026-09-28. This PRD records scope and acceptance, not approval to start implementation.
+Roadmap level: **subtask**. Status: **implementation-ready under the Owner’s autonomous sequential-development instruction**. The Owner approved the three-level roadmap structure on 2026-09-28. The Owner authorized sequential implementation without sub-agents.
 
 ## Background and scope
 
@@ -26,9 +26,9 @@ This is the intended implementation leaf. Split again only if design reveals mor
 
 ## Acceptance criteria
 
-- [ ] Projection rebuild reproduces current formal state and Timeline without turning logs into lifecycle truth.
-- [ ] Reconnect using a saved cursor does not lose or duplicate visible formal events; authorization applies to reads.
-- [ ] Runner-owned files are accessed through the service boundary rather than backend-local paths.
+- [x] Projection rebuild reproduces current formal state and Timeline without turning logs into lifecycle truth.
+- [x] Reconnect using a saved cursor does not lose or duplicate visible formal events; authorization applies to reads.
+- [x] Runner-owned files are accessed through the service boundary rather than backend-local paths.
 
 ## Out of scope
 
@@ -45,3 +45,15 @@ Review upstream evidence and the current source, refine leaf boundaries and obse
 - [Readiness gates](../../../docs/10-architecture-readiness.md)
 - [Invariants](../../../docs/08-principles-and-non-goals.md)
 - [Engineering specs](../../spec/index.md)
+
+## Concrete read boundary
+
+Provide authenticated Owner Task overview and formal-event pages. Rebuild overview
+from canonical Task/Plan/Node/Attempt/operation records on every read, without a
+second lifecycle cache. Resume append-only Task events from a Task-bound versioned
+cursor; detect missing history or invalid future positions and require snapshot
+refresh instead of silently skipping gaps. Separate raw Runtime events from Timeline.
+
+Use bounded JSON pages and generated schemas/OpenAPI. No backend-local Runner file
+access, UI screens, browser streaming loop or large-file transport is added here.
+The cursor API is the durable foundation consumed by subsequent UI/SSE work.

@@ -1,4 +1,3 @@
-{"file": ".trellis/spec/index.md", "reason": "Roadmap baseline; refine with leaf-specific contracts and evidence before implementation."}
-{"file": ".trellis/spec/backend/index.md", "reason": "Roadmap baseline; refine with leaf-specific contracts and evidence before implementation."}
-{"file": ".trellis/spec/protocol/index.md", "reason": "Roadmap baseline; refine with leaf-specific contracts and evidence before implementation."}
-{"file": "docs/09-first-executable-slice.md", "reason": "Roadmap baseline; refine with leaf-specific contracts and evidence before implementation."}
+{"file": ".trellis/spec/backend/owner-reads.md", "reason": "Canonical reads and cursor contracts"}
+{"file": ".trellis/spec/backend/owner-commands.md", "reason": "Owner authentication"}
+{"file": ".trellis/spec/protocol/schema-generation.md", "reason": "Generated shared wire authority"}

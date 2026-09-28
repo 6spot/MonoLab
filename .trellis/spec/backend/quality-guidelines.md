@@ -58,3 +58,7 @@ in addition to Vitest; `erasableSyntaxOnly` prevents non-erasable runtime syntax
 Dispatch foundation adds eight cases in `postgres-dispatch.test.ts`, including
 independent-process SIGKILL before/after promotion COMMIT. Total DB entrypoint:
 49 cases (48 database cases plus pure graph validation); local suite: 52 cases.
+
+Owner reads add six PostgreSQL cases. The complete DB entrypoint now passes 55
+cases (54 DB cases and one pure graph test); the local suite passes 56 cases.
+Shared read schemas also pass Linux Go race/vet. UI/SSE remain later work.

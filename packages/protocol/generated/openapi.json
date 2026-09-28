@@ -5,6 +5,96 @@
     "version": "1.0.0"
   },
   "paths": {
+    "/v1/owner/tasks/{task_id}": {
+      "get": {
+        "security": [
+          {
+            "OwnerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Authenticated response; admission is distinct from completed effects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskOverview"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Deterministic protocol error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/owner/tasks/{task_id}/events": {
+      "get": {
+        "security": [
+          {
+            "OwnerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Id"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/TaskEventCursor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Authenticated response; admission is distinct from completed effects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskEventPage"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Deterministic protocol error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/owner/commands": {
       "post": {
         "security": [
@@ -1494,6 +1584,179 @@
             }
           }
         ]
+      },
+      "TaskEventCursor": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 512,
+        "pattern": "^[A-Za-z0-9_-]+$"
+      },
+      "TaskEventsQuery": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [],
+        "properties": {
+          "cursor": {
+            "$ref": "#/components/schemas/TaskEventCursor"
+          }
+        }
+      },
+      "NodeCounts": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "pending",
+          "running",
+          "blocked",
+          "completed",
+          "cancelled"
+        ],
+        "properties": {
+          "pending": {
+            "$ref": "#/components/schemas/Counter"
+          },
+          "running": {
+            "$ref": "#/components/schemas/Counter"
+          },
+          "blocked": {
+            "$ref": "#/components/schemas/Counter"
+          },
+          "completed": {
+            "$ref": "#/components/schemas/Counter"
+          },
+          "cancelled": {
+            "$ref": "#/components/schemas/Counter"
+          }
+        }
+      },
+      "TaskOverview": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "schema_version",
+          "task_id",
+          "control_version",
+          "state",
+          "specification_id",
+          "nodes",
+          "queued_attempts",
+          "held_attempts",
+          "open_operations",
+          "event_cursor"
+        ],
+        "properties": {
+          "schema_version": {
+            "type": "integer",
+            "const": 1
+          },
+          "task_id": {
+            "$ref": "#/components/schemas/Id"
+          },
+          "control_version": {
+            "$ref": "#/components/schemas/Counter"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "PLANNING",
+              "RUNNING",
+              "BLOCKED",
+              "REPLAN_REQUIRED",
+              "REVIEW",
+              "COMPLETED",
+              "CANCELLED"
+            ]
+          },
+          "specification_id": {
+            "$ref": "#/components/schemas/Id"
+          },
+          "plan_id": {
+            "$ref": "#/components/schemas/Id"
+          },
+          "nodes": {
+            "$ref": "#/components/schemas/NodeCounts"
+          },
+          "queued_attempts": {
+            "$ref": "#/components/schemas/Counter"
+          },
+          "held_attempts": {
+            "$ref": "#/components/schemas/Counter"
+          },
+          "open_operations": {
+            "$ref": "#/components/schemas/Counter"
+          },
+          "event_cursor": {
+            "$ref": "#/components/schemas/TaskEventCursor"
+          }
+        }
+      },
+      "FormalTaskEvent": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "sequence",
+          "kind",
+          "body"
+        ],
+        "properties": {
+          "sequence": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "kind": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "attempt_id": {
+            "$ref": "#/components/schemas/Id"
+          },
+          "operation_id": {
+            "$ref": "#/components/schemas/Id"
+          },
+          "body": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      },
+      "TaskEventPage": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "schema_version",
+          "task_id",
+          "events",
+          "cursor",
+          "has_more",
+          "reset_required"
+        ],
+        "properties": {
+          "schema_version": {
+            "type": "integer",
+            "const": 1
+          },
+          "task_id": {
+            "$ref": "#/components/schemas/Id"
+          },
+          "events": {
+            "type": "array",
+            "maxItems": 64,
+            "items": {
+              "$ref": "#/components/schemas/FormalTaskEvent"
+            }
+          },
+          "cursor": {
+            "$ref": "#/components/schemas/TaskEventCursor"
+          },
+          "has_more": {
+            "type": "boolean"
+          },
+          "reset_required": {
+            "type": "boolean"
+          }
+        }
       }
     },
     "securitySchemes": {

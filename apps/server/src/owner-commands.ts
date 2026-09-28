@@ -27,7 +27,7 @@ export async function revokeOwnerSession(db: Database, sessionId: string) {
   await db.pool.query('UPDATE owner_sessions SET revoked=true WHERE id=$1', [sessionId]);
 }
 
-async function owner(tx: Transaction, token: string): Promise<void> {
+export async function authenticateOwner(tx: Transaction, token: string): Promise<void> {
   if (!/^owner\.v1\.[0-9a-f]{64}$/.test(token)) throw new CommandError('unauthorized', 'Owner session required');
   const row = await tx.query('SELECT id FROM owner_sessions WHERE token_digest=$1 AND NOT revoked AND expires_at>clock_timestamp() FOR SHARE', [digest(token)]);
   if (!row.rowCount) throw new CommandError('unauthorized', 'Owner session expired or revoked');
@@ -73,7 +73,7 @@ export class OwnerCommands {
     const command = validate<OwnerCommand>('OwnerCommand', body);
     const envelope = canonicalJSON(command); const hash = digest(envelope);
     return transaction(this.db, async (tx) => {
-      await owner(tx, token);
+      await authenticateOwner(tx, token);
       const basis = await taskBasis(tx, command.scope_id);
       const prior = (await tx.query<{ digest: string; response: OwnerCommandResult }>('SELECT digest,response FROM owner_command_receipts WHERE scope_id=$1 AND request_id=$2', [command.scope_id, command.request_id])).rows[0];
       if (prior) {
@@ -95,7 +95,7 @@ export class OwnerCommands {
   async status(token: string, scopeId: string, requestId: string): Promise<OwnerCommandResult> {
     validate('Id', scopeId); validate('Id', requestId);
     return transaction(this.db, async (tx) => {
-      await owner(tx, token);
+      await authenticateOwner(tx, token);
       const row = (await tx.query<{ response: OwnerCommandResult }>('SELECT response FROM owner_command_receipts WHERE scope_id=$1 AND request_id=$2', [scopeId, requestId])).rows[0];
       return row?.response ?? { schema_version: 1, request_id: requestId, status: 'unknown' };
     });
@@ -108,7 +108,7 @@ export class OwnerCommands {
 export async function consumeTaskConfirmation(tx: Transaction, token: string, confirmationId: string, requestId: string, binding: ConfirmationBinding): Promise<void> {
   validate('Id', confirmationId); validate('Id', requestId); validate('Id', binding.scope_id);
   validate('TaskProposalAction', binding.action);
-  await owner(tx, token); const basis = await taskBasis(tx, binding.scope_id);
+  await authenticateOwner(tx, token); const basis = await taskBasis(tx, binding.scope_id);
   const identity = (await tx.query<{ proposal_id: string }>('SELECT proposal_id FROM authorization_receipts WHERE id=$1', [confirmationId])).rows[0];
   if (!identity) throw new CommandError('denied_scope', 'Unknown Owner confirmation');
   const row = await proposal(tx, identity.proposal_id);

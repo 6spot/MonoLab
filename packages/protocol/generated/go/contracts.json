@@ -1175,6 +1175,179 @@
           }
         }
       ]
+    },
+    "TaskEventCursor": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^[A-Za-z0-9_-]+$"
+    },
+    "TaskEventsQuery": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [],
+      "properties": {
+        "cursor": {
+          "$ref": "#/definitions/TaskEventCursor"
+        }
+      }
+    },
+    "NodeCounts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "pending",
+        "running",
+        "blocked",
+        "completed",
+        "cancelled"
+      ],
+      "properties": {
+        "pending": {
+          "$ref": "#/definitions/Counter"
+        },
+        "running": {
+          "$ref": "#/definitions/Counter"
+        },
+        "blocked": {
+          "$ref": "#/definitions/Counter"
+        },
+        "completed": {
+          "$ref": "#/definitions/Counter"
+        },
+        "cancelled": {
+          "$ref": "#/definitions/Counter"
+        }
+      }
+    },
+    "TaskOverview": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "task_id",
+        "control_version",
+        "state",
+        "specification_id",
+        "nodes",
+        "queued_attempts",
+        "held_attempts",
+        "open_operations",
+        "event_cursor"
+      ],
+      "properties": {
+        "schema_version": {
+          "type": "integer",
+          "const": 1
+        },
+        "task_id": {
+          "$ref": "#/definitions/Id"
+        },
+        "control_version": {
+          "$ref": "#/definitions/Counter"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "PLANNING",
+            "RUNNING",
+            "BLOCKED",
+            "REPLAN_REQUIRED",
+            "REVIEW",
+            "COMPLETED",
+            "CANCELLED"
+          ]
+        },
+        "specification_id": {
+          "$ref": "#/definitions/Id"
+        },
+        "plan_id": {
+          "$ref": "#/definitions/Id"
+        },
+        "nodes": {
+          "$ref": "#/definitions/NodeCounts"
+        },
+        "queued_attempts": {
+          "$ref": "#/definitions/Counter"
+        },
+        "held_attempts": {
+          "$ref": "#/definitions/Counter"
+        },
+        "open_operations": {
+          "$ref": "#/definitions/Counter"
+        },
+        "event_cursor": {
+          "$ref": "#/definitions/TaskEventCursor"
+        }
+      }
+    },
+    "FormalTaskEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sequence",
+        "kind",
+        "body"
+      ],
+      "properties": {
+        "sequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "kind": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "attempt_id": {
+          "$ref": "#/definitions/Id"
+        },
+        "operation_id": {
+          "$ref": "#/definitions/Id"
+        },
+        "body": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+    "TaskEventPage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "task_id",
+        "events",
+        "cursor",
+        "has_more",
+        "reset_required"
+      ],
+      "properties": {
+        "schema_version": {
+          "type": "integer",
+          "const": 1
+        },
+        "task_id": {
+          "$ref": "#/definitions/Id"
+        },
+        "events": {
+          "type": "array",
+          "maxItems": 64,
+          "items": {
+            "$ref": "#/definitions/FormalTaskEvent"
+          }
+        },
+        "cursor": {
+          "$ref": "#/definitions/TaskEventCursor"
+        },
+        "has_more": {
+          "type": "boolean"
+        },
+        "reset_required": {
+          "type": "boolean"
+        }
+      }
     }
   }
 }

@@ -9,7 +9,7 @@
     "lint": "eslint apps packages --max-warnings 0",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:db": "MONOLAB_TEST_DATABASE=1 vitest run apps/server/test/postgres.test.ts apps/server/test/postgres-claims.test.ts apps/server/test/postgres-recovery.test.ts apps/server/test/postgres-owner.test.ts apps/server/test/postgres-task-records.test.ts apps/server/test/postgres-dispatch.test.ts",
+    "test:db": "MONOLAB_TEST_DATABASE=1 vitest run apps/server/test/postgres.test.ts apps/server/test/postgres-claims.test.ts apps/server/test/postgres-recovery.test.ts apps/server/test/postgres-owner.test.ts apps/server/test/postgres-task-records.test.ts apps/server/test/postgres-dispatch.test.ts apps/server/test/postgres-reads.test.ts",
     "protocol:generate": "node packages/protocol/scripts/generate.mjs",
     "protocol:check": "node packages/protocol/scripts/generate.mjs --check",
     "db:migrate": "node --experimental-strip-types packages/db/src/migrate.ts",

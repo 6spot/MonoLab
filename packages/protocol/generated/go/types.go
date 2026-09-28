@@ -3,6 +3,8 @@ package protocol
 
 type InventoryCursor string
 
+type TaskEventCursor string
+
 type CommandEnvelope struct {
 	ExpectedControlVersion int64               `json:"expected_control_version"`
 	Name                   CommandEnvelopeName `json:"name"`
@@ -110,15 +112,15 @@ type RuntimeEvent struct {
 }
 
 type Operation struct {
-	AttemptID     string        `json:"attempt_id"`
-	DispatchID    string        `json:"dispatch_id"`
-	Kind          OperationKind `json:"kind"`
-	OperationID   string        `json:"operation_id"`
-	RequestID     string        `json:"request_id"`
-	ResourceID    string        `json:"resource_id"`
-	Result        *EffectResult `json:"result,omitempty"`
-	SchemaVersion int64         `json:"schema_version"`
-	State         State         `json:"state"`
+	AttemptID     string         `json:"attempt_id"`
+	DispatchID    string         `json:"dispatch_id"`
+	Kind          OperationKind  `json:"kind"`
+	OperationID   string         `json:"operation_id"`
+	RequestID     string         `json:"request_id"`
+	ResourceID    string         `json:"resource_id"`
+	Result        *EffectResult  `json:"result,omitempty"`
+	SchemaVersion int64          `json:"schema_version"`
+	State         OperationState `json:"state"`
 }
 
 type OperationResult struct {
@@ -162,6 +164,49 @@ type OwnerCommandResult struct {
 	RequestID      string                   `json:"request_id"`
 	SchemaVersion  int64                    `json:"schema_version"`
 	Status         OwnerCommandResultStatus `json:"status"`
+}
+
+type TaskEventsQuery struct {
+	Cursor *string `json:"cursor,omitempty"`
+}
+
+type TaskOverview struct {
+	ControlVersion  int64             `json:"control_version"`
+	EventCursor     string            `json:"event_cursor"`
+	HeldAttempts    int64             `json:"held_attempts"`
+	Nodes           NodeCounts        `json:"nodes"`
+	OpenOperations  int64             `json:"open_operations"`
+	PlanID          *string           `json:"plan_id,omitempty"`
+	QueuedAttempts  int64             `json:"queued_attempts"`
+	SchemaVersion   int64             `json:"schema_version"`
+	SpecificationID string            `json:"specification_id"`
+	State           TaskOverviewState `json:"state"`
+	TaskID          string            `json:"task_id"`
+}
+
+type NodeCounts struct {
+	Blocked   int64 `json:"blocked"`
+	Cancelled int64 `json:"cancelled"`
+	Completed int64 `json:"completed"`
+	Pending   int64 `json:"pending"`
+	Running   int64 `json:"running"`
+}
+
+type TaskEventPage struct {
+	Cursor        string            `json:"cursor"`
+	Events        []FormalTaskEvent `json:"events"`
+	HasMore       bool              `json:"has_more"`
+	ResetRequired bool              `json:"reset_required"`
+	SchemaVersion int64             `json:"schema_version"`
+	TaskID        string            `json:"task_id"`
+}
+
+type FormalTaskEvent struct {
+	AttemptID   *string                `json:"attempt_id,omitempty"`
+	Body        map[string]interface{} `json:"body"`
+	Kind        string                 `json:"kind"`
+	OperationID *string                `json:"operation_id,omitempty"`
+	Sequence    int64                  `json:"sequence"`
 }
 
 type CommandEnvelopeName string
@@ -241,12 +286,12 @@ const (
 	Stop                  OperationKind = "stop"
 )
 
-type State string
+type OperationState string
 
 const (
-	Recovery      State = "recovery"
-	StateAdmitted State = "admitted"
-	Succeeded     State = "succeeded"
+	Recovery      OperationState = "recovery"
+	StateAdmitted OperationState = "admitted"
+	Succeeded     OperationState = "succeeded"
 )
 
 type FailureKind string
@@ -294,4 +339,16 @@ type OwnerCommandResultStatus string
 const (
 	FluffyCommitted OwnerCommandResultStatus = "committed"
 	FluffyUnknown   OwnerCommandResultStatus = "unknown"
+)
+
+type TaskOverviewState string
+
+const (
+	Blocked        TaskOverviewState = "BLOCKED"
+	Cancelled      TaskOverviewState = "CANCELLED"
+	Completed      TaskOverviewState = "COMPLETED"
+	Planning       TaskOverviewState = "PLANNING"
+	ReplanRequired TaskOverviewState = "REPLAN_REQUIRED"
+	Review         TaskOverviewState = "REVIEW"
+	Running        TaskOverviewState = "RUNNING"
 )

@@ -336,5 +336,44 @@
       "request_id": "request",
       "status": "unknown"
     }
+  },
+  {
+    "name": "valid empty Task event page",
+    "schema": "TaskEventPage",
+    "valid": true,
+    "value": {
+      "schema_version": 1,
+      "task_id": "task",
+      "events": [],
+      "cursor": "abc",
+      "has_more": false,
+      "reset_required": false
+    }
+  },
+  {
+    "name": "Task read query rejects principal claims",
+    "schema": "TaskEventsQuery",
+    "valid": false,
+    "value": {
+      "owner": true
+    }
+  },
+  {
+    "name": "Task cursor rejects null",
+    "schema": "TaskEventsQuery",
+    "valid": false,
+    "value": {
+      "cursor": null
+    }
+  },
+  {
+    "name": "Task event sequence starts at one",
+    "schema": "FormalTaskEvent",
+    "valid": false,
+    "value": {
+      "sequence": 0,
+      "kind": "node_completed",
+      "body": {}
+    }
   }
 ]

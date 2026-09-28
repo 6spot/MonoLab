@@ -107,7 +107,7 @@ func TestAtomicRecordIgnoresUnfinishedTemporaryFile(t *testing.T) {
 func TestOperationReplayBindsImmutableIdentity(t *testing.T) {
 	a := protocol.Operation{OperationID: "op", AttemptID: "a", DispatchID: "d", ResourceID: "r", RequestID: "req", SchemaVersion: 1, Kind: protocol.KindCompleteNode}
 	b := a
-	b.State = protocol.State("running")
+	b.State = "recovery"
 	if !sameOperation(a, b) {
 		t.Fatal("mutable control projection rejected")
 	}

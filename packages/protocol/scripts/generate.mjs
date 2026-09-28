@@ -31,6 +31,8 @@ const get = (name, auth, parameters = []) => ({ security: [{ [auth]: [] }], para
 artifacts.set('generated/openapi.json', `${JSON.stringify({
   openapi: '3.1.0', info: { title: 'MonoLab boundary probe', version: '1.0.0' },
   paths: {
+    '/v1/owner/tasks/{task_id}': { get: get('TaskOverview', 'OwnerAuth', ['task_id']) },
+    '/v1/owner/tasks/{task_id}/events': { get: { ...get('TaskEventPage', 'OwnerAuth', ['task_id']), parameters: [...get('TaskEventPage', 'OwnerAuth', ['task_id']).parameters, { name: 'cursor', in: 'query', required: false, schema: reference('TaskEventCursor') }] } },
     '/v1/owner/commands': { post: { security: [{ OwnerAuth: [] }], requestBody: { required: true, content: { 'application/json': { schema: reference('OwnerCommand') } } }, responses: responses('OwnerCommandResult') } },
     '/v1/owner/scopes/{scope_id}/commands/{request_id}': { get: get('OwnerCommandResult', 'OwnerAuth', ['scope_id', 'request_id']) },
     '/v1/commands': { post: { security: [{ AttemptAuth: [] }], requestBody: { required: true, content: { 'application/json': { schema: reference('CommandSubmission') } } }, responses: responses('CommandResult') } },
