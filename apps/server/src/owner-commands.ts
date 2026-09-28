@@ -5,7 +5,7 @@ import { canonicalJSON, digest, MAX_BODY_BYTES, validate } from '../../../packag
 import type { OwnerCommand, OwnerCommandResult, TaskProposalAction } from '../../../packages/protocol/src/index.ts';
 import { CommandError } from '../../../packages/domain/src/commands.ts';
 
-interface TaskBasis { control_version: number; specification_id: string; plan_id: string }
+interface TaskBasis { control_version: number; specification_id: string; plan_id: string | null }
 interface Proposal { id: string; task_id: string; action: TaskProposalAction; content_digest: string; basis: TaskBasis; eligible: boolean }
 export interface ConfirmationBinding { scope_id: string; action: TaskProposalAction; content_digest: string }
 
@@ -34,7 +34,7 @@ async function owner(tx: Transaction, token: string): Promise<void> {
 }
 
 async function taskBasis(tx: Transaction, taskId: string): Promise<TaskBasis> {
-  const row = (await tx.query<{ control_version: string; specification_id: string; plan_id: string }>('SELECT control_version,specification_id,plan_id FROM tasks WHERE id=$1 FOR UPDATE', [taskId])).rows[0];
+  const row = (await tx.query<{ control_version: string; specification_id: string; plan_id: string | null }>('SELECT control_version,specification_id,plan_id FROM tasks WHERE id=$1 FOR UPDATE', [taskId])).rows[0];
   if (!row) throw new CommandError('denied_scope', 'Unknown Task scope');
   return { ...row, control_version: Number(row.control_version) };
 }
@@ -67,7 +67,8 @@ export async function prepareTaskProposal(tx: Transaction, input: { id: string; 
 }
 
 export class OwnerCommands {
-  constructor(readonly db: Database) {}
+  readonly db: Database;
+  constructor(db: Database) { this.db = db; }
   async confirm(token: string, body: unknown): Promise<OwnerCommandResult> {
     const command = validate<OwnerCommand>('OwnerCommand', body);
     const envelope = canonicalJSON(command); const hash = digest(envelope);

@@ -49,3 +49,8 @@ Owner command foundation: 51 local unit/schema cases and 32 real PostgreSQL case
 passed on 2026-09-29 (including 7 in `postgres-owner.test.ts`). Full Go race/vet
 passed after adapting generated enum references. These checks do not establish
 public login, domain action execution or the deferred live Runtime acceptance.
+
+Task record foundation adds `postgres-task-records.test.ts`: eight real database
+cases plus one pure graph test. Total: 52 local cases and 41 cases through the DB
+entrypoint (40 database cases plus that pure graph test). Check native module load
+in addition to Vitest; `erasableSyntaxOnly` prevents non-erasable runtime syntax.

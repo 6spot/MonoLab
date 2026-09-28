@@ -5,7 +5,7 @@ import { database, transaction } from './index.ts';
 import type { Database } from './index.ts';
 
 export async function migrate(db: Database): Promise<void> {
-  const sources = await Promise.all(['0001_boundary_probe.sql', '0002_connection_instance.sql', '0003_capture_failure.sql', '0004_owner_commands.sql'].map(async (name, index) => {
+  const sources = await Promise.all(['0001_boundary_probe.sql', '0002_connection_instance.sql', '0003_capture_failure.sql', '0004_owner_commands.sql', '0005_task_records.sql'].map(async (name, index) => {
     const sql = await readFile(new URL(`../migrations/${name}`, import.meta.url), 'utf8');
     return { version: index + 1, sql, checksum: createHash('sha256').update(sql).digest('hex') };
   }));
@@ -24,5 +24,5 @@ export async function migrate(db: Database): Promise<void> {
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL is required');
   const db = database(process.env.DATABASE_URL);
-  try { await migrate(db); process.stdout.write('Database migration version 4 is ready.\n'); } finally { await db.pool.end(); }
+  try { await migrate(db); process.stdout.write('Database migration version 5 is ready.\n'); } finally { await db.pool.end(); }
 }

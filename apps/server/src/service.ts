@@ -6,6 +6,7 @@ import { canonicalJSON, digest, MAX_FRAME_BYTES, parseSubmission, ProtocolVersio
 import type { CommandEnvelope, CommandResult, CommandSubmission, Dispatch, EffectResult, Frame, Operation, OperationResult, RunnerInventory, RuntimeEvent } from '../../../packages/protocol/src/index.ts';
 import { authenticateAttempt, issueAttemptCredential } from './auth.ts';
 import type { AttemptIdentity } from './auth.ts';
+import { assertCurrentNode } from './task-records.ts';
 
 interface RunnerRow { id: string; incarnation: string; connected: boolean; ready: boolean; available: boolean; capacity: number; connection_instance: string | null }
 interface TaskRow { id: string; resource_id: string; control_version: string }
@@ -138,8 +139,8 @@ export class BoundaryService {
       }
       guardNewCommand(command, { kind: attempt.kind, taskId: attempt.task_id, resourceId: task.resource_id, mutationAllowed: attempt.mutation_allowed, processReleased: attempt.process_released, controlVersion: Number(task.control_version), sourceWatermark: attempt.launch.source_watermark, connectionAvailable: runner.available && runner.connection_instance === this.instanceId });
       if (attempt.node_id) {
-        const node = (await tx.query<{ activation: string; state: string; member: boolean }>("SELECT n.activation,n.state,(p.content->'node_ids' ? n.id) AS member FROM nodes n JOIN tasks t ON t.id=n.task_id JOIN plan_revisions p ON p.id=t.plan_id WHERE n.id=$1 AND n.task_id=$2", [attempt.node_id, attempt.task_id])).rows[0];
-        if (!node || !node.member || Number(node.activation) !== Number(attempt.node_activation) || node.state !== 'RUNNING') throw new CommandError('stale_execution', 'Node activation or effective Plan membership is no longer current');
+        const node = await assertCurrentNode(tx, { task_id: attempt.task_id, node_id: attempt.node_id, node_activation: Number(attempt.node_activation) });
+        if (node.state !== 'RUNNING') throw new CommandError('stale_execution', 'Node is no longer running');
       }
       if (command.name === 'complete_node' || command.name === 'commit_task_turn') {
         const unfinished = await tx.query("SELECT id FROM operations WHERE attempt_id=$1 AND state <> 'succeeded'", [attempt.id]);
@@ -308,12 +309,18 @@ export class BoundaryService {
         await tx.query('UPDATE outbox SET done=true WHERE operation_id=$1', [operation.id]);
         if (terminal) await tx.query('UPDATE attempts SET mutation_allowed=false,process_absent=true,process_released=true WHERE id=$1', [attempt.id]);
         if (operation.kind === 'complete_node') {
+          await assertCurrentNode(tx, { task_id: attempt.task_id, node_id: attempt.node_id!, node_activation: Number(attempt.node_activation) });
           const node = (await tx.query<{ activation: string; state: string }>('SELECT activation,state FROM nodes WHERE id=$1 FOR UPDATE', [attempt.node_id])).rows[0];
           const blockedByThisOperation = node?.state === 'BLOCKED' && (operation.failure_kind === 'capture_hard_limit' || operation.failure_kind === 'invalid_finalization');
           const taskState = (await tx.query<{ state: string }>('SELECT state FROM tasks WHERE id=$1', [attempt.task_id])).rows[0]!.state;
           if (!node || Number(node.activation) !== Number(attempt.node_activation) || (node.state !== 'RUNNING' && !blockedByThisOperation) || !['RUNNING', 'BLOCKED'].includes(taskState) || attempt.process_released) throw new CommandError('stale_execution', 'Completion activation is no longer current');
+          await tx.query('INSERT INTO node_completions(node_id,activation,attempt_id,operation_id,result) VALUES($1,$2,$3,$4,$5)', [attempt.node_id, attempt.node_activation, attempt.id, operation.id, message.result]);
           await tx.query("UPDATE nodes SET state='COMPLETED',result=$2 WHERE id=$1", [attempt.node_id, message.result]);
-          await tx.query("UPDATE tasks SET state='REVIEW',control_version=control_version+1 WHERE id=$1", [attempt.task_id]);
+          await tx.query(`UPDATE tasks t SET state=CASE WHEN NOT EXISTS (
+            SELECT 1 FROM plan_nodes pn JOIN nodes n ON n.id=pn.node_id WHERE pn.plan_id=t.plan_id AND n.state<>'COMPLETED'
+          ) AND NOT EXISTS (
+            SELECT 1 FROM operations o JOIN attempts a ON a.id=o.attempt_id WHERE a.task_id=t.id AND o.state<>'succeeded'
+          ) THEN 'REVIEW' ELSE 'RUNNING' END,control_version=control_version+1 WHERE t.id=$1`, [attempt.task_id]);
           await taskEvent(tx, attempt, 'node_completed', { node_id: attempt.node_id, node_activation: Number(attempt.node_activation), ...message.result }, operation.id);
         }
       } else {

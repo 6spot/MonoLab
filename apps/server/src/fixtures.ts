@@ -37,10 +37,16 @@ export async function createAttemptFixture(db: Database, input: AttemptFixture):
       await tx.query('INSERT INTO specification_revisions(id,task_id,content) VALUES($1,$2,$3)', [specId, input.task_id, { title: 'Boundary probe fixture', scope: 'No remote publication' }]);
       await tx.query('INSERT INTO plan_revisions(id,task_id,content) VALUES($1,$2,$3)', [planId, input.task_id, { probe: true, node_ids: input.kind === 'node' ? [input.node_id ?? `node_${input.task_id}`] : [] }]);
     }
-    const task = (await tx.query<{ resource_id: string; control_version: string }>('SELECT resource_id,control_version FROM tasks WHERE id=$1 FOR UPDATE', [input.task_id])).rows[0]!;
+    const task = (await tx.query<{ resource_id: string; control_version: string; specification_id: string; plan_id: string }>('SELECT resource_id,control_version,specification_id,plan_id FROM tasks WHERE id=$1 FOR UPDATE', [input.task_id])).rows[0]!;
     if (task.resource_id !== input.resource_id) throw new Error('Task resource fixture cannot change');
     const nodeId = input.kind === 'node' ? input.node_id ?? `node_${input.task_id}` : undefined;
-    if (nodeId) await tx.query("INSERT INTO nodes(id,task_id,activation,state) VALUES($1,$2,1,'RUNNING') ON CONFLICT(id) DO NOTHING", [nodeId, input.task_id]);
+    if (nodeId) {
+      await tx.query("INSERT INTO nodes(id,task_id,activation,state) VALUES($1,$2,1,'RUNNING') ON CONFLICT(id) DO NOTHING", [nodeId, input.task_id]);
+      const node = (await tx.query<{ task_id: string; activation: string }>('SELECT task_id,activation FROM nodes WHERE id=$1', [nodeId])).rows[0]!;
+      if (node.task_id !== input.task_id || node.activation !== '1') throw new Error('Node fixture identity or activation changed');
+      await tx.query('INSERT INTO plan_nodes(task_id,plan_id,node_id,definition) SELECT id,plan_id,$2,$3 FROM tasks WHERE id=$1 AND NOT EXISTS (SELECT 1 FROM plan_nodes WHERE plan_nodes.plan_id=tasks.plan_id AND node_id=$2)', [input.task_id, nodeId, { node_id: nodeId, dependencies: [], probe: true }]);
+      await tx.query("INSERT INTO node_activations(task_id,node_id,activation,specification_id,plan_id,basis_source) SELECT id,$2,1,specification_id,plan_id,'recorded' FROM tasks WHERE id=$1 ON CONFLICT DO NOTHING", [input.task_id, nodeId]);
+    }
     const launch: Dispatch = {
       dispatch_id: randomUUID(), attempt_id: input.attempt_id, runner_id: input.runner_id, task_id: input.task_id,
       ...(nodeId ? { node_id: nodeId } : {}), kind: input.kind, fencing_generation: 1, node_activation: nodeId ? 1 : 0,
@@ -49,6 +55,7 @@ export async function createAttemptFixture(db: Database, input: AttemptFixture):
     };
     validate('Dispatch', launch);
     await tx.query('INSERT INTO attempts(id,runner_id,task_id,node_id,owner_key,dispatch_id,kind,fencing_generation,node_activation,launch) VALUES($1,$2,$3,$4,$5,$6,$7,1,$8,$9)', [input.attempt_id, input.runner_id, input.task_id, nodeId ?? null, nodeId ? `node:${nodeId}` : `planner:${input.task_id}`, launch.dispatch_id, input.kind, launch.node_activation, launch]);
+    await tx.query('UPDATE attempts SET specification_id=$2,plan_id=$3 WHERE id=$1', [input.attempt_id, task.specification_id, task.plan_id]);
     await tx.query("INSERT INTO outbox(id,runner_id,attempt_id,kind) VALUES($1,$2,$3,'start')", [randomUUID(), input.runner_id, input.attempt_id]);
     return launch;
   });

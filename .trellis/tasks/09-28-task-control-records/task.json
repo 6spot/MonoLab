@@ -3,7 +3,7 @@
   "name": "task-control-records",
   "title": "Task control and revision records",
   "description": "Persist product Task control and immutable revision identities under explicit activation guards.",
-  "status": "planning",
+  "status": "in_progress",
   "dev_type": null,
   "scope": null,
   "package": null,
@@ -12,7 +12,7 @@
   "assignee": "me",
   "createdAt": "2026-09-28",
   "completedAt": null,
-  "branch": null,
+  "branch": "feat/stage-a-boundary-probe",
   "base_branch": "main",
   "worktree_path": null,
   "commit": null,
@@ -24,6 +24,6 @@
   "notes": "",
   "meta": {
     "roadmap_level": "subtask",
-    "planning_maturity": "backlog"
+    "planning_maturity": "implementation-ready"
   }
 }

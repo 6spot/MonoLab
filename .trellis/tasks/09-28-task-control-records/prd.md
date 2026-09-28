@@ -6,7 +6,7 @@ Persist product Task control and immutable revision identities under explicit ac
 
 ## Planning status
 
-Roadmap level: **subtask**. Status: **planning / backlog**, not implementation-ready. The Owner approved the three-level roadmap structure on 2026-09-28. This PRD records scope and acceptance, not approval to start implementation.
+Roadmap level: **subtask**. Status: **implementation-ready under the Owner’s autonomous sequential-development instruction**. The Owner approved the three-level roadmap structure on 2026-09-28. The Owner reiterated continuation on 2026-09-29 and prohibited sub-agents.
 
 ## Background and scope
 
@@ -26,9 +26,9 @@ This is the intended implementation leaf. Split again only if design reveals mor
 
 ## Acceptance criteria
 
-- [ ] Task-owned Nodes and immutable Specification/Plan graph membership remain distinct from Attempts.
-- [ ] Guarded transitions reject stale activation/claim/revision inputs and retain history.
-- [ ] Transaction tests prove effective pointers/control records do not expose partially published revisions.
+- [x] Task-owned Nodes and immutable Specification/Plan graph membership remain distinct from Attempts.
+- [x] Guarded transitions reject stale activation/claim/revision inputs and retain history.
+- [x] Transaction tests prove effective pointers/control records do not expose partially published revisions.
 
 ## Out of scope
 
@@ -45,3 +45,20 @@ Review upstream evidence and the current source, refine leaf boundaries and obse
 - [Readiness gates](../../../docs/10-architecture-readiness.md)
 - [Invariants](../../../docs/08-principles-and-non-goals.md)
 - [Engineering specs](../../spec/index.md)
+
+## Concrete foundation boundary
+
+- Preserve the existing Task control columns as the single canonical control record;
+  add no competing pointer/state table. Permit a Task without a Plan before Start.
+- Persist immutable revision ancestry/bases, per-Plan Node definitions and append-only
+  Node activation/completion records. Legacy probe records retain their content.
+- Provide internal transaction-local Task initialization, initial Plan publication,
+  pre-start exact-authorized Specification publication and settled reactivation.
+- Use the records in probe fixtures and existing command/finalization guards, so
+  changed Plan membership or activation cannot grant stale completion.
+- Do not expose new unauthenticated HTTP operations. Public creation/Start, semantic
+  Plan generation, post-start requirement settlement, Replan and scheduling remain
+  with their existing later tasks. Internal helpers require the calling command
+  module to authenticate and persist its receipt/outbox in the same transaction.
+- Verify clean and populated upgrades, immutable history, cross-Task constraints,
+  concurrent publications and rollback with real PostgreSQL.

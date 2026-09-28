@@ -16,6 +16,8 @@ These paths exist. Keep subsequent product work within the established ownership
 
 Current entrypoints: [app.ts](../../../apps/server/src/app.ts) owns authenticated HTTP/WSS and bounded message queues; [service.ts](../../../apps/server/src/service.ts) owns probe admission, receipt/recovery and effect settlement; [commands.ts](../../../packages/domain/src/commands.ts) contains pure new-command guards; [migrate.ts](../../../packages/db/src/migrate.ts) owns reviewed migration application. [admin.ts](../../../apps/server/src/admin.ts) is local stdin-only fixture administration, not an HTTP setup API.
 
+Production entrypoints use Node native type erasure. Keep `erasableSyntaxOnly` enabled in `tsconfig.json`; avoid parameter properties and other syntax requiring transformation. Vitest and compiled builds alone cannot prove the native entrypoint loads; check `node --experimental-strip-types -e "import('./apps/server/src/app.ts')"` after changing its module graph.
+
 Keep Project, Role, Todo, Task, Planner, Orchestrator, Runtime coordination, Workspace coordination and Delivery ownership explicit as the product grows. Do not create a service per table or treat probe fixtures as the full scheduler.
 
 ## Command path

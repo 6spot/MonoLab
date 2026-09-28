@@ -1,0 +1,123 @@
+import type { Transaction } from '../../../packages/db/src/index.ts';
+import { CommandError } from '../../../packages/domain/src/commands.ts';
+import { canonicalJSON, digest, MAX_BODY_BYTES, validate } from '../../../packages/protocol/src/index.ts';
+import { consumeTaskConfirmation } from './owner-commands.ts';
+
+export interface ControlBasis { control_version: number; specification_id: string; plan_id: string | null }
+interface ControlRow { id: string; control_version: string; specification_id: string; plan_id: string | null; state: string }
+export interface PlanNode { node_id: string; role_id: string; goal: string; dependencies: string[] }
+
+function contentJSON(value: unknown): string {
+  let json: string;
+  try { json = canonicalJSON(value); } catch { throw new CommandError('invalid_input', 'Content must be canonical JSON'); }
+  if (Buffer.byteLength(json) > MAX_BODY_BYTES) throw new CommandError('invalid_input', 'Content exceeds limit');
+  return json;
+}
+
+async function control(tx: Transaction, taskId: string, expected?: ControlBasis): Promise<ControlRow> {
+  validate('Id', taskId);
+  const row = (await tx.query<ControlRow>('SELECT id,control_version,specification_id,plan_id,state FROM tasks WHERE id=$1 FOR UPDATE', [taskId])).rows[0];
+  if (!row) throw new CommandError('denied_scope', 'Unknown Task');
+  if (expected && (Number(row.control_version) !== expected.control_version || row.specification_id !== expected.specification_id || row.plan_id !== expected.plan_id)) throw new CommandError('version_conflict', 'Task revision basis changed', Number(row.control_version));
+  return row;
+}
+
+export function validatePlan(nodes: PlanNode[]): void {
+  if (!Array.isArray(nodes) || nodes.length < 1 || nodes.length > 256) throw new CommandError('invalid_input', 'Plan requires 1..256 Nodes');
+  contentJSON(nodes);
+  const byId = new Map<string, PlanNode>();
+  for (const node of nodes) {
+    validate('Id', node.node_id); validate('Id', node.role_id);
+    if (byId.has(node.node_id) || typeof node.goal !== 'string' || !node.goal.trim() || !Array.isArray(node.dependencies) || new Set(node.dependencies).size !== node.dependencies.length) throw new CommandError('invalid_input', 'Invalid or duplicate Node definition');
+    byId.set(node.node_id, node);
+  }
+  const visiting = new Set<string>(); const visited = new Set<string>();
+  function visit(id: string) {
+    if (visited.has(id)) return;
+    const node = byId.get(id);
+    if (!node || visiting.has(id)) throw new CommandError('invalid_input', 'Plan has missing dependencies or a cycle');
+    visiting.add(id);
+    for (const dependency of node.dependencies) visit(dependency);
+    visiting.delete(id); visited.add(id);
+  }
+  for (const id of byId.keys()) visit(id);
+}
+
+// Internal primitives: caller authenticates, checks its receipt first, and commits
+// these writes with the command receipt/event/outbox. No independent HTTP access.
+export async function initializeTask(tx: Transaction, input: { task_id: string; specification_id: string; specification: unknown }): Promise<ControlBasis> {
+  validate('Id', input.task_id); validate('Id', input.specification_id);
+  const json = contentJSON(input.specification);
+  await tx.query("INSERT INTO tasks(id,specification_id,state) VALUES($1,$2,'PLANNING')", [input.task_id, input.specification_id]);
+  await tx.query('INSERT INTO specification_revisions(id,task_id,content,content_digest) VALUES($1,$2,$3,$4)', [input.specification_id, input.task_id, json, digest(json)]);
+  return { control_version: 1, specification_id: input.specification_id, plan_id: null };
+}
+
+export async function publishInitialPlan(tx: Transaction, input: { task_id: string; plan_id: string; expected: ControlBasis; nodes: PlanNode[]; claim: { attempt_id: string; fencing_generation: number } }): Promise<ControlBasis> {
+  validate('Id', input.plan_id); validatePlan(input.nodes);
+  const identity = (await tx.query<{ runner_id: string }>('SELECT runner_id FROM attempts WHERE id=$1 AND task_id=$2', [input.claim.attempt_id, input.task_id])).rows[0];
+  if (!identity) throw new CommandError('denied_scope', 'Planner claim belongs to another Task');
+  await tx.query('SELECT id FROM runners WHERE id=$1 FOR UPDATE', [identity.runner_id]);
+  const task = await control(tx, input.task_id, input.expected);
+  const claim = (await tx.query<{ kind: string; fencing_generation: string; mutation_allowed: boolean; process_released: boolean; specification_id: string | null }>('SELECT kind,fencing_generation,mutation_allowed,process_released,specification_id FROM attempts WHERE id=$1 FOR UPDATE', [input.claim.attempt_id])).rows[0]!;
+  if (claim.kind !== 'planner' || Number(claim.fencing_generation) !== input.claim.fencing_generation || !claim.mutation_allowed || claim.process_released) throw new CommandError('stale_execution', 'Planner claim is no longer current');
+  if (claim.specification_id !== task.specification_id) throw new CommandError('version_conflict', 'Planner launch Specification is stale or unknown');
+  if (task.state !== 'RUNNING' || task.plan_id !== null) throw new CommandError('unmet_precondition', 'Initial Plan requires a started Task with no Plan');
+  const json = contentJSON({ node_ids: input.nodes.map((node) => node.node_id), nodes: input.nodes });
+  await tx.query('INSERT INTO plan_revisions(id,task_id,content,specification_id,content_digest) VALUES($1,$2,$3,$4,$5)', [input.plan_id, input.task_id, json, task.specification_id, digest(json)]);
+  for (const node of input.nodes) {
+    await tx.query("INSERT INTO nodes(id,task_id,activation,state) VALUES($1,$2,1,'PENDING')", [node.node_id, input.task_id]);
+    await tx.query('INSERT INTO plan_nodes(task_id,plan_id,node_id,definition) VALUES($1,$2,$3,$4)', [input.task_id, input.plan_id, node.node_id, node]);
+    await tx.query("INSERT INTO node_activations(task_id,node_id,activation,specification_id,plan_id,basis_source) VALUES($1,$2,1,$3,$4,'recorded')", [input.task_id, node.node_id, task.specification_id, input.plan_id]);
+  }
+  await tx.query('UPDATE tasks SET plan_id=$2,control_version=control_version+1 WHERE id=$1', [input.task_id, input.plan_id]);
+  return { control_version: Number(task.control_version) + 1, specification_id: task.specification_id, plan_id: input.plan_id };
+}
+
+export async function publishPlanningSpecification(tx: Transaction, token: string, input: { task_id: string; specification_id: string; specification: unknown; confirmation_id: string; request_id: string; expected: ControlBasis }): Promise<ControlBasis> {
+  validate('Id', input.specification_id);
+  const json = contentJSON(input.specification);
+  // Authentication/session locking must precede the Task lock.
+  await consumeTaskConfirmation(tx, token, input.confirmation_id, input.request_id, { scope_id: input.task_id, action: 'apply_specification_revision', content_digest: digest(json) });
+  const task = await control(tx, input.task_id, input.expected);
+  if (task.state !== 'PLANNING' || task.plan_id !== null) throw new CommandError('unmet_precondition', 'Started Task revisions require a settlement operation');
+  await tx.query('INSERT INTO specification_revisions(id,task_id,parent_id,content,content_digest,authorization_id) VALUES($1,$2,$3,$4,$5,$6)', [input.specification_id, input.task_id, task.specification_id, json, digest(json), input.confirmation_id]);
+  await tx.query('UPDATE tasks SET specification_id=$2,control_version=control_version+1 WHERE id=$1', [input.task_id, input.specification_id]);
+  return { control_version: Number(task.control_version) + 1, specification_id: input.specification_id, plan_id: null };
+}
+
+export async function assertCurrentNode(tx: Transaction, input: { task_id: string; node_id: string; node_activation: number }): Promise<{ state: string }> {
+  const row = (await tx.query<{ state: string }>(`SELECT n.state FROM nodes n
+    JOIN tasks t ON t.id=n.task_id
+    JOIN plan_nodes pn ON pn.plan_id=t.plan_id AND pn.node_id=n.id
+    JOIN node_activations a ON a.node_id=n.id AND a.activation=n.activation
+    WHERE n.id=$1 AND n.task_id=$2 AND n.activation=$3
+      AND a.specification_id=t.specification_id AND a.plan_id=t.plan_id`, [input.node_id, input.task_id, input.node_activation])).rows[0];
+  if (!row) throw new CommandError('stale_execution', 'Node activation or effective revision membership is no longer current');
+  return row;
+}
+
+// Caller authorizes Rework and records its decision/event; this primitive only
+// resets a fully settled subgraph. Live-writer settlement belongs to orchestration.
+export async function reactivateSettledNodes(tx: Transaction, input: { task_id: string; expected: ControlBasis; node_ids: string[] }): Promise<string[]> {
+  const task = await control(tx, input.task_id, input.expected);
+  if (!['RUNNING', 'BLOCKED', 'REVIEW'].includes(task.state) || !task.plan_id) throw new CommandError('unmet_precondition', 'Task cannot reactivate work');
+  const members = (await tx.query<{ node_id: string; definition: { dependencies: string[] } }>('SELECT node_id,definition FROM plan_nodes WHERE plan_id=$1', [task.plan_id])).rows;
+  const affected = new Set(input.node_ids);
+  if (!affected.size || input.node_ids.some((id) => !members.some((node) => node.node_id === id))) throw new CommandError('denied_scope', 'Reactivation target is outside the Plan');
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const node of members) if (!affected.has(node.node_id) && node.definition.dependencies.some((id) => affected.has(id))) { affected.add(node.node_id); changed = true; }
+  }
+  const ids = [...affected].sort();
+  const owners = await tx.query(`SELECT a.id FROM attempts a WHERE a.task_id=$1 AND a.node_id=ANY($2::text[])
+    AND (NOT a.process_released OR EXISTS (SELECT 1 FROM operations o WHERE o.attempt_id=a.id AND o.state<>'succeeded'))`, [input.task_id, ids]);
+  if (owners.rowCount) throw new CommandError('unmet_precondition', 'Old writers and admitted operations must settle before reactivation');
+  for (const id of ids) {
+    const node = (await tx.query<{ activation: string }>("UPDATE nodes SET activation=activation+1,state='PENDING',result=NULL WHERE id=$1 RETURNING activation", [id])).rows[0]!;
+    await tx.query("INSERT INTO node_activations(task_id,node_id,activation,specification_id,plan_id,basis_source) VALUES($1,$2,$3,$4,$5,'recorded')", [input.task_id, id, node.activation, task.specification_id, task.plan_id]);
+  }
+  await tx.query("UPDATE tasks SET state='RUNNING',control_version=control_version+1 WHERE id=$1", [input.task_id]);
+  return ids;
+}
