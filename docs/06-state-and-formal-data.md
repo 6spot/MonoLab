@@ -95,6 +95,9 @@ Specific causes live in `end_reason`.
 
 A RUNNING Task may therefore have queued Planner/Node Attempts. Task state and Attempt scheduling state are intentionally different layers.
 
+Attempt execution ownership is exclusive per owner. The scheduler atomically promotes a QUEUED Attempt to RUNNING only when no other active Attempt owns that same Node/Planner scope.
+
+A RUNNING Attempt may record a monotonic fencing generation/token. This is infrastructure metadata used to reject stale mutations; it is not a user-facing lifecycle state.
 For Node-owned Attempts, Attempt failure does not imply Node failure. For Planner-owned Attempts, failure does not create a new Task state; the surrounding Task/Todo remains in its existing formal state while fallback/retry/attention is handled.
 
 ## Runtime capacity projection
