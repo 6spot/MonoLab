@@ -184,6 +184,34 @@ For Auto placement, a QUEUED Attempt may keep `runner_id = null` until dispatch.
 
 For an explicitly pinned target, the queued Attempt is bound to that Runner and waits only for that Runner. Switching Runner always ends the current Attempt and creates another.
 
+### Execution ownership and fencing
+
+Dispatch must atomically claim execution ownership. For each Attempt owner (Node, Todo Planner scope, or Execution Task Planner scope), at most one Attempt may be active at a time.
+
+Use a transactional compare-and-set / unique active-owner constraint rather than an in-memory mutex. The claim assigns the concrete Runner and an opaque monotonically increasing fencing generation/token.
+
+Conceptually:
+
+~~~text
+QUEUED Attempt
+↓ atomic claim
+runner_id = runner-b
+fencing_generation = 12
+status = RUNNING
+~~~
+
+A different Runner cannot claim the same owner while generation 12 remains active.
+
+Heartbeat timeout alone must not release this ownership. A lost heartbeat does not prove the Runtime process has stopped, so automatic lock expiry must not create a second live execution.
+
+Before a successor Attempt is allowed to run, the previous Attempt must be formally terminalized or reliably fenced. Starting the successor advances the owner's fencing generation.
+
+Every state-mutating Tool Protocol call from Planner/Agent execution must carry the Attempt identity and its fencing generation. The backend accepts the call only if that Attempt is still the current active execution for the owner. Calls from stale/terminal Attempts are rejected.
+
+This prevents a recovered old Runner from publishing a Plan, completing a Node, publishing an Artifact, or requesting lifecycle changes after a newer Attempt has taken ownership.
+
+The lock granularity is the execution owner, not the whole Execution Task. Independent Nodes in the same Task may legitimately run on different Runners at the same time.
+
 
 ## Owner start and initial planning
 
