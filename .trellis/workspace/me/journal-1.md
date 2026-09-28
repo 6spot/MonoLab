@@ -72,3 +72,25 @@ Added immutable revisions, graph membership, activation/completion history and c
 ### Status
 
 [OK] **Completed**
+
+
+## Session 4: Complete durable dispatch and event ingestion
+<!-- trellis-session: v=2 fp=a7faacb25a7ecfa6 -->
+
+**Date**: 2026-09-29
+**Task**: Complete durable dispatch and event ingestion
+**Branch**: `feat/stage-a-boundary-probe`
+
+### Summary
+
+Added durable selected Attempt queue, atomic capacity promotion, monotonic fencing and Task/Runner locality. 49 DB-entrypoint checks including before/after COMMIT SIGKILL passed, plus local/native checks. Continuing with canonical reads and cursors.
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `3bda81d` | feat: add durable Attempt queue and guarded dispatch |
+
+### Status
+
+[OK] **Completed**
