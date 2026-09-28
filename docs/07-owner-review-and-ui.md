@@ -22,6 +22,7 @@ Execution Board
 → global view of formal Execution Tasks
 
 Execution Task Detail
+→ Conversation
 → Overview
 → Timeline
 → Execution Details
@@ -207,11 +208,11 @@ Morie / Select a Project before creating
 [Cancel] [Continue discussing] [Create Task]
 ~~~
 
-The Owner can reread the exact title/specification that will become immutable.
+The Owner can reread the exact title/specification that will create the Task and its immutable initial requirement revision.
 
 The preview is not a persisted Draft Task and should not introduce another domain lifecycle. It is temporary UI state reconstructed from structured proposal content on its committed Discussion message.
 
-After confirmation, the system creates the immutable Execution Task in PLANNING and replaces/inserts the preview with a confirmed inline card in the Discussion flow. Creation does not start Planner or execution automatically.
+After confirmation, the system creates the Execution Task with its initial Specification revision in PLANNING and replaces/inserts the preview with a confirmed inline card in the Discussion flow. Creation does not start Planner or execution automatically.
 
 A confirmed Execution Task card may show:
 
@@ -232,7 +233,7 @@ Project UI should remain a light overview and scope lens, not become another pro
 A Project overview may show:
 
 - Project name and Owner-authored Context;
-- linked Resources and their default refs;
+- linked Resources with their default refs and delivery settings;
 - selected reusable Roles;
 - a compact summary of active Todos;
 - a compact summary of current Execution Tasks;
@@ -326,6 +327,10 @@ Manual model entry remains available for new or provider-specific model identifi
 
 MonoLab does not install coding tools and does not manage their login credentials. Runtime setup/authentication stays with the tool on the Runner machine.
 
+An Execution Policy may set an optional duration budget. Present it as an attention threshold, not a timeout: exceeding it never stops execution.
+
+Runner status also lists unsafe host conditions found at enrollment (module 11).
+
 ## Runner capacity UI
 
 Runner configuration may expose one simple capacity control:
@@ -375,7 +380,7 @@ CANCELLED
 
 Attention may be shown as a filter/section inside the Board.
 
-For a RUNNING Task with no published Plan yet (`current_plan_id = null`), the UI should present initial planning rather than Node progress. If Planner execution cannot proceed, show the Planner failure/availability reason and actions such as Retry, Stop, or Cancel Task.
+For a RUNNING Task with no published Plan yet (`current_plan_id = null`), the UI should present initial planning rather than Node progress. If Planner execution cannot proceed, show the Planner failure/availability reason and actions such as Retry, Stop, or Cancel Task. A planning issue shows the Planner's reason with an answer field next to those actions.
 
 Stopping during this pre-Plan RUNNING phase returns the Task to PLANNING. Once a Plan exists, stopping execution must not reuse PLANNING because the Task has already begun formal execution.
 
@@ -396,7 +401,7 @@ Overview should answer four questions:
 
 Default content:
 
-- immutable Execution Task Specification;
+- effective Specification with revision history;
 - current status/attention;
 - current Progress;
 - formal Outputs;
@@ -616,7 +621,7 @@ No Git:
 - Accept → COMPLETED.
 
 Git:
-- entering REVIEW automatically prepares the delivery branch and creates/updates the GitHub PR;
+- entering REVIEW automatically prepares the delivery branch and creates/updates the GitHub PR, unless the repository defers remote preparation until acceptance;
 - Review shows the local diff plus PR preparation progress or the prepared PR, checks/CI, and mergeability;
 - Accept & Merge → deterministic Git Delivery;
 - delivery success → COMPLETED;
@@ -628,6 +633,10 @@ If checks are still running, Review may show them in progress. Accept & Merge ma
 
 Request Changes keeps the Task in REVIEW while Planner processes the feedback, shown as an internal operation status on the Review card (for example `Processing requested changes`). Disable Accept / Merge while that operation is unresolved; queueing or failure is shown there with Retry/attention rather than moving the card to Running. When Rework is applied, work resumes under the same delivery branch / PR and later returns to REVIEW. Move to REPLAN_REQUIRED only after a formal decision that the graph is insufficient.
 
+If Planner raises a planning issue while routing, the Review card shows its reason with Answer & Retry, Withdraw feedback, and Cancel. Withdraw feedback is also available while routing is still running; the Task stays in REVIEW, and Accept needs a fresh confirmation of the exact result.
+
+When the provider reports conflicts or an out-of-date branch, Review shows it with a prefilled `Update from target branch` Request Changes action.
+
 For multi-repository Tasks, Review may show multiple delivery items/PRs under one Task-level delivery while retaining one Owner-level Accept & Merge action.
 
 Git Delivery has its own operation state. Do not expand Task states with MERGING/MERGED/etc.
@@ -636,13 +645,13 @@ Request Changes means improving the current result to satisfy the existing immut
 
 The Owner should provide human-readable review feedback rather than being required to choose a Node or understand the internal DAG.
 
-Execution Task Planner receives the frozen Specification, current Plan/formal execution state, review feedback, relevant completion summaries/Artifacts, and current Project Context, then decides whether the feedback can be handled by Rework of existing Node(s) or requires Replan.
+Execution Task Planner receives the effective Specification revision, relevant Task Conversation, current Plan/formal execution state, review feedback, completion summaries/Artifacts, and current Project Context. It decides whether to apply Rework, propose a requirement revision, request Replan for an insufficient graph, or ask for clarification.
 
 Use Rework when the current collaboration structure remains sufficient. Use Replan only when the future collaboration structure must change.
 
-Request Changes keeps the same Task, Task Workspace, and delivery lineage. It does not create a new Execution Task unless the Owner is actually introducing scope outside the frozen Specification.
+Request Changes keeps the same Task, Task Workspace, and delivery lineage. Changes within this delivery can produce a new Specification revision in the same Task.
 
-A genuinely new requirement outside the frozen Specification goes back to Discussion and becomes a new Execution Task.
+For a separate delivery objective or further work after terminal delivery, direct the Owner back to Todo Discussion to initiate an independent Execution Task through the normal preview/confirmation flow. Task Conversation never displays a creation preview for another Task or automatically copies its context into Todo Discussion.
 
 Only the Owner can finally accept the Task. Agents cannot self-approve or directly perform final merge/close.
 
@@ -650,20 +659,38 @@ Only the Owner can finally accept the Task. Agents cannot self-approve or direct
 
 Use `Ready to start` / `待开始` for the PLANNING library column; show `Planning execution` only for RUNNING Tasks with no Plan. Preview may offer both `Create Task` and `Confirm and Start`, using the same exact-content confirmation. An unassigned preview prompts for a Project before confirmation; capture and Discussion remain available without one.
 
-Review always exposes the local integrated result, even when PR preparation failed. Show Preparing PR, Retry preparation, failed checks, and partial delivery as delivery details within REVIEW. Acceptance identifies the exact reviewed version. Changed delivery code requires renewed acceptance; never leave an old approval appearing applicable to a new head.
+Review always exposes the local integrated result, even when PR preparation failed. Show Preparing PR, Retry preparation, failed checks, and partial delivery as delivery details within REVIEW. Pre-push findings appear there too, identifying affected paths and candidate commit versions with sensitive values redacted. Offer Request Changes or an exact-candidate override for eligible content findings; permission failures require fixing access or removing the change. Review identifies the exported delivery head and its matching internal result tree; it must not imply that private Agent commits are published. Already-published sensitive history requires separate remediation, not a claim that a deletion commit removed it. For repositories that defer remote preparation until acceptance, Review shows only the local result and explains that Accept & Merge will push, open the PR, wait for required checks on that exact head, and merge. Acceptance identifies the exact reviewed version. Changed delivery code requires renewed acceptance; never leave an old approval appearing applicable to a new head.
 
-For plain Git delivery, label the action `Accept delivered branch` and explain that branch merge is manual. For partially merged multi-repository delivery, list succeeded and remaining items separately, and offer retry remaining delivery or cancel remaining work. Do not offer ordinary Request Changes over already-delivered code.
+For plain Git automatic preparation, show `Branch published · awaiting acceptance` and label the action `Accept delivered branch`. The Owner may request changes before final acceptance even though the branch is already pushed. For after-acceptance preparation, label the action `Accept & publish branch` and explain that completion waits for verified publication; push failures remain retryable in REVIEW. In both modes explain that merging into the target branch is manual and is not performed by this action. For partially finalized multi-repository delivery, including mixed GitHub/plain-Git items, list succeeded and remaining items separately, and offer retry remaining delivery or cancel remaining work. A branch preparation push does not count as a succeeded final delivery item. Do not offer ordinary Request Changes over already-delivered code. Cancel explains that open PRs for undelivered items will be closed and their branches kept.
 
-Blocked recovery accepts an optional Owner answer alongside Retry/Continue. Persist it as Task-scoped context for the next execution. Replan confirmation shows the concrete proposed changes and their effect on existing work, without exposing the DAG as required UI.
+Blocked recovery accepts an optional Owner answer alongside Retry/Continue. Persist it as Task-scoped context for the next execution. Replan confirmation shows the concrete proposed changes and their effect on existing work, without exposing the DAG as required UI. REPLAN_REQUIRED also offers Dismiss with optional direction, meaning the current graph remains sufficient. For a Node-originated request, normal work resumes after process/capacity reconciliation. For a review-originated request, return to Review with the requested correction still pending and Accept disabled; show Rework routing or a planning issue. Withdraw feedback is a separate action with its own explicit meaning. During dismissal, show any Planner termination still pending instead of claiming the process already stopped. When the Rework limit blocks a requesting Node, Node detail shows the preserved request with Apply Rework, which resets the limit, and Continue without it.
 
 ## Attention and asynchronous notifications
 
-Execution Board is the canonical inbox for execution attention; no separate Activity product is needed. Surface review readiness, a missing Owner decision, exhausted execution, and delivery failure there. Multiple simultaneous blockers must remain discoverable even if a card shows only one primary attention pointer.
+Execution Board is the canonical inbox for execution attention; no separate Activity product is needed. Surface review readiness, a missing Owner decision, planning issues, exhausted execution, Runtime input requests, exceeded duration budgets, and delivery failure there. Multiple simultaneous blockers must remain discoverable even if a card shows only one primary attention pointer.
 
 V1 requires durable in-app notifications derived from formal events/operation failures, keyed by source identity and activation or delivery version. Replayed events do not create duplicates. Resolve a notification when its underlying condition clears; reading it only marks it read. Browser reconnect reloads current attention and unread notifications from the backend. Ordinary capacity queueing is not an alert. External email/mobile push is optional and can be added without changing lifecycle truth.
 
 ## Discussion delivery and queued input
 
-Show a submitted Owner message immediately after server persistence, with a queued indicator when another turn is still active. Stream Planner text provisionally and mark the reply complete only after the atomic Discussion commit. Reconnect loads committed messages and then resumes any provisional stream; it never appends the same final reply twice.
+Show a submitted Owner message immediately after server persistence, with a queued indicator when another turn is still active. Stream the Planner's provisional output when the Adapter exposes it, otherwise show a working indicator, and render the reply only from the atomic Discussion commit. Reconnect loads committed messages and then resumes any provisional stream; it never appends the same final reply twice.
 
-An interrupted turn offers Retry or Stop/leave pending, while later messages remain queued. A restored proposal card displays the exact structured content attached to its committed reply. Its confirmed Task link is reconstructed from the creation receipt, so a second device cannot create a duplicate Task by confirming the same proposal. Creating another independent Task requires a new explicit proposal/confirmation action.
+A failed or interrupted turn offers Retry or Withdraw request. Retry handles that same message again. Withdrawal keeps the message visible with a withdrawn label, ends its pending request without a fabricated reply, and lets later messages proceed after prior execution has stopped/reconciled. Until either resolution, later messages in that Todo remain queued; other Todos continue independently within shared capacity. Stop during active processing only interrupts the turn and leaves these recovery actions available. A restored proposal card displays the exact structured content attached to its committed reply. Its confirmed Task link is reconstructed from the creation receipt, so a second device cannot create a duplicate Task by confirming the same proposal. Creating another independent Task requires a new explicit proposal/confirmation action.
+
+## Task Conversation as the ongoing control surface
+
+Task detail keeps a message composer available alongside progress and results throughout delivery. The Owner can ask questions, add guidance, answer blockers, or change requirements without returning to Todo or choosing a message category. Show Planner replies and concise action receipts in Conversation; formal revision/rework decisions also appear in Timeline. Conversation and Timeline are distinct projections, not duplicate copies of canonical messages/events.
+
+Show the effective requirement and its history in Overview. A proposed change appears inline with the exact proposed requirement, concise diff, affected work, and Confirm / Revise / Withdraw actions. Confirmation may cover requirements and a replacement Plan together when both are shown. Ordinary questions and within-scope guidance have no approval dialog. Before Start or while stopped, chatting must not implicitly start execution.
+
+Distinguish message saved, Planner queued/processing, awaiting Owner, instruction delivered/queued/failed, and change effective. Do not label a delivered instruction implemented or imply every Node received it. Failed routing/delivery has Retry and a clear reason. A change settling old execution shows that work before claiming the new requirement is active. Surface these as operation attention, never new Task states.
+
+Unclassified input temporarily guards acceptance and new delivery admission; status-only replies clear that guard. Unresolved changes/corrections keep Accept disabled with a concrete explanation. Once a requirement revision is published, show which earlier review is obsolete and require acceptance of the exact effective requirement/Plan/result. Review feedback asking for new scope uses the same inline proposal flow instead of forcing a new Task.
+
+If merge was already dispatched, explain that it may have taken effect and reconcile its outcome before promising a change. After partial or completed delivery, explain that changed requirements cannot redefine delivered work and that the Owner can return to Todo Discussion to initiate independent work. Terminal Task chat remains available for read-only questions and answers; it offers no new-Task preview or creation action.
+
+### Visible exits for conversational waits
+
+Pending/failed input and guidance offer Retry and Withdraw. Pending requirement proposals offer Revise or Withdraw; an admitted withdrawal shows reconciliation until its freeze is actually released. Explain any independent feedback/Replan/blocker still requiring action. A proposal waiting for confirmation does not disable the conversation composer. Blocker answers expose the existing Retry/Continue action with the recorded answer instead of implying that an ordinary reply resumed execution.
+
+After an already-dispatched merge succeeds, show the delivered version and explain which newer input could not affect that delivery. Do not leave the Task permanently “waiting for changes” that can no longer affect that delivery. Further execution begins only when the Owner returns to Todo Discussion and confirms an independent Task preview there; Task Conversation does not generate that preview or transfer its messages automatically.

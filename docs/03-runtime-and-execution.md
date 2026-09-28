@@ -32,11 +32,22 @@ The core system must not understand provider-specific concepts such as Codex thr
 
 Session identifiers are opaque and Runner/installation-scoped. Persist the Runner and Runtime identity with a session handle; an equal handle string on another machine is not the same session. Moving execution to another Runner starts fresh unless an explicit Adapter export/import contract is implemented.
 
-Adapter responsibilities include detect, start/resume, send, interrupt, normalize runtime events, and normalize objective errors.
+Adapter responsibilities include detect, start/resume, send, interrupt, normalize runtime events, and normalize objective errors. For each supported CLI version, an Adapter also documents and verifies:
+
+- headless invocation with a structured event stream;
+- how assembled context and the fixed protocol are injected (system-prompt or instruction mechanism) without editing repository files;
+- registration of the per-Attempt Tool Protocol bridge (module 05);
+- a non-interactive permission mode and grants for the Attempt's reserved paths;
+- session capture/resume, including any launch-directory dependency;
+- whether one invocation can accept further input.
+
+These are verified implementation facts, not Role capabilities or a settings surface.
 
 Typical normalized reasons include QUOTA_EXHAUSTED, AUTH_REQUIRED, RATE_LIMITED, PROCESS_EXITED, RUNTIME_ERROR, and UNKNOWN.
 
 Do not automatically declare an Agent "hung" merely because no output has appeared for a long period. Record factual activity data such as `last_activity_at` and let the Owner stop/switch manually.
+
+If a Runtime nevertheless reports that it is waiting for interactive input, such as an approval, login, or confirmation prompt, the Adapter normalizes that objective fact and MonoLab raises Owner attention with Stop/Switch actions. The fact comes from the CLI's structured events or documented prompts, never from silence.
 
 ## Execution Policy
 
@@ -48,6 +59,7 @@ Role itself remains runtime-independent.
 ExecutionPolicy
 - default_target
 - fallback_targets[]
+- duration_budget?    # optional attention threshold; never stops execution
 ~~~
 
 Each target is complete:
@@ -61,6 +73,8 @@ ExecutionTarget
 ~~~
 
 Every fallback is its own Execution Target, not merely a runtime ID.
+
+`duration_budget` is an optional deterministic wall-clock threshold. When a RUNNING Attempt exceeds the budget of its applicable policy, MonoLab raises Owner attention with Stop/Switch actions. The budget never stops the Attempt, triggers fallback, or changes Node/Task state. It measures configured elapsed time, not silence, so it is not a hang inference.
 
 Runner selection is optional:
 
@@ -114,7 +128,7 @@ Planner work uses the same Execution Policy resolver and ordered fallback behavi
 
 A target found unavailable during initial policy resolution is skipped without creating an Attempt. If a target becomes unavailable after a QUEUED Attempt already exists, terminalize that queued record with the factual pre-start reason before resolving a successor; do not silently rewrite its selected target.
 
-Planner availability must not become a dependency of ordinary scheduling after a Plan has been published. Orchestrator continues to unlock and schedule Nodes from an existing Plan without consulting Planner. Planner is required again only for new initial planning, Replan, or Owner review-feedback routing.
+Planner availability must not become a dependency of ordinary scheduling after a Plan has been published. Orchestrator continues to unlock and schedule Nodes from an existing Plan without consulting Planner. Planner is invoked for Task Conversation, guidance/change interpretation, initial planning, Replan, and review routing. Existing Plan scheduling remains independent except for explicit input/change/review operation guards.
 
 If all Planner targets are unavailable during initial planning, the Task remains RUNNING with no Plan and Owner-facing attention. If all Planner targets are unavailable during Replan, the Task remains REPLAN_REQUIRED. During review-feedback routing, it remains REVIEW with operation attention and acceptance disabled until feedback is resolved. Do not add PLANNER_FAILED or PLANNER_RETRYING Task states.
 
@@ -173,7 +187,7 @@ V1 has a single Runner. `runner_id` remains part of ExecutionTarget/Attempt fact
 
 Do not implement cross-Runner Workspace materialization, Task migration, Runner balancing, or failover in V1.
 
-If the Runner has no free execution slot, the Attempt remains QUEUED. If the Runner is unavailable, work waits for that Runner to return unless the Runtime failure itself can be handled on the same Runner through another installed Runtime.
+If the Runner has no free execution slot, the Attempt remains QUEUED. If the Runner is unavailable, work waits for that Runner to return; V1 has no other Runner to move it to. Runtime fallback applies only to Runtime failures on an available Runner.
 
 ### Execution ownership and fencing
 
@@ -259,6 +273,8 @@ Plan validation errors are not Runtime failures. Return deterministic validation
 
 If a Planner Attempt ends without successfully publishing a Plan, the Task remains RUNNING with no current Plan and surfaces attention/retry rather than advancing execution.
 
+If the Planner raises a planning issue instead (module 02), the Task likewise remains RUNNING with no Plan and shows the issue. Retry with the Owner's answer starts a new Planner Attempt; Stop returns the Task to PLANNING; Cancel Task remains available.
+
 ## Orchestrator scheduling
 
 Orchestrator owns deterministic scheduling. Planner defines Plan structure; Agents perform Node work; neither decides the day-to-day runnable set.
@@ -325,7 +341,7 @@ Keep blocker semantics lightweight. `block_node(reason)` carries a human-readabl
 
 ### Replan recovery
 
-REPLAN_REQUIRED is cleared by publishing a new confirmed Plan revision. Review-feedback routing is an internal operation while Task remains REVIEW; it is never a temporary use of REPLAN_REQUIRED, and Rework does not clear an actual Replan request. Do not add a separate Resume Task action.
+REPLAN_REQUIRED is cleared by publishing a new confirmed Plan revision or by an explicit Owner dismissal of the request (module 02). Review-feedback routing is an internal operation while Task remains REVIEW; it is never a temporary use of REPLAN_REQUIRED, and Rework does not clear an actual Replan request. Do not add a separate Resume Task action.
 
 The recovery path is:
 
@@ -340,7 +356,7 @@ request_replan(reason)
 → Orchestrator recalculates runnable Nodes
 ~~~
 
-If the Owner rejects the proposed Replan, retain the scheduling freeze and allow revised planning; the system must not silently clear the request and continue the old Plan as though it were still valid. The Owner may cancel the Task or provide further direction that results in a new planning decision.
+If the Owner rejects the proposed Replan, retain the scheduling freeze and allow revised planning; the system must not clear the request on its own and continue the old Plan as though it were still valid. The Owner may give further direction that leads to a new planning decision, dismiss the request because the current graph remains sufficient, or cancel the Task. Dismissal revokes/cancels request-bound Planner execution and reconciles its process ownership. For a review-originated request it returns to REVIEW with a new feedback-routing operation, not to an accepted result; the feedback remains effective until separately withdrawn or addressed.
 
 
 ## Session boundaries
@@ -364,7 +380,7 @@ Sessions never cross Todo / Execution Task / Node boundaries.
 
 A Todo Planner Session may be resumed across normal Owner messages in that Todo. If it cannot be resumed, MonoLab rebuilds the Planner context from Todo formal data such as Original Capture, Working Requirement State, recent Discussion, and Project Context.
 
-Creating an Execution Task ends the Todo Planner's participation in that execution chain. Planning/Replan uses a separate Execution Task Planner Session and never resumes the Todo Planner Session.
+Creating an Execution Task ends the Todo Planner's participation in that execution chain. Task Conversation, planning, and Replan use a separate Execution Task Planner Session and never resumes the Todo Planner Session.
 
 Each Node has its own execution-session continuity. Different Nodes do not share a Runtime Session, even when they use the same Runtime.
 
@@ -396,18 +412,24 @@ Conceptually:
 
 ~~~text
 Attempt
-- id
+- id                     # also the stable dispatch identity
 - owner_type
 - owner_id
+- node_activation?       # NODE owners only
 - runtime_id
-- runner_id
+- runner_id?             # set by the claim; preset only for a pinned target
+- fencing_generation?    # set by the claim
+- runtime_version?       # observed at dispatch; diagnostics only
 - model_id?
 - thinking_level?
 - session_id?
+- context_fingerprint?
 - status
 - end_reason?
-- started_at
-- ended_at
+- last_activity_at?
+- created_at
+- started_at?
+- ended_at?
 ~~~
 
 `owner_id` refers to the Node, Todo, or Execution Task appropriate to `owner_type`. Do not allow arbitrary combinations of nullable owner IDs.
@@ -479,9 +501,11 @@ Automatic fallback and manual switching share the same execution path after targ
 
 If a Node Attempt exits without a successful lifecycle command, process success alone never completes the Node. An admitted completion operation takes precedence: settle that operation before interpreting process exit or considering fallback. Record the actual Attempt outcome and surface the missing formal outcome. An objective Runtime failure may advance through ordered fallback targets once; an otherwise successful exit without a lifecycle command blocks the Node for Owner Retry.
 
+When a turn ends without the formal call its phase requires and the Adapter has verified that the live invocation accepts further input, the Adapter may send one fixed protocol reminder naming the missing call. The reminder is constant text within the same Attempt, not a retry, fallback, or model-generated input; if the invocation then exits without the call, the rules above apply. Planner phases follow the same rule, including `commit_discussion_turn`.
+
 If no allowed target remains, Orchestrator sets the Node BLOCKED with the factual failure reference. This is a system operation, not an Agent `block_node` call. Retry resolves current policy and returns the same Node to PENDING. Healthy capacity waiting remains QUEUED and does not consume retry budget.
 
-Automatic recovery must be bounded. V1 permits one pass through an ordered fallback list per activation/retry and at most one automatic retry after an integration conflict; repeated conflicts block the Node for Owner action. Automatic Agent-requested Rework is limited to three requests per Task between explicit Owner Rework-limit resets, after which the requester is blocked with the proposed request preserved for review. These are deterministic safety limits, not runtime scoring or silence timeouts.
+Automatic recovery must be bounded. V1 permits one pass through an ordered fallback list per activation/retry and at most one automatic retry after an integration conflict; repeated conflicts block the Node for Owner action. Automatic Agent-requested Rework is limited to three requests per Task between explicit Owner Rework-limit resets, after which the requester is blocked with the proposed request preserved for review. The Owner either applies the preserved request, which resets the limit, or continues the requester without it. These are deterministic safety limits, not runtime scoring or silence timeouts.
 
 Claiming a Runner slot and claiming the Attempt owner must happen in one serialized database transaction, including the capacity check. Independent owner claims must not oversubscribe a Runner. Dispatch/start commands carry stable IDs so Runner reconnect or redelivery does not spawn duplicate processes. Node RUNNING includes a queued Attempt already admitted for that Node.
 
@@ -489,7 +513,7 @@ Logical cancellation revokes tool authority immediately, but does not establish 
 
 ## Activation and invalidation ordering
 
-A Node has a monotonically increasing activation generation. Rework advances it for the target and every descendant, invalidates their current outputs, revokes their queued/running Attempts, and records the reason in one database transaction. Fallback and ordinary retries stay in the same activation; Attempt fencing remains a separate execution-ownership generation.
+A Node has a monotonically increasing activation generation. Rework advances it for the target and every descendant, invalidates their current outputs, revokes their queued/running Attempts, and records the reason in one database transaction. Fallback, ordinary retries, and integration-conflict retries stay in the same activation; Attempt fencing remains a separate execution-ownership generation.
 
 Do not dispatch replacement work until affected process trees are stopped and pending workspace operations are reconciled. Completion and invalidation serialize admission against the same Task orchestration version. If completion already settled, invalidate its evidence; if invalidation wins, reject a new completion. An already-admitted local operation must still reconcile any in-flight side effects under the cancellation/invalidation ordering contract in State & Formal Data. Rework also revokes pending delivery acceptance.
 
@@ -499,13 +523,15 @@ A recoverable completion operation keeps its Node RUNNING with a recovery indica
 
 ## Session compatibility is checked before resume
 
-A Runtime session is an optimization over canonical context. Same Runtime and owner alone do not establish compatibility. Context Builder records an Attempt context fingerprint covering Project association/context, Role instructions or Planner guidance, fixed protocol version, effective Plan/activation where applicable, relevant formal inputs, and workspace lineage. This is execution metadata, not a Role revision or Plan snapshot.
+A Runtime session is an optimization over canonical context. Same Runtime and owner alone do not establish compatibility. Context Builder records an Attempt context fingerprint covering Project association/context, Role instructions or Planner guidance, fixed protocol version, effective Specification revision and consumed message/guidance watermark, effective Plan/activation where applicable, relevant formal inputs, and workspace lineage. This is execution metadata, not a Role revision or Plan snapshot.
 
-Resume only if the Adapter can inject the current authoritative context without retaining conflicting old instructions or stale workspace assumptions. If a fingerprint change cannot be reconciled by a documented Adapter capability, start a fresh session. Project reassignment, Runtime switching after intervening work, and incompatible workspace lineage always start fresh sessions. A fresh session must not lose committed Discussion replies, review feedback, blocker answers, or current completion evidence.
+Resume only if the Adapter can inject the current authoritative context without retaining conflicting old instructions or stale workspace assumptions. If a fingerprint change cannot be reconciled by a documented Adapter capability, start a fresh session. Project reassignment, Runtime switching after intervening work, and incompatible workspace lineage always start fresh sessions. A fresh session must not lose committed Discussion replies, review feedback, blocker or planning-issue answers, or current completion evidence.
 
-Planner Attempts that commit Discussion, publish the initial Plan, prepare a Replan proposal, apply review Rework, or resolve review routing into a formal Replan request have achieved their phase-specific formal outcome. Persist that outcome before releasing their owner claim. A subsequent process exit cannot schedule fallback for an already-committed phase. If exit occurs without the phase's outcome, leave the enclosing turn/Task operation retryable with attention; never infer an outcome from text.
+Planner Attempts that commit Task Conversation routing, admit an authorized requirement-change operation, commit Discussion, publish the initial Plan, prepare a Replan proposal, apply review Rework, resolve review routing into a formal Replan request, or raise a planning issue have achieved their phase-specific formal outcome. Persist that outcome before releasing their owner claim. A subsequent process exit cannot schedule fallback for an already-committed phase. If exit occurs without the phase's outcome, leave the enclosing turn/Task operation retryable with attention; never infer an outcome from text.
 
-Runner directly starts the Owner-installed host CLI under its configured execution account, using existing CLI authentication. Runtime processes start in assigned scratch space before a repository is opened. `open_workspace` lazily materializes and returns the assigned host directory or Git worktree; it does not migrate or restart the Runtime process. Native permission/sandbox settings, where supported, must permit those assigned paths. Scratch files are not formal outputs unless published or included in finalized workspace results. Container execution and execution images are not V1 requirements.
+Runner directly starts the Owner-installed host CLI under its configured execution account, using existing CLI authentication. The launch directory is the execution owner's stable private scratch directory, so CLIs that key sessions by directory can still resume. Before launch, Runner derives every path the Attempt may later need from the Task's deterministic workspace layout and the Node's workspace lease mode, including the Git common directories that isolated worktrees write to. It creates those paths empty where needed and grants them through the CLI's native permission settings; Planner Attempts instead receive a read-only inspection root. `open_workspace` and `inspect_repository` lazily materialize inside reserved paths and never migrate or restart the Runtime process. A resource added to the Project after launch becomes available to later Attempts. A CLI that cannot grant reserved paths at launch fails the feasibility probe rather than weakening this contract. Path grants scope normal execution; they are not containment (module 05).
+
+Because the launch directory is outside every repository, repository-level CLI configuration is not loaded, and Adapter-managed settings stay authoritative; `open_workspace` surfaces repository instruction files instead (module 04). Scratch files are not formal outputs unless published or included in finalized workspace results. Container execution and execution images are not V1 requirements.
 
 ## Control service and Runner boundary
 
@@ -521,8 +547,40 @@ When the control connection is lost, an already-running Runtime may continue loc
 
 A compatible placement must satisfy Runtime/settings support, explicit Runner pin, required execution isolation, and access to the existing workspace lineage, as well as capacity. Capacity-full is ordinary queueing only after these compatibility constraints pass. A healthy CLI on another machine is not a usable fallback if the work exists only on the original Runner.
 
-V1 resolves to its sole Runner. The first future multi-Runner milestone places different Tasks on different Runners while keeping all Node execution and repository work for a given Task on one workspace host. Reserve this host atomically before the first Node dispatch, even though repository materialization remains lazy. Store that reservation as Workspace infrastructure metadata, not in the immutable Task Specification or a Task resource binding. All repository workspaces subsequently opened by the Task use that host. Task/Todo Planner work without repository access may execute elsewhere using canonical context and fresh sessions.
+V1 resolves to its sole Runner. The first future multi-Runner milestone places different Tasks on different Runners while keeping all Node execution and repository work for a given Task on one workspace host. Reserve this host atomically before the first Node dispatch, even though repository materialization remains lazy. Store that reservation as Workspace infrastructure metadata, not in the immutable Task Specification or a Task resource binding. All repository workspaces subsequently opened by the Task use that host. Todo Planner work, and Execution Task Planner work before the Task's workspace host is reserved, may execute on any compatible Runner using canonical context and fresh sessions. Once the host is reserved, Execution Task Planner Attempts run there so that on-demand inspection of the Task's result stays local.
 
 A pinned target incompatible with the existing host is unavailable for that work. Ordered fallback may choose a compatible Runtime on the same host; it must not silently clone a repository elsewhere and lose private edits or unpushed integrated commits. With no compatible target, surface a locality/availability reason. Owner target switching obeys the same rule and must fail before stopping a healthy current execution when transfer is unsupported.
 
 Reserve separate future milestones for (1) multiple Runners serving separate Tasks, (2) explicit quiescent workspace transfer, and (3) same-Task execution across Runners. They do not require new Task/Node states, but each requires its own Workspace transport and failure-recovery implementation before enabling the scheduler behavior. Cross-Runner failover is never inferred solely from heartbeat timeout.
+
+## Task input delivery and Planner wakeup
+
+Task Planner is a durable scope, invoked on demand through the existing Attempt machinery. Initial Plan, conversation, requirement changes, Replan, and feedback routing share its single active owner claim; these are work reasons, not new Runtime or Planner types. Pending input is durable and ordered. A busy/unavailable Planner leaves a visible queue or retryable operation; it cannot lose the message or fabricate a semantic outcome. Planner failure does not independently stop unrelated Node scheduling.
+
+Each Attempt records the Specification revision, context fingerprint, and exact input/guidance IDs or watermark used at launch. Historical launch inputs never change retroactively. A resumed provider session receives current formal context and passes compatibility validation; old hidden context cannot override a new requirement revision.
+
+Guidance delivery is per recipient. Persist the message/guidance ID, Node, exact target Attempt and generation, dispatch identity, delivery status and acknowledgement. Future multi-Node execution uses multiple receipts, never one Task-wide delivered flag. Pending, delivered, failed, and uncertain delivery are infrastructure facts; none means implemented or semantically accepted.
+
+Stage A guarantees queued follow-up and controlled stop-and-resume with the same Node/workspace. Planner's committed routing authorizes an in-scope continuation; the program stops/reconciles any incompatible active writers before a successor starts, preserves unfinished code, and supplies the guidance in a fresh Attempt. If the original Attempt completed first, retain its history and apply the recorded impact policy: satisfy input through an answer, or invalidate/reactivate work that still needs the guidance. Never silently mark undelivered input consumed because a process exited. Explicit Owner Stop prevents automatic continuation until Continue.
+
+Live steering is optional per Adapter and negotiated through fixed transport features, not a Role capability taxonomy. When implemented, it targets the expected active turn, serializes deliveries, and persists receipts. An ended/unsupported turn falls back to the durable follow-up path; never silently redirect to another active Attempt. A lost acknowledgement records uncertainty and triggers reconciliation or a visibly replayed follow-up, not a claim of exactly-once provider consumption. Live steering cannot publish a Specification revision or bypass requirement-change settlement.
+
+Task Conversation shares existing Runner capacity and task-host placement. No permanent Planner process, separate pool, or reserved machine is introduced. The UI distinguishes queued, processing, awaiting Owner, and failed operation attention. System orchestration and acceptance checks do not depend on a live Planner process.
+
+### Closing guidance obligations
+
+Each routed instruction has an execution obligation distinct from its transport receipt. A launch manifest binds the obligations assigned to that Attempt; later live input is added only through a persisted recipient record. `complete_node` declares the handled guidance IDs and references its ordinary completion summary; the backend checks attribution and the frozen input set, not semantic correctness. Final Owner review remains the correctness decision.
+
+Completion and guidance routing serialize on the Node activation. If routing wins, guidance assigned to that completion must be declared handled or remain pending for controlled follow-up; do not silently close it. If completion admission wins, new guidance cannot join that frozen completion and routes to a later activation or a Planner answer explaining that no further work is needed. After successful workspace finalization, one transaction records completion and settles only the handled obligations. Transport delivery or process success alone never settles an obligation. A required follow-up prevents acceptance and unnecessary downstream dispatch from the affected subgraph until it is applied or explicitly withdrawn.
+
+Failed or unknown delivery keeps its obligation pending with Retry, controlled continuation, or Owner withdrawal. A change may explicitly supersede an obligation and replace it with revised work, retaining provenance. Supersession, withdrawal and successful handling each clear only their own guards. No per-step Agent checkpoint or separate outcome taxonomy is required.
+
+If a frozen completion leaves required guidance unhandled, its recorded routing policy must durably admit the follow-up activation or enqueue explicit Planner re-evaluation in the same transaction. The pending obligation guards affected downstream dispatch and acceptance until that decision resolves. Missing guidance known in the Attempt launch manifest returns a correctable completion precondition error unless the Agent explicitly leaves it unresolved through `block_node`; it is never auto-marked handled. Input arriving after completion admission follows the separate follow-up path.
+
+## Single-host restart reconciliation
+
+Backend, Runner and host restarts are separate cases. Backend restart rebuilds pending work from PostgreSQL/outbox and waits for the Runner's ownership report. Runner restart inventories supervised processes and local journal operations before accepting new dispatch. A host reboot reports its new boot identity; old process IDs are not surviving executions, even if reused.
+
+With persistent disks intact, reconcile local Git/operation journals and backend receipts first. Previously completed formal commands return their existing result. A process that died without a formal outcome is an interrupted Attempt; apply the existing fallback or Owner Retry policy using preserved workspace state and fresh canonical context, never fabricate completion or require provider-session recovery. Accepted workspace/delivery operations continue through their system recovery path without a live Agent. Retain claims until old process absence and workspace ownership are established; boot-identity evidence may establish absence without waiting for an impossible old-process acknowledgement.
+
+Backend/Runner disconnection permits existing local computation under module-03 offline restrictions. Log backpressure/storage exhaustion may stop it with recorded infrastructure attention; reconnection does not replay unaccepted state mutations. The same Runner with durable data is sufficient for all supported recovery paths; another machine is not required.

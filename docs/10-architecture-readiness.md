@@ -39,13 +39,31 @@ No paper review guarantees freedom from implementation defects. The remaining hi
 | A passes tests, B subsequently integrates nonconflicting code | A's evidence remains tied to its tested revision; final combined result is not falsely marked verified |
 | Cancellation arrives after Git integration started but before formal commit | Reconcile side effects without granting current completion evidence or unlocking downstream work |
 | Local worktrees are cleaned after delivery | Published managed Artifacts remain retrievable independently of those paths |
+| A CLI asks for interactive approval in headless mode | The normalized input request raises attention; no silent indefinite wait |
+| A lazily opened workspace lies outside the CLI's launch directory | Reserved path grants allow access without restarting the process; a CLI that cannot grant them fails the probe |
+| A candidate introduces then deletes a credential-like file | Publication-range checks catch intermediate content, not just the net diff |
+| An internal result history contains a removed credential-like file | A clean export preserves the exact final tree without publishing private ancestors |
+| Replan dismissal happens during Planner execution | Execution is revoked and reconciled; review feedback is preserved, not silently withdrawn |
+| The execution account can reach control-plane secrets (docker group, published database port, readable secrets) | Runner reports an unsafe host; the module-05 credential boundary is not claimed |
 
 Use deterministic fault-injection tests for the control races, isolated process tests for supervision, and a real CLI/GitHub test run for Adapter/provider assumptions. The multi-Runner identities used in boundary tests can be fakes in Stage A; production transfer/failover requires separate acceptance evidence later.
 
 ## Decisions that cannot remain implicit
 
-The selected stack and transports are defined in [Technology & Deployment](11-technology-and-deployment.md). Before broad implementation, probe native Linux process supervision and workspace access with the first Owner-installed Runtime Adapter. Verify PostgreSQL claim/transaction behavior, how the Runner journal and Git results survive supported restart, and how the GitHub adapter enforces expected-head merge. Exercise HTTPS/WSS transport and generated JSON Schema contracts in a separate-process test.
+The selected stack, transports, Agent tool bridge, and host identity profile are defined in [Technology & Deployment](11-technology-and-deployment.md). Before broad implementation, probe native Linux process supervision and workspace access with the first Owner-installed Runtime Adapter. Verify PostgreSQL claim/transaction behavior, how the Runner journal and Git results survive supported restart, and how the GitHub adapter enforces expected-head merge. Exercise HTTPS/WSS transport and generated JSON Schema contracts in a separate-process test.
 
-Runtime-native sandbox behavior, dynamic workspace exposure, session resume, provider check semantics, and process-tree termination must be established by observation/documentation for the chosen implementation. They are not guaranteed by naming an Adapter interface.
+Runtime-native sandbox behavior, non-interactive permission modes, reserved-path grants for dynamic workspace exposure, tool-bridge registration, commit-call reliability, session resume, provider check semantics, and process-tree termination must be established by observation/documentation for the chosen implementation. They are not guaranteed by naming an Adapter interface.
 
 Do not expand scope to automatic cross-Runner failover, distributed transactions, microservices, or external workspace storage in Stage A. Preserve their boundaries now; implement them only with the corresponding recovery guarantees. Permanent Runner-disk loss remains explicitly outside V1.
+
+## Conversational Task gate
+
+The accepted model keeps Task identity stable while Specification revisions evolve through Task Planner conversation (modules 01–08). Stage A must verify ordered input, one Task Planner mutation owner, exact-content change authorization, atomic requirement/evidence publication, controlled continuation, and acceptance/delivery races. A single Runner/Node does not waive these contracts.
+
+Exercise a lost input acknowledgement, a late completion after change admission, new input during change settlement, stale confirmation, Replan dismissal with a pending requirement change, and a merge whose response is lost as a change arrives. Preserve per-recipient cardinality now; live steering and multi-Node delivery are later extensions. Their provider-specific behavior requires independent feasibility evidence.
+
+The conversation closure cases in module 09 are required alongside the original execution loop. In particular, Stage A now includes one-Node Replan publication; otherwise immutable Node definitions would prevent some promised requirement revisions. Guidance completion, operation-owned guard release, unavailable-Planner withdrawal, and post-dispatch delivery reconciliation must be tested explicitly.
+
+## Single-host V1 gate
+
+Module 09's single-host release matrix is the V1 completion criterion; passing Stage A alone is insufficient. Module 11 now defines first-run bootstrap, local Owner authentication, Runner enrollment, two-account repository permissions, privileged supervision, and storage/upgrade behavior. Verify all of these on one host together with module-03 reboot recovery and module-04 provider polling without webhooks. These are required implementation checks, not deferred multi-Runner features or claims that the current repository already runs them.

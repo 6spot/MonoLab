@@ -13,6 +13,7 @@ This is the accepted technology baseline. Modules 01–08 own domain and executi
 | Primary database | PostgreSQL | Canonical records, claims, receipts, events, outbox and projections |
 | Database access | Drizzle with reviewed SQL migrations | Typed queries and explicit SQL where locks/transactions require it |
 | Runner | Go, independently built daemon | Runtime adapters, native process supervision, workspace effects and local recovery |
+| Agent tool bridge | MCP stdio server built with the Runner | Per-Attempt Tool Protocol access from Agent CLIs |
 | Execution host | Linux with Owner-installed/authenticated Agent CLIs | Native process execution and durable host workspace storage |
 | Git | System Git CLI invoked with structured argument arrays | Clone/fetch, worktrees, revision capture, integration and authorized push |
 | Remote delivery | GitHub App integration behind a provider adapter | Repository access, PR/checks and guarded merge |
@@ -46,7 +47,7 @@ Go Runner (Linux host service)
     └─ native Attempt processes
           ├─ Owner-installed Agent CLI and its existing authentication
           ├─ assigned host workspace/scratch directories
-          └─ scoped Tool Protocol calls → backend HTTPS
+          └─ per-Attempt MCP tool bridge → backend HTTPS Tool Protocol
 ```
 
 Planner is semantic Agent work executed through the same Runner/CLI infrastructure as Node work. Backend Planner code builds context and validates formal results; it does not silently replace Planner execution with an unrelated direct model API loop.
@@ -57,7 +58,7 @@ The backend and Runner are separate executable/deployment units from the first i
 
 - Web uses HTTPS JSON APIs. SSE carries persisted/provisional UI updates with resumable cursors; clients refresh authoritative state after gaps. A live connection is never lifecycle authority.
 - Runner initiates WSS to the backend, avoiding a required public inbound Runner port. RPC-style envelopes over that connection carry correlation IDs, stable operation IDs, schema versions and current ownership. Backend Workspace reads are routed through this service boundary rather than opening host paths.
-- Attempt tools call the backend HTTPS Tool Protocol with scoped credentials. A CLI-specific tool adapter may bridge its native tool transport, but must preserve the same authorization and idempotency behavior.
+- Attempt tools call the backend HTTPS Tool Protocol with scoped credentials through the per-Attempt bridge (module 05). The default bridge is a small MCP stdio server built with the Runner and registered through each CLI's MCP configuration at launch. A CLI without MCP support may instead use a `monolab` command on PATH that implements the same contract. Either form must preserve the same authorization and idempotency behavior.
 - PostgreSQL outbox rows are committed with control transitions. Workers poll/claim bounded batches with transactional guards; notifications may wake workers but are not durable queue truth. No Redis, Kafka or Temporal is required in the baseline.
 - Keep large logs/content off the small command-response path: batch events, apply backpressure, and use authenticated HTTP transfer when needed. Runner-local spooling and acknowledged cursors remain mandatory.
 
@@ -69,7 +70,7 @@ The Go daemon directly invokes an installed host CLI with a resolved executable 
 
 Each Attempt has supervised native process identity bound to dispatch/Attempt IDs, a process group or service scope, log streams and a durable start record. The Linux implementation must demonstrate process-tree termination and restart reconciliation, including escaped/background descendants; a single child PID or a shell `kill` alone is insufficient. Use the local journal and process birth/supervisor identity to reconcile uncertain starts without spawning duplicates. The concrete supervisor mechanism is selected by the feasibility probe.
 
-Runner creates separate workspace/scratch directories. `open_workspace` lazily clones/materializes the repository in its assigned directory; serial work may reuse the Task Workspace, and parallel work uses private Node worktrees. The Runtime's native tools then read/write/build/test in those host paths. A worktree separates code state; it is not a container or a security sandbox.
+Runner creates separate workspace/scratch directories and grants each Attempt its reserved workspace paths at launch (module 03). `open_workspace` lazily clones/materializes the repository inside those paths; serial work may reuse the Task Workspace, and parallel work uses private Node worktrees. The Runtime's native tools then read/write/build/test in those host paths. A worktree separates code state; it is not a container or a security sandbox.
 
 Use supported CLI-native permission/sandbox settings and host account permissions. Keep backend state and system delivery credentials protected under separate service identities. Native execution uses the permissions of its configured account, so MonoLab does not claim arbitrary-code containment or protection from credentials independently available to that account. A stricter sandbox can be an explicit future execution-environment option without changing Task/Node/Attempt semantics; it is not a prerequisite for using an already-installed CLI.
 
@@ -77,11 +78,34 @@ Runner's durable journal uses local SQLite for operation metadata and filesystem
 
 The Owner installs and authenticates coding tools on the execution host. Discovery verifies the executable and startability under the actual execution account, including its permissions and login context. MonoLab never installs those Runtimes or performs login on the Owner's behalf.
 
+## Host identities and hardening
+
+V1 uses two host identities:
+
+| Identity | Runs | Holds |
+| --- | --- | --- |
+| Runner service account | Go daemon, journal/spool, per-resource repository caches, credentialed Git operations | Enrollment credential; short-lived provider tokens in memory only |
+| Execution account | Agent CLI processes, workspace files, uncredentialed Git operations on workspaces | Owner-managed CLI logins; its current Attempt credential |
+
+The daemon runs as a systemd service with cgroup delegation and the capability to start processes as the execution account. Each Attempt, and each system Git operation on a workspace, runs in its own child cgroup, which provides whole-tree freeze and kill. The feasibility probe confirms this mechanism or replaces it with an equivalent one.
+
+Workspace files belong to the execution account. Finalization and integration run as that account in a system cgroup outside the Agent's tree, after that tree is frozen; this assumes non-hostile Agents, consistent with the V1 containment non-claim. The service account keeps a local bare repository cache per resource, fetched with a short-lived read-only token. Workspaces clone and refresh from that cache without credentials, and their `origin` points at it, so pushing to `origin` fails for lack of write permission; remotes an Agent adds with the Owner's own credentials remain outside this guard (module 05). Delivery imports the finalized result tree and constructs its separate candidate commit with controlled public parents in system-owned storage (module 04). It persists and scans that candidate, then pushes only its explicit delivery ref with a write token; it never publishes internal Agent/operation refs. No mirror/all-ref push is allowed. Each account needs scoped `safe.directory` entries for repositories the other owns. Credentials never appear in process arguments, which other accounts can read through `/proc`; pass them through the service account's environment or an inherited descriptor.
+
+The single-host deployment claims the module-05 boundary only when:
+
+- the execution account is not in the `docker` group and has no passwordless `sudo`;
+- PostgreSQL has no host-published port, and backend secrets and Compose files are unreadable by the execution account;
+- Agents can reach the backend only through its authenticated HTTPS API.
+
+Runner enrollment checks the conditions it can observe and reports any violation as an unsafe-host fact in Runner status; while one remains, MonoLab does not claim the credential and authorization boundary. Project tests that need containers use a rootless container runtime owned by the execution account, or a separate execution host, never the control plane's Docker daemon.
+
 ## Git delivery across the process boundary
 
-The backend owns provider authorization, PR creation/checks, acceptance and merge. Runner owns local Git objects. Backend sends an authorized push operation identifying the exact workspace revision and delivery branch; a separately permissioned system Git worker executes it outside the Agent process and reports a reconciled result. Provider credentials supplied for that operation are short-lived and repository-scoped where supported, never written into Agent-readable repository config, logs or environment; the system worker uses a service identity whose credential storage Agent processes cannot read.
+The backend owns provider authorization, PR creation/checks, acceptance and merge. Runner owns local Git objects. Backend sends an authorized push operation identifying the exact candidate delivery head, its source workspace/tree manifest, expected published head and delivery branch; the Runner service account executes it from the resource's repository cache, outside the Agent process, and reports a reconciled result. Provider credentials supplied for that operation are short-lived and repository-scoped where supported, never written into Agent-readable repository config, logs or environment; the system worker uses a service identity whose credential storage Agent processes cannot read.
 
 The Runner system service is trusted infrastructure; formal Agent requests still require scoped authorization. A lost push/merge response is reconciled against remote state. The backend never requires the repository directory to be mounted into its own container.
+
+The GitHub App requests Metadata (read), Contents (read/write), Pull requests (read/write), and Checks and Commit statuses (read). Changing workflow files also needs the Workflows permission; without it, preparation fails before any push with an explicit reason.
 
 ## Repository layout
 
@@ -95,6 +119,7 @@ packages/
   db/                   # PostgreSQL schema, repositories and SQL migrations
 runner/
   cmd/monolab-runner/    # Go executable
+  cmd/monolab-bridge/    # per-Attempt MCP tool bridge
   internal/             # transport, adapters, supervision, workspace, journal
   go.mod
 infra/
@@ -106,8 +131,44 @@ Use a pnpm workspace for TypeScript packages and a Go module for Runner. `packag
 
 ## Initial deployment and expansion
 
-One Linux host runs PostgreSQL and the backend via Compose plus the Go host daemon. The backend serves the built SPA for a same-origin Web/API deployment; a TLS ingress terminates HTTPS/WSS and supports SSE. Persist database and Runner data separately. Docker Compose is an application/database packaging choice only; it does not host the Agent CLI. The Go Runner does not require Docker API/socket access. Never expose PostgreSQL to the public network.
+One Linux host runs PostgreSQL and the backend via Compose plus the Go host daemon. The backend serves the built SPA for a same-origin Web/API deployment; a TLS ingress terminates HTTPS/WSS and supports SSE. Persist database and Runner data separately. Back up PostgreSQL on a schedule to storage off the host, for example with `pg_dump` or WAL archiving; Runner journal and workspace data remain under the disk-loss limitation in modules 04 and 06. Docker Compose is an application/database packaging choice only; it does not host the Agent CLI. The Go Runner does not require Docker API/socket access. Never expose PostgreSQL to the public network.
 
 Adding machines installs the same Go daemon and enrolls each Runner with the backend. The backend keeps one canonical database and applies Runtime compatibility, capacity and Workspace locality checks. The first multi-Runner milestone distributes separate Tasks; workspace transfer and same-Task distributed execution remain later capabilities with their own verification gates.
 
 The first concrete host CLI/execution account, Owner sign-in mechanism and deployment domain/TLS setup are still environment-specific choices. They do not reopen the selected languages, frameworks, database or transport. Resolve them during the feasibility/setup phase before an externally accessible deployment; no public deployment may omit authentication.
+
+## Conversational Task implementation boundary
+
+The selected stack and deployment remain unchanged. Backend Task/Planner modules own durable Task messages, Specification revisions and semantic routing records; Orchestrator owns change settlement and effective pointers. PostgreSQL transactions/outbox serialize admissions and dispatch. Go Runner only executes attributed Attempts, reconciles processes/workspaces, and reports input delivery facts. It does not interpret Owner intent or publish requirement revisions.
+
+Versioned dispatch includes the Specification revision and input/guidance basis. Start with queued follow-up and controlled stop-and-resume on the installed native CLI. Optional live steering is a negotiated Adapter transport feature with per-recipient receipts; it does not require containers, a resident Planner, or another service.
+
+## Single-host installation and first-run contract
+
+Ship a single-host deployment recipe with Compose configuration, reviewed migrations, TLS ingress configuration, persistent-volume paths, Runner/systemd configuration, enrollment and health commands. The recipe may configure MonoLab services and OS identities with administrator authorization; it never installs or logs into coding CLIs for the Owner. A fresh installation must not require hand-written SQL, copying runtime session files, or placing system secrets in an Agent workspace.
+
+Bootstrap in this order:
+
+1. Create persistent backend/database and Runner/workspace locations with the documented service/execution ownership. Configure TLS ingress with an address reachable by both the host Runner and backend/browser deployment. Agent bridge callbacks use this configured backend URL, never a container's loopback address or an assumed host-path mount.
+2. Start PostgreSQL; run migrations under one migration lock; start the backend only after compatible schema readiness. Serve a same-origin Web/API and health endpoint. SSE/WSS pass through ingress with suitable streaming/idle settings and reconnect support.
+3. Provision the sole Owner through a local administrative bootstrap command. The baseline is a local Owner login with a salted password hash and revocable server-side sessions in PostgreSQL; use Secure/HttpOnly/SameSite cookies, CSRF/origin checks and login rate limiting. Provision/reset credentials through an interactive local command, not command-line password arguments or an unauthenticated public setup route. Bootstrap is idempotent and cannot create a second Owner. This avoids making an external identity provider a V1 dependency.
+4. Enroll the Runner with a one-use, expiring token issued through the authenticated Owner or local administrative interface. Store its distinct long-lived credential in service-only storage; ordinary daemon restart retains Runner identity and gets a new connection incarnation. Revocation/rotation does not delete unresolved execution ownership records.
+5. Discover CLIs under the actual execution account, including its explicit home/login environment and executable paths. Verify non-interactive launch, tool bridge, structured output and physical Stop using that account. The Owner performs CLI login there. A login available only to an administrator's interactive shell does not satisfy this gate. The execution account also needs the project's build/test toolchains; unavailable tools produce actionable failure, not an automatic system-wide installer.
+6. Configure Planner policy and at least one reusable Role referencing a verified Runtime. Configure GitHub App credentials/installation and Project repository/default ref/delivery settings, then select the Role for the Project. Verify scoped repository read and delivery permissions independently from CLI login. Capture/discussion can precede a runnable Project; Start reports exact missing prerequisites.
+7. Run the Stage A smoke flow against an authorized test repository. Report separate backend/schema, Runner connection/storage, CLI/tool-bridge and Git provider readiness. An HTTP health response alone never means Task execution is ready.
+
+Backend starts independently of Runner availability so the Owner can inspect state, cancel/withdraw and repair configuration while execution is offline. Runner reconnects with bounded backoff; startup does not require a live browser. Templates restart failed services, but process recovery follows recorded ownership rather than blindly restarting every Agent. Initial health checks must not publish or merge in arbitrary repositories.
+
+### Privileged process launch and shared repository access
+
+The service-account daemon needs a concrete authorized path to start/supervise execution-account processes. Package a narrow local privileged launcher using fixed systemd/cgroup launch and stop operations, or an equivalently constrained systemd policy. It validates the Runner service identity, dispatch ID, fixed execution UID, reserved paths and unit ownership; it never exposes arbitrary root shell execution to the execution account or passes service secrets into the child environment. The helper is Runner infrastructure, not another orchestration service. Verify launch, freeze, kill, daemon restart and host reboot under the actual permissions before accepting the host profile.
+
+Separate read-only repository cache objects from service-private credentials/journal. Grant the execution account traversal/read permission on the required cache repositories and no write permission; service Git can read finalized execution-owned objects through explicit access rules. Scoped `safe.directory` configuration is additional to filesystem permissions, not a substitute for them. Clone via Git transport (`--no-local`) across account ownership, without hardlinks or shared object alternates; do not rely on default local-clone optimizations across owners. Fetch/clone and candidate export must pass a real two-account permission test. Tokens stay outside cache config and Agent-readable files.
+
+### Local resource limits and maintenance
+
+Expose configured execution concurrency and per-process resource limits appropriate to the host. Cgroup limits apply to execution processes so an ordinary build cannot consume all resources needed by the database/backend and recovery services. Shared Runner slots are still the scheduling model; there is no permanently reserved Planner slot. Full capacity leaves chat visibly queued while deterministic Owner controls remain available.
+
+Monitor free space for database volumes, Runner journal/log spool, caches and workspaces. Below configured thresholds stop new dispatch/materialization and report storage attention. If a durable journal/spool write fails, stop or freeze affected execution safely and do not acknowledge unpersisted effects or silently discard required records. Recovery requires restored storage and reconciliation before retry. Cleanup may remove disposable inspection data and acknowledged logs according to retention, but never unresolved-operation records or live/recoverable workspaces merely to free space. Do not automatically delete unrelated host files.
+
+Deployment upgrades stop new dispatch and use a maintenance window to drain or stop/reconcile active effects before incompatible migrations. Persist versioned operation data; after migration, validate backend/Runner compatibility and reconcile before reopening dispatch. Backups cover PostgreSQL and documented service configuration/secrets; workspace/journal backups must be coordinated with a quiescent Runner if made. A database-only restore cannot claim recovery of missing Runner workspaces. Permanent disk loss remains outside V1's execution-recovery guarantee.

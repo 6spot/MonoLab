@@ -4,7 +4,7 @@ This file is the architecture map. Detailed rules live in the linked modules.
 
 ## Selected implementation stack
 
-React/Vite/TypeScript Web → Fastify/Node.js TypeScript modular monolith → PostgreSQL (Drizzle/SQL). A separate Go Runner on Linux directly invokes Owner-installed/authenticated host Agent CLIs and supervises their processes and system Git operations. Web uses HTTPS/SSE; Runner initiates a versioned authenticated WSS connection; Agent tools use scoped HTTPS commands. PostgreSQL outbox workers handle durable background work.
+React/Vite/TypeScript Web → Fastify/Node.js TypeScript modular monolith → PostgreSQL (Drizzle/SQL). A separate Go Runner on Linux directly invokes Owner-installed/authenticated host Agent CLIs and supervises their processes and system Git operations. Web uses HTTPS/SSE; Runner initiates a versioned authenticated WSS connection; Agent tools use scoped HTTPS commands through a per-Attempt tool bridge (MCP by default). PostgreSQL outbox workers handle durable background work.
 
 Initial deployment is one Linux host with backend/database in Docker Compose and a systemd-managed Go daemon. Adding Runners preserves this service boundary. See [Technology & Deployment](docs/11-technology-and-deployment.md) for ownership, repository layout, credentials and the local SQLite infrastructure journal.
 
@@ -75,7 +75,7 @@ Workspace Manager
   └─ isolated Git Worktree for concurrent execution
 ```
 
-Agents work freely inside the workspace. System state outside the workspace is controlled through the Tool Protocol.
+Agents work freely inside the workspace. System state outside the workspace is controlled through the Tool Protocol. Planner inspects repositories only through read-only snapshots.
 
 ## UI
 
@@ -90,7 +90,7 @@ Execution Board
   → global view of formal Execution Tasks
 
 Execution Task Detail
-  → Overview / Timeline / Execution Details
+  → Conversation / Overview / Timeline / Execution Details
 
 Projects
   → long-lived project context and resources
@@ -115,17 +115,18 @@ Todo
 ├─ Discussion
 └─ Working Requirement State
         │
-        └─ materializes immutable Execution Task
+        └─ creates Task with initial Specification revision
 
 Execution Task
-├─ immutable Specification
+├─ Task Conversation
+├─ immutable Specification revisions
 ├─ Execution Plan revisions
 ├─ Nodes
 ├─ Artifacts / Task Events
 └─ Current Task State projection
 
 Planner
-└─ semantic control for Discussion / initial Plan / Replan
+└─ semantic control for Discussion / Task Conversation / requirement changes / Plan / Replan
 
 Orchestrator
 └─ deterministic Task / Node transitions and scheduling
@@ -161,18 +162,21 @@ UI reads canonical records plus rebuildable projections; it must not become anot
 
 ## Execution consistency contracts
 
+- Task identity persists across requirement changes; Specification revisions are immutable and Task Conversation can invoke Planner throughout delivery. Planner continuity is durable context, not a permanently running process. Task Conversation serves only its current Task; terminal conversations are read-only. New Tasks originate in Todo Discussion as independent execution chains, without inherited Task context.
 - Plan revisions own immutable graph membership; stable Task-owned Nodes carry mutable lifecycle and activation generations.
 - Rework invalidates current evidence while retaining history and correcting the existing integrated code.
 - Replan publication waits for running work and workspace operations to settle, then atomically switches a confirmed graph.
 - Workspace ownership includes physical writer isolation; Git/database completion uses recoverable, idempotent operations.
 - REVIEW exposes the integrated local result even when remote PR preparation fails.
 - Owner confirmations bind exact content/results and are enforced by command authorization. Delivery may partially succeed across repositories.
+- Delivery exports the exact result tree with controlled public ancestry, scans the actual candidate publication range, and never rewrites already-pushed delivery history. Private execution commits stay internal.
+- Owner-blocking control waits — planning issues, review feedback, Replan requests — have explicit Owner exits besides Cancel.
 
 The detailed contracts and transition table live in modules 02–06; they do not introduce new Task states or Agent-authored recovery checkpoints.
 
 ## First implementation milestone
 
-[First Executable Slice](docs/09-first-executable-slice.md) defines the single-Runner, single-repository, single-Node loop to implement and verify first, followed by the remaining V1 capabilities. It is a delivery sequence, not a replacement domain model.
+[First Executable Slice](docs/09-first-executable-slice.md) defines the single-Runner, single-repository, single-Node loop to implement and verify first, followed by the remaining V1 capabilities and a complete single-host release gate. It is a delivery sequence, not a replacement domain model.
 
 ## Deployment and extension boundary
 

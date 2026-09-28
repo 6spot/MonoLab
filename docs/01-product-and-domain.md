@@ -32,7 +32,7 @@ Project
 
 Project Context is Owner-authored. It may include the project description, long-lived constraints, delivery conventions, and other stable information needed by Planner and execution agents. Do not require AI to generate or own the canonical Project Context.
 
-Resources are the repositories or other execution resources that belong to the Project. Resource-specific default refs belong to the resource configuration rather than the Execution Task.
+Resources are the repositories or other execution resources that belong to the Project. Resource-specific default refs and delivery settings belong to the resource configuration rather than the Execution Task.
 
 Roles are globally reusable behavioral profiles. A Project stores only the Role IDs that Planner may use for that Project.
 
@@ -42,7 +42,7 @@ Project Context is injected directly when Planner or an execution Agent works. E
 
 A Todo may be assigned to a Project after capture and may later be moved to another Project. Historical Discussion remains unchanged. Future Planner turns use the Todo's current Project Context.
 
-Existing Execution Tasks never migrate when their parent Todo is moved. Each immutable Execution Task keeps the Project association it had when it was created; later Tasks created from the Todo use the Todo's current Project.
+Existing Execution Tasks never migrate when their parent Todo is moved. Each Execution Task keeps the Project association it had when it was created; later Tasks created from the Todo use the Todo's current Project.
 
 Project lifecycle should remain simple:
 
@@ -123,7 +123,7 @@ Planner suggestions must not silently become Owner decisions.
 
 ## Execution Task
 
-An Execution Task is the immutable formal snapshot created when the Owner expresses clear execution intent.
+An Execution Task is a stable delivery objective created when the Owner confirms execution intent. It owns a conversation and immutable Specification revisions; an unfinished Task can evolve without creating a new Task for every clarification or requirement change.
 
 ~~~text
 ExecutionTask
@@ -131,7 +131,13 @@ ExecutionTask
 - project_id
 - todo_id
 - title
+- initial_specification_revision_id
+
+SpecificationRevision
+- id / task_id / parent_revision_id
 - specification   # Markdown
+- source_message_ids / authorization_receipt_id
+- created_at
 - created_at
 - created_by
 ~~~
@@ -144,13 +150,13 @@ Execution Task answers only:
 
 It does not contain runtime state, Plan state, resource bindings, Workspace state, Artifact state, or execution logs.
 
-Discussion may continue after an Execution Task is created and may later produce another independent Execution Task.
+Todo Discussion may continue independently and may later produce another Execution Task. Changes to an existing delivery belong in that Task’s own Conversation; later Todo messages never silently modify it.
 
 Execution Task creation is a hard semantic/module boundary. After creation, planning, execution, replan, review, and delivery belong to the Execution Task and do not depend on the Todo Planner Session, Todo Discussion, or Working Requirement State.
 
 The Todo remains independently discussable. A later Execution Task created from the same Todo starts another independent execution chain.
 
-A new Execution Task under the same Todo does not automatically ingest semantic history from older Execution Tasks. The current Project/repository reality naturally carries forward already-delivered code.
+Execution Tasks created through the same Todo are independent execution chains. They do not inherit one another’s Specification, Conversation, Plan, or execution context, and sharing a Todo creates no predecessor/successor Task relationship. The current Project/repository reality naturally carries forward already-delivered code.
 
 ## Configuration changes and execution eligibility
 
@@ -163,3 +169,15 @@ Resource identity is stable. Changing a remote repository creates a new resource
 Removing a resource from a Project prevents future workspace opens for that resource. If an unfinished Task already has a workspace for it, reject removal until that Task finishes or is cancelled. Likewise, removing a selected Role is rejected while an effective Plan of an unfinished Task references it. Referenced Roles cannot be permanently deleted; they may be hidden from future selection. Role instructions remain editable and later Attempts still use the latest configuration.
 
 Destructive cascade deletion first cancels execution and reconciles active workspace/delivery operations. If the Runner is unavailable or a remote operation has an unknown outcome, deletion remains pending; it must not erase the ownership and recovery records needed to finish safely.
+
+## Task Conversation and evolving requirements
+
+Task Conversation is the Owner's persistent entry point for questions, guidance, requirement changes, planning issues, and review feedback throughout a Task. Planner is invoked on demand, not kept running continuously. Durable messages and formal records reconstruct context independently of provider sessions.
+
+The Task association with its Project and Todo remains stable. The initial Specification revision preserves creation intent. Orchestrator's Task control record holds `current_specification_revision_id`; each published revision is immutable. There is no second mutable Task specification or Task Working Requirement State competing with that pointer.
+
+Ordinary questions and guidance within the effective requirement do not create Specification revisions. Changes to scope, constraints, or acceptance expectations do. Each revision records exact Owner-authorized content and its source; chat alone does not mutate formal state. Module 02 defines interpretation and impact, module 05 authorization, and module 06 atomic publication.
+
+Specification revisions answer what to deliver; Plan revisions answer how work collaborates. Neither automatically forces a new version of the other. Existing Node identities and workspace history survive compatible requirement changes.
+
+Task Conversation serves only clarification, guidance, refinement, and requirement changes for its current Task. It never proposes or creates another Task. COMPLETED and CANCELLED remain terminal; their conversation permits read-only questions and answers. For further execution or a materially independent objective, the Owner returns to Todo Discussion and initiates an independent Task through the normal preview/confirmation flow. Do not reopen accepted delivery, mutate its historical Specification through chat, or transfer Task context into Todo Discussion automatically.

@@ -52,7 +52,9 @@ Do not reintroduce without a new, explicit architectural decision:
 
 Todo is a long-lived topic.
 
-Execution Task is a formal execution snapshot.
+Execution Task is a stable delivery objective with its own Conversation and immutable Specification revisions. The effective requirement can change through exact Owner authorization and deterministic publication.
+
+Tasks under one Todo are independent. They do not inherit requirements, conversations, Plans, or execution context from one another. Task Conversation serves only its current Task and cannot propose/create another Task. Terminal Task conversation is read-only; further execution starts through Todo Discussion with a new independent preview and Owner confirmation. Already-delivered repository code remains ordinary Project reality, not inherited Task context.
 
 Do not derive Todo status from Execution Task runtime state.
 
@@ -64,7 +66,7 @@ Tasks do not duplicate or bind Project resources.
 
 The core repository abstraction is Git-based, not GitHub-specific. V1 UX may be GitHub-first through a provider integration and repository picker.
 
-Agents use `open_workspace(resource_id)` when they actually need a repository.
+Agents use `open_workspace(resource_id)` when they actually need a repository. Planner inspects repositories only through read-only snapshots and never receives a writable workspace.
 
 ### Role is not Runtime
 
@@ -94,6 +96,10 @@ Replan changes collaboration structure.
 
 REPLAN_REQUIRED means the current collaboration graph is insufficient. Request Changes and pending Planner feedback routing are not evidence of that condition. Routing is an internal operation while Task remains REVIEW; apply Rework directly when the graph is sufficient, and create a formal Replan request only when it is not.
 
+### Owner-blocking waits have explicit exits
+
+A control wait that needs the Owner — pending Task input/change, a planning issue, unresolved review feedback, or a Replan request — offers an explicit resolution besides Cancel: answer and retry, withdraw the input/change/feedback, or dismiss the Replan request. Each resolution is a recorded Owner decision; the system never resolves such a wait on its own. Dismissing Replan rejects the structural change, not the originating review feedback; withdrawing feedback is a separate Owner decision.
+
 ### Completed is not Accepted
 
 Node Completed means an Agent declared its work complete.
@@ -122,7 +128,7 @@ Attempt fencing protects formal commands. Workspace handoff also requires stoppi
 
 ### Acceptance is version-specific
 
-Owner confirmation is enforced by the command backend and binds the exact proposed Task, Plan, or delivery result. Changed content cannot inherit approval. Multi-repository delivery may partially succeed and must never be presented as atomic.
+Owner confirmation is enforced by the command backend and binds the exact proposed Task, Specification revision, Plan, or delivery result. Acceptance binds the effective Specification/Plan and exact result together. Changed content cannot inherit approval. For plain Git, publishing a delivery branch is preparation; final delivery requires recorded exact-version Owner acceptance and verified publication, and does not include a target-branch merge. Multi-repository delivery may partially succeed and must never be presented as atomic.
 
 ### One deployed Runner is not a singleton domain
 
@@ -131,3 +137,19 @@ Stage A/V1 deployment limits do not change data cardinality or module contracts.
 ### Completion evidence is revision-specific
 
 Preserving code, completing work, validating the combined result, and Owner acceptance are distinct facts. Test evidence records the actual input/result revision and cannot automatically validate later integrated code.
+
+### Internal Git history is not publication history
+
+Keep private Agent execution commits for audit and recovery. Delivery exports the exact finalized result tree using controlled public ancestry and checks the actual candidate publication range. Already-pushed delivery history is never rewritten automatically; internal history is not pushed merely because a Node completed.
+
+### Persistent Planner responsibility is not a resident process
+
+Task Planner is available throughout delivery through durable Task context and on-demand Attempts. Runtime session memory is an optimization, never the requirement or conversation source of truth.
+
+### Requirement change is not graph change
+
+Specification revisions change what to deliver. Plan revisions change collaboration structure. A requirement change may use the existing graph; only actual graph insufficiency warrants REPLAN_REQUIRED. Conversation routing and change settlement use internal operations, not new Task lifecycle states.
+
+### Received is not applied
+
+Saving a message, interpreting it, delivering guidance to an Attempt, publishing a requirement revision, and completing the requested work are distinct facts. Record input provenance and recipient outcomes; never infer a formal change or successful implementation from natural-language acknowledgement.

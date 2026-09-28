@@ -23,8 +23,12 @@ V1 may use one relational database. The names below are conceptual table/record 
 ### Canonical product/domain records
 
 ```text
+owner_auth                       # sign-in records; mechanism chosen at setup
+planner_settings                 # Owner Planner Guidance, Planner Execution Policy
+global_execution_policy
+
 projects
-project_resources
+project_resources                # including resource delivery settings
 roles
 project_roles
 
@@ -33,31 +37,60 @@ todo_discussion_messages
 todo_working_requirement_state
 
 execution_tasks
+specification_revisions          # immutable requirement text, parent, source and authorization
+task_messages                    # ordered durable Task Conversation
+task_guidance                    # scoped instructions and supersession history
+task_controls                    # Orchestrator control record per Task
 execution_plans
-nodes
+plan_nodes                       # per-revision membership and immutable Node definitions
+nodes                            # stable Task-owned identity and mutable lifecycle
+node_activations                 # append-only activation and completion records
 artifacts
+managed_content                  # immutable Artifact content referenced by digest
 task_events
+owner_decisions                  # feedback, blocker/issue answers, dismissals, withdrawals
 ```
 
 `Original Capture` belongs to Todo itself unless implementation needs a separate immutable record. Do not create a separate table merely because the UI renders it as a distinct block.
 
-`ExecutionTask.specification` is immutable after creation. Execution Plan revisions are immutable. Nodes have stable Task-owned identities; each Plan revision owns immutable graph membership and definitions referencing those identities. Mutable Node lifecycle and activation facts are separate from immutable Plan structure.
+Task identity is stable; `specification_revisions` are immutable. The effective revision is selected by `task_controls.current_specification_revision_id`, never by a mutable duplicate specification field. Execution Plan revisions are immutable. Nodes have stable Task-owned identities; each Plan revision owns immutable graph membership and definitions referencing those identities. Mutable Node lifecycle and activation facts are separate from immutable Plan structure.
 
-Discussion messages are append-only conversation history. Working Requirement State is mutable/rebuildable semantic state and may be stored as one current record per Todo.
+Discussion messages are append-only conversation history. The Todo module also records explicit Owner withdrawal dispositions against source messages, without deleting or modifying their original content. A turn resolves once by committed reply or withdrawal; commit that resolution, processed-watermark advancement, command receipt and next-turn outbox intent atomically. Late Planner output cannot override withdrawal, and a new Attempt waits for old process ownership to settle. Working Requirement State is mutable/rebuildable semantic state and may be stored as one current record per Todo; withdrawal alone does not rewrite it.
+
+### Command and control records
+
+```text
+command_receipts                 # scoped request ID, payload digest, recorded result
+authorization_receipts           # exact-content Owner confirmations
+task_input_operations            # input batch/watermark, routing, unresolved attention
+requirement_change_operations    # authorized proposal, impact, settlement and publication
+review_feedback_operations       # routing basis, status, single resolution
+replan_requests                  # freeze, prepared proposal payload, resolution
+outbox                           # durable dispatch and background intents
+notifications                    # durable in-app notifications and read state
+```
+
+These records make commands idempotent and recovery reconstructable. They are not new Task/Node lifecycles; the Task control record references the open ones.
 
 ### Runtime / infrastructure records
 
 ```text
-runners
+runners                          # identity, enrollment, connection incarnation, capacity, host facts
 runtime_registry
 attempts
-runtime_sessions?       # only if adapter/session recovery needs persistence
+runtime_sessions?                # only if adapter/session recovery needs persistence
 execution_logs
-workspace_records?      # local Workspace Manager metadata, not product state
-git_delivery_operations
+attempt_input_receipts           # exact input/recipient/generation, delivery and uncertainty
+workspace_records                # logical workspace: host, incarnation, generation, base/target, finalized revision
+workspace_operations             # recoverable completion/integration stages
+delivery_items                   # per modified Task repository: branch, review request, published head and candidate manifest
+delivery_operations              # preparation, push and merge progress
+provider_integrations            # GitHub App installation metadata; keys stay in service secret storage
 ```
 
-Do not force every infrastructure concept into a first-class table. For example, Runtime Registry may be persisted or reconstructed from Runner discovery depending on implementation needs, and Workspace paths/worktree bookkeeping may live in Workspace Manager storage.
+Do not force every infrastructure concept into a first-class table. For example, Runtime Registry may be persisted or reconstructed from Runner discovery depending on implementation needs. Workspace paths and worktree bookkeeping live in the Runner's local journal; the control database keeps only the location-independent workspace records that control APIs address.
+
+The Runner journal (module 11) holds dispatch/start intents, supervision handles, local operation stages, and log-spool cursors. It is reconciliation bookkeeping, never a second copy of Task/Node truth.
 
 Attempt is the durable attribution boundary for Runtime execution. Execution Log belongs to Attempt. Runtime Session is opaque adapter infrastructure and should be persisted only when needed for recovery/resume.
 
@@ -81,14 +114,18 @@ Timeline is never a canonical table. Runnable Nodes are never persisted as lifec
 
 A record has one owning module even when other modules read it:
 
-- Project owns Project / Resource association;
+- Project owns Project / Resource association and resource delivery settings;
 - Role Library owns Role profiles;
 - Todo owns capture, Discussion, and Working Requirement State;
-- Execution Task owns immutable Task / Plan / Node / Artifact / Event records;
-- Orchestrator owns deterministic lifecycle mutations and Current Task State projection updates;
-- Runtime owns Runner / Runtime / Attempt / Session / Execution Log infrastructure;
-- Workspace Manager owns local workspace/worktree/Git bookkeeping;
-- Delivery owns Git delivery operation state.
+- Planner owns Planner Guidance and Planner Execution Policy;
+- Execution Task owns stable Task identity, immutable Specification revisions, Task messages/guidance, Plan / Node definition / Artifact / managed content / Event / Owner decision records;
+- Orchestrator owns deterministic lifecycle mutations, Task control records, Node lifecycle and activations, Replan requests, input/change/review-feedback operations, and Current Task State projection updates;
+- the command boundary owns command and authorization receipts; outbox rows belong to the module whose transition wrote them;
+- Runtime owns Runner / Runtime / Global Execution Policy / Attempt / Session / Execution Log infrastructure;
+- Workspace Manager owns workspace records, workspace operations, and local workspace/worktree/Git bookkeeping;
+- Delivery owns delivery items, delivery operation state, and provider integration metadata;
+- notifications are derived from formal events and own only their read/resolved state;
+- Owner access owns sign-in records.
 
 Cross-module code should call the owning module's API/service boundary instead of directly mutating another module's records.
 
@@ -266,6 +303,7 @@ Keep event types small, for example:
 - NODE_BLOCKED
 - REWORK_REQUESTED
 - REPLAN_REQUESTED
+- PLANNING_ISSUE_RAISED
 - ARTIFACT_PUBLISHED
 - OWNER_DECISION
 - TASK_REVIEW_READY
@@ -301,10 +339,11 @@ It may have provider-specific internal states such as preparing, pushing, waitin
 
 For Git tasks:
 
-- readiness for review causes automatic delivery preparation / PR creation;
+- readiness for review causes local preparation and, when configured, automatic branch publication / provider review-request creation;
 - Task remains REVIEW while the Owner reviews and while delivery prerequisites are being evaluated;
 - Owner Accept starts/continues the final delivery operation;
-- successful merge/delivery causes TASK_COMPLETED;
+- GitHub items finalize on confirmed merge; plain-Git items finalize only after exact-version Owner acceptance and verified branch publication are recorded under current guards. A preparation push alone is not final delivery;
+- TASK_COMPLETED requires every delivery item to be finalized;
 - delivery failure leaves the Task in REVIEW.
 
 Git delivery state is not Current Task State and should not be duplicated there beyond an attention/reference pointer when Owner action is required.
@@ -357,7 +396,7 @@ Node lifecycle records carry an activation generation. Attempts, completion summ
 
 An Artifact is historical immediately upon publication. It becomes current completion evidence only when its source activation successfully completes and is still valid in the effective Plan. Default downstream context includes outputs selected by successful completion, not every Artifact a failed Attempt happened to publish. The successful Attempt's Artifacts are included by default. An optional `artifact_ids` argument to `complete_node(summary, artifact_ids?)` may explicitly select earlier Attempt outputs from the same activation; IDs from a different activation are rejected. An empty selection is valid. Immutable content and `supersedes` preserve provenance without making obsolete results current.
 
-Persist Owner authorization receipts, Task-scoped review feedback/blocker answers, and operation recovery records under their owning modules. They are not new user-facing lifecycles. Task event sequence plus durable control facts must reconstruct Start/Stop, unresolved Replan and pending review-feedback operations, effective Plan, invalidation, acceptance, and cancellation; do not infer them from log prose or timestamps alone.
+Persist Owner authorization receipts, Task-scoped review feedback/blocker answers, and operation recovery records under their owning modules. They are not new user-facing lifecycles. Task event sequence plus durable control facts must reconstruct Start/Stop, unresolved Replan and pending review-feedback operations, open planning issues, effective Specification/Plan, conversation input dispositions, requirement publication, invalidation, acceptance, and cancellation; do not infer them from log prose or timestamps alone.
 
 ## Transition precedence and recovery
 
@@ -372,13 +411,16 @@ Persist Owner authorization receipts, Task-scoped review feedback/blocker answer
 | Rework | Authorized target set | Invalidate target/descendants and pending acceptance; resume after writers stop |
 | Request Replan | Active Task and valid request identifying an insufficient graph | REPLAN_REQUIRED; freeze dispatch and settle running work |
 | Publish Replan | Quiescent work, confirmed graph, unchanged basis | Atomically replace effective Plan and clear freeze |
-| Request Changes | REVIEW, no partially merged result or unresolved merge | Remain REVIEW; revoke acceptance and create feedback-routing operation that blocks new acceptance/merge |
+| Dismiss Replan | REPLAN_REQUIRED, unresolved request, no publication admitted | Resolve request/discard proposal; revoke request-bound Planner execution and reconcile; clear freeze and re-derive status; preserve originating feedback through a new routing operation in REVIEW |
+| Request Changes | REVIEW, no finalized delivery item or unresolved merge | Remain REVIEW; revoke acceptance and create feedback-routing operation that blocks new acceptance/merge |
 | Review routing to Rework | REVIEW, current unresolved feedback operation, unchanged basis | Resolve operation and apply Rework atomically; derive RUNNING from runnable work, never REPLAN_REQUIRED |
 | Review routing to Replan | REVIEW, current unresolved feedback operation, unchanged basis, graph insufficient | Resolve operation and record formal Replan request atomically; REPLAN_REQUIRED |
 | Review routing waits/fails | Unresolved feedback operation | Remain REVIEW; operation status/attention and Retry, acceptance still blocked |
-| All work complete | No freeze or unsettled local operation | REVIEW; prepare remote delivery |
-| Accept | REVIEW, no unresolved feedback operation, exact result receipt | Start/continue delivery; COMPLETED only after success |
-| Cancel | Nonterminal Task | Revoke execution/acceptance; CANCELLED; reconcile outstanding effects |
+| Raise planning issue | Current authorized Execution Task Planner during Task conversation/change routing, initial planning, Replan preparation, or review routing | Record issue and attention; close the Planner's mutation phase; Task state unchanged |
+| Withdraw feedback | Unresolved feedback operation | Resolve operation as withdrawn; revoke its Planner Attempt; remain REVIEW; acceptance admissible with a new receipt |
+| All work complete | No freeze or unsettled local operation | REVIEW; remote preparation waits for input/change/delivery admission guards |
+| Accept | REVIEW, no unresolved input/change/feedback guard, exact Specification/Plan/result receipt | Start/continue delivery; COMPLETED only after success |
+| Cancel | Nonterminal Task | Revoke execution/acceptance; CANCELLED; reconcile outstanding effects; close open review requests for undelivered items |
 
 CANCELLED and COMPLETED cannot be overwritten by late callbacks. An unresolved Replan request takes precedence over ordinary RUNNING/BLOCKED/REVIEW derivation. A pending feedback-routing operation does not change Task status; it guards acceptance and merge while Task remains REVIEW. Repeated callbacks are idempotent. A delivery failure cannot move REVIEW back to RUNNING. Remote success discovered after cancellation is recorded truthfully without undoing cancellation or pretending the merge was prevented.
 
@@ -404,13 +446,27 @@ These scenarios define the minimum verification surface for the first execution 
 | Request Changes resolves to Rework | REVIEW while routing, then RUNNING; no REPLAN_REQUIRED transition or Replan event |
 | Request Changes resolves to Replan | REVIEW until the formal graph-insufficiency request commits, then REPLAN_REQUIRED |
 | Planner fails or waits during feedback routing | REVIEW with operation attention; acceptance and merge remain blocked |
+| Feedback changes requirements or is ambiguous | Pending requirement proposal or planning issue in REVIEW; acceptance stays blocked until the linked input/change/feedback operations resolve |
+| Owner withdraws feedback while Planner is routing | One resolution wins; a late Planner outcome is rejected; acceptance needs a new receipt |
+| Owner dismisses a Replan request | No Plan revision; old queued/running Planner work revoked; discarded proposal and late outcomes rejected; requester resumes after handoff/capacity guards |
+| Owner dismisses a review-originated Replan | Return to REVIEW with original feedback still effective and a new routing operation; acceptance remains blocked |
+| Dismissal races with Planner publication or issue reporting | One guarded outcome wins; no stale mutation or overlapping Planner process |
+| Internal history adds then removes sensitive content | Exported clean result has equal tree but no private intermediate commit ancestry |
+| Candidate history contains a forbidden intermediate file later deleted | Publication-range scan catches it even when net diff is clean |
+| Rework repairs an unpushed candidate | New candidate uses last published/base parent; rejected candidate is never published; published history is not rewritten |
+| Push response is lost before candidate replacement | Reconcile remote head first; never treat an uncertain candidate as unpublished |
+| Subsequent delivery exports corrected result | Previous published head remains ancestor; source/delivery trees match; fresh checks/acceptance bind new head |
 | Accept races with Request Changes or successful CI refresh | Serialized admission honors pending feedback; CI refresh cannot re-enable acceptance |
 | Review-routing outcome is replayed or competes with another outcome | One committed routing decision; no duplicate invalidation or late Replan transition |
 | Runtime exits successfully without completing the Node | Node is blocked for Retry, never inferred complete from prose/exit code |
 | PR creation response is lost | Reconcile the existing PR; no duplicate PR |
 | PR head changes after acceptance | Old acceptance cannot merge new code |
 | Second repository merge fails | First merge remains recorded; REVIEW shows partial delivery and retries only remaining work |
+| Plain-Git preparation push succeeds before acceptance | REVIEW remains correctable; no finalized delivery item or partial-delivery restriction |
+| Plain-Git final acceptance races with new input or Request Changes | One guarded outcome wins; a push alone cannot defeat input guards; retries preserve the exact accepted version |
 | Browser disconnects and reconnects | Execution continues; current attention and deduplicated notifications reload |
+
+Delivery operation records persist the candidate manifest (source workspace revision, result tree, delivery head, parent set), last reconciled published head, scan version/findings and any scoped overrides. Workspace revisions and delivery commits have distinct identities. Candidate replacement retains immutable operation history and cannot change an already-published parent chain. These are Delivery infrastructure records, not another Task state machine.
 
 ## Independent versions and atomic ownership
 
@@ -420,9 +476,9 @@ These scenarios define the minimum verification surface for the first execution 
 | Node activation | One durable Node | Existing work is invalidated for Rework | Runtime retry count |
 | Attempt fencing generation | One execution owner | A new Attempt claims execution | New semantic work |
 | Task event sequence | One Task's formal history | A formal event is appended | An approval's exclusive compare-and-set token |
-| Todo message sequence / processed watermark | One Todo | Message append / successful turn commit | Task execution progress |
+| Todo message sequence / processed watermark | One Todo | Message append / committed reply or explicit Owner withdrawal | Task execution progress |
 
-The Task control record is canonical Orchestrator-owned state outside the immutable Specification. It holds the current Plan pointer, control version, start/terminal decisions, and references to active Replan scheduling freezes, pending review-feedback operations, and acceptance. `current_task_state` projects this record with Node/Attempt/delivery facts. Rebuilding that projection never invents a new control version. This is operational state, not a large semantic summary.
+The Task control record is canonical Orchestrator-owned state outside the immutable Specification. It holds the current Specification and Plan pointers, input sequence/processed watermark, control version, start/terminal decisions, and references to active Replan scheduling freezes, pending input/change/review-feedback operations, and acceptance. `current_task_state` projects this record with Node/Attempt/delivery facts. Rebuilding that projection never invents a new control version. This is operational state, not a large semantic summary.
 
 Prepared Replan proposals use the Task control version, not the raw event sequence, as their compare-and-set basis. Recording a proposal or its confirmation must not make that proposal stale through its own bookkeeping. Unrelated log chunks, notification reads, and remote check refreshes do not change control version; effective result changes do. Acceptance additionally binds the result digest and delivery item versions.
 
@@ -443,3 +499,42 @@ Keep multiplicity in the schema from Stage A: Project-resource and Project-Role 
 Database constraints and operation receipts serialize control decisions; they cannot atomically roll back remote or local side effects. Completion admission, cancellation, and invalidation share an explicit ordering boundary. If cancellation/invalidation wins before a completion operation starts integration, abort integration and preserve the private result. If integration is already in progress, settle it before exposing a new workspace base; the cancelled/invalidated activation never gains current completion evidence and no downstream work unlocks from it. Record any retained integrated code truthfully as corrective-work input. Task cancellation remains immediate for authority and scheduling, while cleanup/reconciliation may continue.
 
 Multiple backend workers may use the same primary database without acquiring independent lifecycle authority. Claims, dispatch and workspace/delivery operation ownership require transactional guards; in-memory locks may optimize but never establish correctness. Operation takeover also requires reconciliation at the side-effect host/provider, not just expiry of a database lease.
+
+## Requirement revision publication and input consistency
+
+Task creation atomically writes its initial Specification revision and control pointer. Subsequent revisions record their parent, exact content digest, source message IDs and Owner receipt. Plan revisions and activation/Attempt launch records retain the Specification basis used to produce them. Retaining a Plan across requirement revisions records explicit applicability; never rewrite its historical creation basis.
+
+Input operations own source sequence, processed watermark, routing outcome and unresolved follow-up references. A processed message may still have a pending change or delivery. Guidance owns scope and supersession; Runtime owns transport receipts. Existing review-feedback operations are referenced by conversation routing rather than duplicated. Every Owner-blocking operation has Retry and an explicit answer/withdrawal or cancellation path; withdrawal fences its associated Planner work and reconciles ownership.
+
+Admission of an authorized requirement change serializes with completion, acceptance, Plan publication and delivery dispatch using Task control plus relevant activation/result versions. It persists the proposal, impact, receipt, scheduling guards and recovery intent before any external effect. Physical settlement occurs outside the database transaction under the admitted operation identity. Task status does not become REPLAN_REQUIRED unless graph insufficiency has actually been established.
+
+After settlement, one transaction validates the admitted basis and newer input dispositions, switches the effective Specification pointer (and confirmed Plan pointer when necessary), records evidence applicability/invalidation, updates affected activations, resolves linked input/feedback operations, increments control version, emits formal events and writes scheduling outbox work. An old completion may settle as historical evidence but cannot become current evidence for a superseded activation. If the basis changed, preserve completed settlement work and re-evaluate the proposal/impact; do not blindly retry publication. Changed requirement text or graph needs fresh exact-content authorization.
+
+A requirement-only change reuses the current Plan. Completed affected Nodes and descendants are reactivated; unfinished affected Attempts are fenced and continued after writer reconciliation. Explicitly unaffected activations may remain current through a recorded carry-forward decision binding old and new Specification versions and the evidence identity. No historical result is relabeled as if it was produced under the new revision. If no current result remains valid, ordinary Node state derivation leads to RUNNING; if all required evidence remains applicable, REVIEW can remain. A pre-start Task remains PLANNING, and an Owner-stopped Task does not resume automatically.
+
+| Operation | Guard | Effect |
+| --- | --- | --- |
+| Submit Task message | Authenticated Owner, matching Task | Persist input and queue Planner; guard acceptance/delivery admission until classified; no Task state transition |
+| Commit question reply | Current Planner/input basis | Reply and resolve that input guard; no evidence invalidation |
+| Route guidance | Current scope/basis | Persist guidance and recipient intents; any correction keeps acceptance guarded until addressed |
+| Prepare requirement proposal | Current Specification/Plan and input basis | Pending exact proposal; no effective revision change |
+| Admit authorized change | Matching receipt, no competing publication or unresolved delivery outcome | Persist settlement operation, revoke acceptance, freeze affected dispatch |
+| Publish change with sufficient graph | Settlement and basis validated | Atomically switch Specification, carry forward/invalidate evidence; derive normal state |
+| Change needs graph revision | Actual graph insufficiency | REPLAN_REQUIRED; publish Specification and confirmed Plan atomically after settlement |
+| Withdraw unpublished change | No committed publication; reconcile admitted effects | Keep prior Specification; resolve linked input only as explicitly authorized; fresh acceptance required if revoked |
+
+Required race/recovery cases: two clients confirming one proposal; new message during Planner reply/change settlement; completion racing guidance or revision; backend crash between writer stop and revision publication; lost provider supplement acknowledgement; stale Attempt completion after publication; Owner Stop during change; initial planning on an obsolete revision; Replan dismissal with an unpublished requirement proposal; terminal Task messages; acceptance/merge racing new Owner input. Assert one effective revision, no lost input, no stale evidence acceptance, no duplicate dispatch and no premature writer handoff. These are implementation gates, not claims of completed tests.
+
+### Operation guard ownership and settlement exits
+
+Acceptance and scheduling guards reference the operation that owns them; they are not a single mutable Task boolean. Resolving one operation cannot clear another's input, correction, Replan, Owner-stop or external blocker. Persist cross-references when input routes to feedback, requirement change, or guidance obligations. Terminalize the originating obligation only when its successor has durably taken responsibility or the Owner explicitly withdraws it; successor guards remain effective.
+
+An admitted change owns its settlement journal and freeze. Publication, withdrawal and cancellation serialize on that operation. Withdrawal waits for admitted workspace/provider effects to reconcile, then releases only its own freeze, keeps the previous Specification, and makes interrupted unfinished work eligible under that previous basis after old writers stop. Completed evidence invalidated by real effects is not resurrected; retain correction attention or reactivate the necessary work. Owner Stop and independent blockers still prevent dispatch. A lost Runner or uncertain remote outcome keeps settlement pending and visible; Retry reconciles, it does not abandon ownership.
+
+If a requirement change and Replan are linked, withdrawing the change does not dismiss an independently raised graph insufficiency. For a request created solely for the withdrawn proposal, the Owner resolution must explicitly include dismissal of that linked request; otherwise the UI continues to show it. Dismissal alone leaves the requirement input unresolved. Repeated resolutions return their receipts; races cannot publish and withdraw the same operation.
+
+The admitted operation advances its own expected control version transactionally as it records settlement progress. Its own version increments do not invalidate itself. External changes to relevant activation/result facts or new input require re-evaluation; unrelated heartbeat/log updates do not. A progress-only reply can commit against its captured observation without taking publication authority. This separates stale-action rejection from starvation of ordinary conversation.
+
+Guidance obligations persist separately from delivery receipts and identify source input, recipient Node/activation, eventual handling evidence or withdrawal/supersession. A Node completion settles handled obligations with completion evidence atomically. Rework/revision invalidation also invalidates reliance on that handling evidence where affected; future Attempts receive still-applicable guidance. The acceptance query checks unresolved obligations even if all Nodes currently display COMPLETED.
+
+Task cancellation revokes unpublished proposal eligibility and execution obligations, retaining their cancelled dispositions and history. System reconciliation finishes already-admitted effects before releasing their physical ownership; neither pending input nor change recovery may reopen the Task. Unanswered Owner messages can still receive terminal-Task replies under the conversation-only scope. Successful historical delivery discovered during reconciliation retains the cancellation/delivery reporting rules of module 04.
