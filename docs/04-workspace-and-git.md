@@ -81,6 +81,26 @@ Workspace Manager owns:
 Inside the returned workspace, the Runtime's native coding tools may freely read/write files, run shell commands, build, test, and search.
 
 Workspace access must respect current execution ownership. A superseded Attempt must not be allowed to finalize/integrate Workspace state after a successor Attempt has taken ownership.
+## V1 Workspace lifecycle
+
+V1 uses one Runner and keeps Task Workspace / Node worktrees local to that Runner.
+
+Create a Task Workspace lazily when the first execution step actually needs a repository. Do not create repository workspaces merely because the Execution Task entered RUNNING.
+
+For a given repository:
+
+- serial Nodes normally reuse the Task Workspace directly;
+- when Nodes must execute concurrently against the same repository, Workspace Manager creates isolated Node worktrees from the current Task Workspace base;
+- the Agent and Planner never choose whether to use a worktree;
+- a completed isolated Node is finalized and integrated back into the Task Workspace before downstream dependent work is unlocked;
+- after successful integration, the isolated worktree may be cleaned up while formal Attempt/log/history remains;
+- conflict recovery reuses the same Node identity and rebuilds a fresh worktree from the latest Task Workspace.
+
+Task Workspace remains the canonical execution/review workspace for the lifetime of the Task. REVIEW always uses the integrated Task Workspace.
+
+CANCELLED and COMPLETED are logical lifecycle outcomes, not instructions to immediately delete local Workspace data. Cleanup/retention is an infrastructure policy and may remove local Task Workspace/worktrees later when no longer needed.
+
+
 ## Serial and parallel execution
 
 Serial Nodes normally share the Task Workspace.
