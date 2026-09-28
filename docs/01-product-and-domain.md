@@ -151,3 +151,15 @@ Execution Task creation is a hard semantic/module boundary. After creation, plan
 The Todo remains independently discussable. A later Execution Task created from the same Todo starts another independent execution chain.
 
 A new Execution Task under the same Todo does not automatically ingest semantic history from older Execution Tasks. The current Project/repository reality naturally carries forward already-delivered code.
+
+## Configuration changes and execution eligibility
+
+Todo capture and Discussion may remain unassigned, but formal Task creation requires selecting an active Project in the preview. The selection is included in Owner confirmation and the immutable Task association. Start additionally requires at least one selected, available Role. A Project without Roles may therefore hold ready-to-start Tasks while the Owner configures execution.
+
+Project resources need not include a repository: non-Git work is allowed. Archived Projects retain history but reject new Task starts until restored. Archiving does not stop already-started Tasks.
+
+Resource identity is stable. Changing a remote repository creates a new resource identity rather than repointing an existing ID. Default-ref changes affect only future workspace creation; an existing Task Workspace retains its recorded base and delivery target. This bookkeeping belongs to Workspace, not Task resource bindings.
+
+Removing a resource from a Project prevents future workspace opens for that resource. If an unfinished Task already has a workspace for it, reject removal until that Task finishes or is cancelled. Likewise, removing a selected Role is rejected while an effective Plan of an unfinished Task references it. Referenced Roles cannot be permanently deleted; they may be hidden from future selection. Role instructions remain editable and later Attempts still use the latest configuration.
+
+Destructive cascade deletion first cancels execution and reconciles active workspace/delivery operations. If the Runner is unavailable or a remote operation has an unknown outcome, deletion remains pending; it must not erase the ownership and recovery records needed to finish safely.

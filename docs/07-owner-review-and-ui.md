@@ -202,14 +202,14 @@ Specification
 ...
 
 Project
-Morie / Unassigned
+Morie / Select a Project before creating
 
 [Cancel] [Continue discussing] [Create Task]
 ~~~
 
 The Owner can reread the exact title/specification that will become immutable.
 
-The preview is not a persisted Draft Task and should not introduce another domain lifecycle. It is temporary UI state.
+The preview is not a persisted Draft Task and should not introduce another domain lifecycle. It is temporary UI state reconstructed from structured proposal content on its committed Discussion message.
 
 After confirmation, the system creates the immutable Execution Task in PLANNING and replaces/inserts the preview with a confirmed inline card in the Discussion flow. Creation does not start Planner or execution automatically.
 
@@ -347,7 +347,7 @@ Board columns are user-facing organization, not a 1:1 copy of internal Task stat
 V1:
 
 ~~~text
-Planning
+Ready to start
 Running
 Review
 Done
@@ -357,7 +357,7 @@ Suggested mapping:
 
 ~~~text
 PLANNING
-→ Planning
+→ Ready to start
 
 RUNNING / BLOCKED / REPLAN_REQUIRED
 → Running
@@ -570,7 +570,7 @@ After Plan publication:
 
 - Stop cancels the current Attempt and blocks that Node until the Owner continues it;
 - Continue reactivates the same Node and normal scheduling creates a new Attempt;
-- Switch Runtime / Runner / Model / Thinking ends the current Attempt and immediately starts another for the same Node;
+- Switch Runtime / Runner / Model / Thinking ends the current Attempt and queues another for the same Node; execution waits for old writers to stop and capacity to become available;
 - Cancel Task remains a separate Task-level terminal action.
 
 Do not expose a V1 whole-Task Pause control unless a real pause lifecycle is introduced later.
@@ -617,14 +617,14 @@ No Git:
 
 Git:
 - entering REVIEW automatically prepares the delivery branch and creates/updates the GitHub PR;
-- Review shows the prepared PR, diff summary, checks/CI, and mergeability;
+- Review shows the local diff plus PR preparation progress or the prepared PR, checks/CI, and mergeability;
 - Accept & Merge → deterministic Git Delivery;
 - delivery success → COMPLETED;
 - delivery failure → remain REVIEW.
 
 There is no normal Owner-facing "Prepare PR" action.
 
-If checks are still running, Review may show them in progress. Accept & Merge may wait for required checks rather than introducing another Task state.
+If checks are still running, Review may show them in progress. Accept & Merge may wait for required checks for the exact accepted head; changed code requires renewed acceptance rather than silently applying the old decision.
 
 Request Changes keeps the Task in the same delivery lineage: work resumes, the same delivery branch / PR is updated, checks rerun, and the Task later returns to REVIEW.
 
@@ -645,3 +645,25 @@ Request Changes keeps the same Task, Task Workspace, and delivery lineage. It do
 A genuinely new requirement outside the frozen Specification goes back to Discussion and becomes a new Execution Task.
 
 Only the Owner can finally accept the Task. Agents cannot self-approve or directly perform final merge/close.
+
+## Confirmation and recovery presentation
+
+Use `Ready to start` / `待开始` for the PLANNING library column; show `Planning execution` only for RUNNING Tasks with no Plan. Preview may offer both `Create Task` and `Confirm and Start`, using the same exact-content confirmation. An unassigned preview prompts for a Project before confirmation; capture and Discussion remain available without one.
+
+Review always exposes the local integrated result, even when PR preparation failed. Show Preparing PR, Retry preparation, failed checks, and partial delivery as delivery details within REVIEW. Acceptance identifies the exact reviewed version. Changed delivery code requires renewed acceptance; never leave an old approval appearing applicable to a new head.
+
+For plain Git delivery, label the action `Accept delivered branch` and explain that branch merge is manual. For partially merged multi-repository delivery, list succeeded and remaining items separately, and offer retry remaining delivery or cancel remaining work. Do not offer ordinary Request Changes over already-delivered code.
+
+Blocked recovery accepts an optional Owner answer alongside Retry/Continue. Persist it as Task-scoped context for the next execution. Replan confirmation shows the concrete proposed changes and their effect on existing work, without exposing the DAG as required UI.
+
+## Attention and asynchronous notifications
+
+Execution Board is the canonical inbox for execution attention; no separate Activity product is needed. Surface review readiness, a missing Owner decision, exhausted execution, and delivery failure there. Multiple simultaneous blockers must remain discoverable even if a card shows only one primary attention pointer.
+
+V1 requires durable in-app notifications derived from formal events/operation failures, keyed by source identity and activation or delivery version. Replayed events do not create duplicates. Resolve a notification when its underlying condition clears; reading it only marks it read. Browser reconnect reloads current attention and unread notifications from the backend. Ordinary capacity queueing is not an alert. External email/mobile push is optional and can be added without changing lifecycle truth.
+
+## Discussion delivery and queued input
+
+Show a submitted Owner message immediately after server persistence, with a queued indicator when another turn is still active. Stream Planner text provisionally and mark the reply complete only after the atomic Discussion commit. Reconnect loads committed messages and then resumes any provisional stream; it never appends the same final reply twice.
+
+An interrupted turn offers Retry or Stop/leave pending, while later messages remain queued. A restored proposal card displays the exact structured content attached to its committed reply. Its confirmed Task link is reconstructed from the creation receipt, so a second device cannot create a duplicate Task by confirming the same proposal. Creating another independent Task requires a new explicit proposal/confirmation action.

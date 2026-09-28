@@ -18,11 +18,11 @@ Keep Runner identity explicit in the architecture so future multi-Runner support
 
 ## Runtime
 
-Runtime is a concrete Agent CLI available on a Runner, for example Codex, Claude Code, or OpenCode.
+Runtime identifies an Agent CLI integration, for example Codex, Claude Code, or OpenCode. `runtime_id` is a stable logical integration identifier, independent of a particular machine. A concrete installation is the Runtime Registry record keyed by `(runner_id, runtime_id)`, with its own executable, version, availability, and discovered model/settings facts. V1 supports one discovered installation per such pair.
 
 Runtime is not Role.
 
-The Registry should store objective facts such as executable, version, availability, runner, and last-seen information. Avoid speculative health/intelligence/cost scores.
+Execution Policy refers to the logical `runtime_id`; dispatch resolves a concrete Registry record and records its observed version in Attempt diagnostics. The Registry should store objective facts such as executable, version, availability, runner, and last-seen information. Avoid speculative health/intelligence/cost scores.
 
 ## Runtime Adapter
 
@@ -30,7 +30,7 @@ Each CLI is wrapped by a Runtime Adapter.
 
 The core system must not understand provider-specific concepts such as Codex thread IDs or Claude session internals.
 
-Session identifiers are opaque.
+Session identifiers are opaque and Runner/installation-scoped. Persist the Runner and Runtime identity with a session handle; an equal handle string on another machine is not the same session. Moving execution to another Runner starts fresh unless an explicit Adapter export/import contract is implemented.
 
 Adapter responsibilities include detect, start/resume, send, interrupt, normalize runtime events, and normalize objective errors.
 
@@ -112,9 +112,9 @@ Do not score runtimes dynamically by model intelligence, estimated speed, cost, 
 
 Planner work uses the same Execution Policy resolver and ordered fallback behavior as Node execution. If a Planner Runtime actually starts and fails with an objective reason such as quota exhaustion, that Attempt ends accordingly and the next configured fallback may be tried.
 
-An unavailable target discovered before execution starts does not create an Attempt; the resolver simply evaluates the next target.
+A target found unavailable during initial policy resolution is skipped without creating an Attempt. If a target becomes unavailable after a QUEUED Attempt already exists, terminalize that queued record with the factual pre-start reason before resolving a successor; do not silently rewrite its selected target.
 
-Planner availability must not become a dependency of ordinary scheduling after a Plan has been published. Orchestrator continues to unlock and schedule Nodes from an existing Plan without consulting Planner. Planner is required again only for new initial planning or Replan.
+Planner availability must not become a dependency of ordinary scheduling after a Plan has been published. Orchestrator continues to unlock and schedule Nodes from an existing Plan without consulting Planner. Planner is required again only for new initial planning, Replan, or Owner review-feedback routing.
 
 If all Planner targets are unavailable during initial planning, the Task remains RUNNING with no Plan and Owner-facing attention. If all Planner targets are unavailable during Replan, the Task remains REPLAN_REQUIRED. Do not add PLANNER_FAILED or PLANNER_RETRYING Task states.
 
@@ -135,9 +135,9 @@ Runner
 - max_concurrent_attempts
 ~~~
 
-Current utilization is derived from Attempts actually RUNNING on that Runner. Do not persist separate authoritative `active_attempts` or `available_slots` counters when they can be rebuilt from Attempt facts.
+Current utilization is derived from RUNNING Attempts and unresolved process-termination reservations on that Runner. Do not persist separate authoritative `active_attempts` or `available_slots` counters when they can be rebuilt from Attempt facts.
 
-V1 treats one RUNNING Attempt as one execution slot. Do not introduce CPU/memory/model-weight scoring or predicted work cost.
+V1 treats one RUNNING Attempt, or its unresolved process-termination reservation, as one execution slot. Do not introduce CPU/memory/model-weight scoring or predicted work cost.
 
 Planner and Node Attempts share the same Runner capacity. Do not create separate Planner pools, reserved Planner machines, or reserved control-plane slots.
 
@@ -201,7 +201,7 @@ Every state-mutating Tool Protocol call from Planner/Agent execution must carry 
 
 This prevents a recovered old Runner from publishing a Plan, completing a Node, publishing an Artifact, or requesting lifecycle changes after a newer Attempt has taken ownership.
 
-The lock granularity is the execution owner, not the whole Execution Task. Independent Nodes in the same Task may legitimately run on different Runners at the same time.
+The execution claim granularity is the execution owner, not the whole Execution Task. Future independent Nodes may run on different Runners only after Workspace supports the required materialization and integration guarantees. An owner-level claim alone does not make a Node portable; the placement restrictions below still apply.
 
 ### Runner loss in V1
 
@@ -245,7 +245,7 @@ While `status = RUNNING` and `current_plan_id = null`, the Task is in initial pl
 
 Initial planning is complete only when `publish_execution_plan()` succeeds and `current_plan_id` is set. A Planner Attempt ending successfully at the Runtime/process level is not sufficient by itself.
 
-Planner Runtime fallback is automatic according to Planner Execution Policy. A target discovered unavailable before Runtime execution starts is skipped without creating an Attempt. If a Runtime actually starts and then fails, record that Attempt and continue through configured fallbacks when allowed.
+Planner Runtime fallback is automatic according to Planner Execution Policy. A target discovered unavailable before Attempt creation is skipped; an already-queued Attempt that becomes unavailable is terminalized with a pre-start reason before choosing a successor. If a Runtime actually starts and then fails, record that Attempt and continue through configured fallbacks when allowed.
 
 If all Planner targets fail or are unavailable, keep the Task RUNNING with `current_plan_id = null` and surface Owner-facing attention. Do not add planner-specific Task states.
 
@@ -279,10 +279,10 @@ Task status is derived from the effective Plan:
 
 - if any Node is RUNNING, or runnable work exists, Task is RUNNING;
 - if no Node is running/runnable and at least one required Node is BLOCKED, Task is BLOCKED;
-- if an unresolved Replan request exists, Task is REPLAN_REQUIRED and no new Nodes are scheduled;
-- if all required Nodes in the current effective Plan are COMPLETED, execution work is finished and the system prepares delivery/review.
+- if an unresolved Replan request or review-feedback routing freeze exists, Task is REPLAN_REQUIRED and no new Nodes are scheduled; this takes precedence over ordinary RUNNING/BLOCKED derivation;
+- if all required Nodes in the current effective Plan are COMPLETED and local workspace operations have settled, execution work is finished and Task enters REVIEW while remote preparation proceeds.
 
-When all required Nodes are complete, Planner is not asked whether the Task is done. The system deterministically finalizes the Task Workspace, prepares delivery where applicable, and moves the Task to REVIEW.
+When all required Nodes are complete and workspace operations have settled, Planner is not asked whether the Task is done. The system moves the Task to REVIEW with the integrated local result and starts delivery preparation where applicable. Remote preparation failure leaves the Task in REVIEW with an actionable delivery error.
 
 ### Rework invalidation
 
@@ -325,20 +325,22 @@ Keep blocker semantics lightweight. `block_node(reason)` carries a human-readabl
 
 ### Replan recovery
 
-REPLAN_REQUIRED is cleared by publishing a new confirmed Plan revision. Do not add a separate Resume Task action.
+An Agent-requested REPLAN_REQUIRED is cleared by publishing a new confirmed Plan revision. A review-feedback routing freeze may also be cleared by authorized Rework as defined in Planner & Planning. Do not add a separate Resume Task action.
 
 The recovery path is:
 
 ~~~text
 request_replan(reason)
 → Task REPLAN_REQUIRED
-→ Owner confirms Replan
-→ Execution Task Planner publishes new Plan revision
+→ running work and local operations settle
+→ Execution Task Planner prepares a replacement graph
+→ Owner confirms the concrete proposal
+→ system publishes the confirmed Plan revision
 → current_plan_id changes
 → Orchestrator recalculates runnable Nodes
 ~~~
 
-If the Owner does not want to proceed with a requested Replan, the system must not silently clear the request and continue the old Plan as though it were still valid. The Owner may cancel the Task or provide further direction that results in a new planning decision.
+If the Owner rejects the proposed Replan, retain the scheduling freeze and allow revised planning; the system must not silently clear the request and continue the old Plan as though it were still valid. The Owner may cancel the Task or provide further direction that results in a new planning decision.
 
 
 ## Session boundaries
@@ -465,10 +467,62 @@ V1 does not need a separate whole-Task pause lifecycle. If whole-Task pause is l
 
 Switch Runtime / Runner / Model / Thinking is Node-scoped and keeps the same Node and Plan.
 
-End the current Attempt (for example CANCELLED with `OWNER_SWITCHED_RUNTIME`) and immediately create a new Attempt using the explicit target. Node remains RUNNING throughout the handoff.
+First validate the proposed target against Runtime compatibility and Workspace locality. Reject unsupported Runner movement before stopping the current Attempt. For an eligible target, end the current Attempt (for example CANCELLED with `OWNER_SWITCHED_RUNTIME`) and create a queued Attempt using the explicit target. Dispatch waits for old writers to stop and capacity to become available. Node remains RUNNING throughout the handoff.
 
 Any change to Runtime, Runner, Model, or Thinking creates a new Attempt so each Attempt has one stable concrete execution target.
 
 Switching Runtime creates a fresh Runtime Session. Do not transfer an opaque provider Session across runtimes. Preserve the same Node Workspace state so the new Runtime can continue from the actual code/files already produced.
 
 Automatic fallback and manual switching share the same execution path after target selection: new Attempt, current formal context, existing Node Workspace, Runtime Adapter start/resume rules.
+
+## Exhaustion, incomplete execution, and bounded recovery
+
+If a Node Attempt exits without a successful lifecycle command, process success alone never completes the Node. An admitted completion operation takes precedence: settle that operation before interpreting process exit or considering fallback. Record the actual Attempt outcome and surface the missing formal outcome. An objective Runtime failure may advance through ordered fallback targets once; an otherwise successful exit without a lifecycle command blocks the Node for Owner Retry.
+
+If no allowed target remains, Orchestrator sets the Node BLOCKED with the factual failure reference. This is a system operation, not an Agent `block_node` call. Retry resolves current policy and returns the same Node to PENDING. Healthy capacity waiting remains QUEUED and does not consume retry budget.
+
+Automatic recovery must be bounded. V1 permits one pass through an ordered fallback list per activation/retry and at most one automatic retry after an integration conflict; repeated conflicts block the Node for Owner action. Automatic Agent-requested Rework is limited to three requests per Task between explicit Owner Rework-limit resets, after which the requester is blocked with the proposed request preserved for review. These are deterministic safety limits, not runtime scoring or silence timeouts.
+
+Claiming a Runner slot and claiming the Attempt owner must happen in one serialized database transaction, including the capacity check. Independent owner claims must not oversubscribe a Runner. Dispatch/start commands carry stable IDs so Runner reconnect or redelivery does not spawn duplicate processes. Node RUNNING includes a queued Attempt already admitted for that Node.
+
+Logical cancellation revokes tool authority immediately, but does not establish that a process stopped. Runner must terminate or isolate the entire process tree before reusing its writable workspace or releasing its execution slot. Until acknowledged, the cancellation/cleanup operation remains unresolved and its slot remains reserved; utilization counts unresolved process ownership as well as RUNNING Attempts. No new execution may write the same workspace merely because the old Attempt is terminal in the database.
+
+## Activation and invalidation ordering
+
+A Node has a monotonically increasing activation generation. Rework advances it for the target and every descendant, invalidates their current outputs, revokes their queued/running Attempts, and records the reason in one database transaction. Fallback and ordinary retries stay in the same activation; Attempt fencing remains a separate execution-ownership generation.
+
+Do not dispatch replacement work until affected process trees are stopped and pending workspace operations are reconciled. Completion and invalidation serialize admission against the same Task orchestration version. If completion already settled, invalidate its evidence; if invalidation wins, reject a new completion. An already-admitted local operation must still reconcile any in-flight side effects under the cancellation/invalidation ordering contract in State & Formal Data. Rework also revokes pending delivery acceptance.
+
+At most one formal workspace completion operation per Node activation may succeed. A frozen completion already in recovery is reconciled before deciding to rerun Agent work.
+
+A recoverable completion operation keeps its Node RUNNING with a recovery indicator, even after its Runtime has stopped. On unrecoverable finalization failure, block the Node with the operation reference. Retry first reconciles any partial integration and then either finishes the same operation or starts a new Attempt; it never reruns against an unresolved partial workspace. Successful system-directed process termination for completion is not a Runtime failure that triggers fallback.
+
+## Session compatibility is checked before resume
+
+A Runtime session is an optimization over canonical context. Same Runtime and owner alone do not establish compatibility. Context Builder records an Attempt context fingerprint covering Project association/context, Role instructions or Planner guidance, fixed protocol version, effective Plan/activation where applicable, relevant formal inputs, and workspace lineage. This is execution metadata, not a Role revision or Plan snapshot.
+
+Resume only if the Adapter can inject the current authoritative context without retaining conflicting old instructions or stale workspace assumptions. If a fingerprint change cannot be reconciled by a documented Adapter capability, start a fresh session. Project reassignment, Runtime switching after intervening work, and incompatible workspace lineage always start fresh sessions. A fresh session must not lose committed Discussion replies, review feedback, blocker answers, or current completion evidence.
+
+Planner Attempts that commit Discussion, publish the initial Plan, prepare a Replan proposal, or apply review Rework have achieved their phase-specific formal outcome. Persist that outcome before releasing their owner claim. A subsequent process exit cannot schedule fallback for an already-committed phase. If exit occurs without the phase's outcome, leave the enclosing turn/Task operation retryable with attention; never infer an outcome from text.
+
+Runner directly starts the Owner-installed host CLI under its configured execution account, using existing CLI authentication. Runtime processes start in assigned scratch space before a repository is opened. `open_workspace` lazily materializes and returns the assigned host directory or Git worktree; it does not migrate or restart the Runtime process. Native permission/sandbox settings, where supported, must permit those assigned paths. Scratch files are not formal outputs unless published or included in finalized workspace results. Container execution and execution images are not V1 requirements.
+
+## Control service and Runner boundary
+
+The backend control service owns canonical Task/Node/Attempt claims, command receipts, dispatch intent, and delivery authorization in the primary database. Runner owns operating-system processes, local workspace materializations, and a durable journal of local effects. It reports facts through authenticated service interfaces; it never needs direct database access or permission to advance Task/Node lifecycle itself. Co-location in V1 must not introduce direct process handles or filesystem paths into the control service's domain APIs.
+
+Dispatch contains stable IDs, the concrete Runner and its current authenticated connection incarnation, Attempt owner/fencing, resolved target, and versioned context references. A Runner verifies that a dispatch is still authorized before starting it. Delayed Start whose authority has already been revoked must be rejected even if the same command was once valid. If cancellation races after start authorization but before process acknowledgement, treat the start as potentially in flight, retain the process reservation, and reconcile/terminate it; do not claim the process never started. The local supervisor serializes Start/Stop for a dispatch identity and retains a cancellation tombstone so a later replay cannot restart it. Duplicate dispatch reconciles the existing supervised process or returns the recorded outcome, rather than spawning again.
+
+Runner identity survives ordinary daemon restart. Its connection incarnation changes on reconnect/re-registration to fence old daemon control channels; this is distinct from Node activation and Attempt fencing. Reconnect must reconcile already-running supervised processes before accepting new starts. A PID alone is not process identity: use dispatch/Attempt identity plus a supervisor handle or process birth identity to avoid PID reuse. The implementation must close the crash window between process creation and acknowledgement through discoverable supervision and durable start intent. If it cannot establish whether a process exists, hold the claim and expose recovery rather than starting a duplicate.
+
+When the control connection is lost, an already-running Runtime may continue local computation, but no new dispatch or formal lifecycle mutation is authorized offline. The Runner may spool log data and perform safe process termination; accepted system operations reconcile by operation identity on reconnect. Do not queue unaccepted Agent mutations and later apply them as if the old authority were still current. Agent tool calls report unavailable/retryable control access until their current claim can be checked.
+
+## Placement includes workspace locality
+
+A compatible placement must satisfy Runtime/settings support, explicit Runner pin, required execution isolation, and access to the existing workspace lineage, as well as capacity. Capacity-full is ordinary queueing only after these compatibility constraints pass. A healthy CLI on another machine is not a usable fallback if the work exists only on the original Runner.
+
+V1 resolves to its sole Runner. The first future multi-Runner milestone places different Tasks on different Runners while keeping all Node execution and repository work for a given Task on one workspace host. Reserve this host atomically before the first Node dispatch, even though repository materialization remains lazy. Store that reservation as Workspace infrastructure metadata, not in the immutable Task Specification or a Task resource binding. All repository workspaces subsequently opened by the Task use that host. Task/Todo Planner work without repository access may execute elsewhere using canonical context and fresh sessions.
+
+A pinned target incompatible with the existing host is unavailable for that work. Ordered fallback may choose a compatible Runtime on the same host; it must not silently clone a repository elsewhere and lose private edits or unpushed integrated commits. With no compatible target, surface a locality/availability reason. Owner target switching obeys the same rule and must fail before stopping a healthy current execution when transfer is unsupported.
+
+Reserve separate future milestones for (1) multiple Runners serving separate Tasks, (2) explicit quiescent workspace transfer, and (3) same-Task execution across Runners. They do not require new Task/Node states, but each requires its own Workspace transport and failure-recovery implementation before enabling the scheduler behavior. Cross-Runner failover is never inferred solely from heartbeat timeout.

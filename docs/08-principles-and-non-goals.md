@@ -109,3 +109,23 @@ Execution Log contains raw operation history.
 Workspace-internal coding is Runtime-native.
 
 Workspace-external formal state changes go through MonoLab tools.
+
+### Valid result is not retained history
+
+Rework preserves history and integrated code, but invalidates current output evidence for the affected Node activations. Only valid completed activations in the effective Plan contribute current acceptance evidence.
+
+### Logical fencing is not process isolation
+
+Attempt fencing protects formal commands. Workspace handoff also requires stopping or isolating old writers. A terminal database record alone does not prove that filesystem mutation has stopped.
+
+### Acceptance is version-specific
+
+Owner confirmation is enforced by the command backend and binds the exact proposed Task, Plan, or delivery result. Changed content cannot inherit approval. Multi-repository delivery may partially succeed and must never be presented as atomic.
+
+### One deployed Runner is not a singleton domain
+
+Stage A/V1 deployment limits do not change data cardinality or module contracts. Runtime policy uses logical integration IDs; process and workspace locations are Runner-scoped infrastructure. Multiple Runners first serve separate Tasks; same-Task distribution requires explicit workspace transport and ownership guarantees.
+
+### Completion evidence is revision-specific
+
+Preserving code, completing work, validating the combined result, and Owner acceptance are distinct facts. Test evidence records the actual input/result revision and cannot automatically validate later integrated code.

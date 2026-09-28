@@ -26,3 +26,7 @@ The product is developer-first, but the execution model is intentionally generic
 Start with [ARCHITECTURE.md](ARCHITECTURE.md).
 
 Detailed modules live under [docs/](docs/README.md).
+
+## Technology
+
+React/Vite/TypeScript Web, Fastify/Node.js TypeScript backend, PostgreSQL with Drizzle/SQL, and a separate Go Runner on Linux directly invoking Owner-installed host Agent CLIs. See [Technology & Deployment](docs/11-technology-and-deployment.md) for the accepted implementation baseline.

@@ -175,7 +175,7 @@ Planner may suggest that the requirement is ready to execute.
 
 When the Owner expresses clear execution intent, Planner must first prepare a lightweight Execution Task preview containing the proposed title and Markdown specification.
 
-The preview is transient UI state, not a persisted domain object and not yet an Execution Task.
+The preview card is transient UI state, reconstructed from structured proposal content on a committed Discussion message. It is not a persisted Draft Task domain object and not yet an Execution Task.
 
 The Owner must be able to reread the proposed task and either confirm it, revise the Discussion, or cancel.
 
@@ -310,7 +310,7 @@ The real DAG is an internal scheduling/debugging structure. It is not normal Own
 
 Plans are immutable.
 
-A Replan creates a new complete Plan revision and switches `current_plan_id`. Old plans remain as history.
+A Replan creates a new complete Plan revision and atomically switches `current_plan_id`. Old plans remain as history. Stable Task-owned Node identities may be referenced by multiple revisions; each revision owns immutable membership and Node definitions, not a copied mutable Node lifecycle.
 
 Replan is required when collaboration structure changes, for example adding a Node, removing a not-yet-started Node, changing dependencies, turning future work from serial to parallel, or replacing future Role assignments.
 
@@ -321,3 +321,35 @@ Runtime switching is not Replan. Rework of an existing Node is not Replan.
 Replan should preserve valid existing work and change only what is necessary for the future, even though the stored result is a complete new immutable Plan revision.
 
 V1 requires Owner confirmation before a requested Replan is published.
+
+### Replan publication contract
+
+V1 uses a quiescent publication boundary. An unresolved Replan request freezes new Node dispatch, cancels queued Node Attempts and returns their Nodes to PENDING, and lets already-running Nodes finish or be explicitly stopped. Initial Replan generation starts only after those Attempts and their workspace completion operations have settled. A running Node that cannot finish requires Owner Stop; silence alone is not grounds for stopping it.
+
+Planner proposes a complete replacement graph against an explicit current Plan revision and Task control version, with the formal event sequence recorded for provenance. Owner confirms the proposed graph through a human-readable change summary. Publication uses compare-and-set against that basis; changed control facts or edited proposal invalidates confirmation and requires a refreshed proposal. Confirmation to begin planning is not approval of an unseen graph. The prepared graph is retained as an infrastructure operation payload until confirmation or cancellation; it is not a new mutable Plan lifecycle. An authenticated Owner confirmation may publish through the same validated command without restarting the Planner that produced the proposal.
+
+Retain a Node ID only when its goal, Role ID, dependencies, hard requirements, consumes, and expected outputs are unchanged. Its current activation and valid result then carry forward. Changed work receives a new Node ID. A changed dependency therefore also requires new identities for affected downstream work. Removed Nodes remain historical and cannot execute or integrate into the new effective Plan.
+
+Validate before publication: a nonempty acyclic graph, unique Node IDs, all dependencies within the graph, valid Project-selected Roles, and no dangling output references. V1 treats every graph member as required; there is no optional-Node scheduling mode. `hard_requirements` are human-readable objective constraints for the Agent, not an additional hidden scheduler predicate. Old Artifacts may be cited explicitly as historical context, but never implicitly treated as current evidence.
+
+### Review feedback planning
+
+Request Changes records Owner feedback and revokes any pending delivery acceptance. The Task enters REPLAN_REQUIRED as a temporary scheduling freeze while the Execution Task Planner routes feedback; this does not itself require a new Plan revision.
+
+The Planner may propose either Rework of existing Node(s), or a changed Plan. For Rework, the Owner's Request Changes authorizes applying the proposed existing-Node targets through the system command boundary; this clears the review-routing freeze and resumes normal scheduling. For a changed Plan, use the proposal confirmation and publication contract above. A normal Agent-requested Replan can only be cleared by confirmed Plan publication, not by this review-feedback exception.
+
+Planner has a task-scoped Rework command for review routing. The Node Agent's upstream-only `request_rework` rule remains unchanged. Feedback and any blocker answer are persisted as Task-scoped Owner decisions and included in the next relevant Attempt; they must not rely on Todo Discussion or opaque Runtime session memory.
+
+## Discussion turns and durable semantic output
+
+Owner messages are persisted before scheduling Planner work, with a client request ID and a monotonic Todo message sequence. V1 processes one Discussion turn at a time per Todo. Messages received during an active turn remain queued in message order; they do not silently change the input of that turn. The UI distinguishes queued input from input already being answered. Owner Stop can interrupt the current turn, but does not delete the submitted messages.
+
+Each turn has a stable source message ID, input message watermark, and Project-context reference. These are Todo message-processing fields, not a separate PlannerInvocation domain. Fallback Attempts handle the same source turn. A completed turn advances the processed Owner-message watermark exactly once. Its context includes committed earlier replies and Owner input only through its source message, even if later messages are already stored. Later turns then consume their own queued input in order. Reply messages retain the source message ID so append order cannot confuse which message they answer.
+
+Planner commits a Discussion turn through `commit_discussion_turn(reply, working_requirement_state, task_preview?)`. The command atomically stores the final assistant message, its updated requirement state and source watermark. If a Task preview is present, its exact title/specification/Project payload is attached to that immutable message as structured content so a reconnect can render it again. The preview card remains transient presentation, with no Draft Task ID or lifecycle. Task creation still requires a separate exact-content Owner receipt.
+
+Streamed text is provisional until that commit succeeds. Incomplete output and provider transcripts remain Attempt logs; they are not final Discussion messages and do not overwrite Working Requirement State. If the Runtime exits without committing, show an interrupted/retry turn and retain subsequent queued messages; do not skip the failed input and answer later messages out of order. After a successful commit, a lost response or later Runtime exit must not trigger a duplicate reply via fallback.
+
+`update_working_requirement_state` remains available for explicit cache rebuilding, with compare-and-set against the committed Discussion watermark. Normal turns use the atomic commit command. Rebuilding from the same canonical history never rewrites original messages or Owner decisions.
+
+If the Todo moves Projects during an active turn, preserve its eventual reply with the Project attribution it used, but do not install its old-Project requirement state as the current cache. A subsequent Planner turn rebuilds understanding for the new Project. Old previews require a refreshed proposal before creation under a different Project. No automatic model invocation is required merely because the Project changed.

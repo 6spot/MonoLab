@@ -2,6 +2,12 @@
 
 This file is the architecture map. Detailed rules live in the linked modules.
 
+## Selected implementation stack
+
+React/Vite/TypeScript Web → Fastify/Node.js TypeScript modular monolith → PostgreSQL (Drizzle/SQL). A separate Go Runner on Linux directly invokes Owner-installed/authenticated host Agent CLIs and supervises their processes and system Git operations. Web uses HTTPS/SSE; Runner initiates a versioned authenticated WSS connection; Agent tools use scoped HTTPS commands. PostgreSQL outbox workers handle durable background work.
+
+Initial deployment is one Linux host with backend/database in Docker Compose and a systemd-managed Go daemon. Adding Runners preserves this service boundary. See [Technology & Deployment](docs/11-technology-and-deployment.md) for ownership, repository layout, credentials and the local SQLite infrastructure journal.
+
 ## Product flow
 
 ```text
@@ -152,3 +158,40 @@ UI reads canonical records plus rebuildable projections; it must not become anot
 - [06 State & Formal Data](docs/06-state-and-formal-data.md)
 - [07 Owner Review & UI](docs/07-owner-review-and-ui.md)
 - [08 Principles & Non-goals](docs/08-principles-and-non-goals.md)
+
+## Execution consistency contracts
+
+- Plan revisions own immutable graph membership; stable Task-owned Nodes carry mutable lifecycle and activation generations.
+- Rework invalidates current evidence while retaining history and correcting the existing integrated code.
+- Replan publication waits for running work and workspace operations to settle, then atomically switches a confirmed graph.
+- Workspace ownership includes physical writer isolation; Git/database completion uses recoverable, idempotent operations.
+- REVIEW exposes the integrated local result even when remote PR preparation fails.
+- Owner confirmations bind exact content/results and are enforced by command authorization. Delivery may partially succeed across repositories.
+
+The detailed contracts and transition table live in modules 02–06; they do not introduce new Task states or Agent-authored recovery checkpoints.
+
+## First implementation milestone
+
+[First Executable Slice](docs/09-first-executable-slice.md) defines the single-Runner, single-repository, single-Node loop to implement and verify first, followed by the remaining V1 capabilities. It is a delivery sequence, not a replacement domain model.
+
+## Deployment and extension boundary
+
+```text
+Web / Mobile
+    ↓ authenticated commands and reads
+Backend control service + primary database
+    ├─ domain records / orchestration / authorization
+    ├─ delivery coordination and provider adapter
+    └─ versioned dispatch / commands / events
+          ↓
+        Runner instance(s)
+          ├─ local Runtime installations / supervised processes
+          ├─ workspace materializations / local operation journal
+          └─ scoped Agent tool calls back to control service
+```
+
+V1 deploys one Runner; the same serializable service boundary applies when co-located. Runtime installation, process, workspace location, and session handles are Runner-scoped. Core Task/Plan/Node identity is location-independent. The control service never reads a Runner path as though it were local.
+
+Expansion order: multiple Runners serving separate Tasks → explicit quiescent workspace transfer → same-Task distributed Nodes. Scheduling across machines requires workspace locality/transport guarantees, not merely free capacity and `runner_id`. See [Runtime & Execution](docs/03-runtime-and-execution.md) and [Workspace & Git](docs/04-workspace-and-git.md) for the owning contracts.
+
+[Architecture Readiness](docs/10-architecture-readiness.md) lists the current extension checks and implementation gates; it does not replace those contracts.
