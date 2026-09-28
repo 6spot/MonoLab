@@ -632,7 +632,15 @@ For multi-repository Tasks, Review may show multiple delivery items/PRs under on
 
 Git Delivery has its own operation state. Do not expand Task states with MERGING/MERGED/etc.
 
-Request Changes means improving the current result to satisfy the existing immutable Specification. It may cause Rework or a new Plan revision.
+Request Changes means improving the current result to satisfy the existing immutable Specification.
+
+The Owner should provide human-readable review feedback rather than being required to choose a Node or understand the internal DAG.
+
+Execution Task Planner receives the frozen Specification, current Plan/formal execution state, review feedback, relevant completion summaries/Artifacts, and current Project Context, then decides whether the feedback can be handled by Rework of existing Node(s) or requires Replan.
+
+Use Rework when the current collaboration structure remains sufficient. Use Replan only when the future collaboration structure must change.
+
+Request Changes keeps the same Task, Task Workspace, and delivery lineage. It does not create a new Execution Task unless the Owner is actually introducing scope outside the frozen Specification.
 
 A genuinely new requirement outside the frozen Specification goes back to Discussion and becomes a new Execution Task.
 
