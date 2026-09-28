@@ -6,6 +6,7 @@
 
 A natural-language statement is never a formal state transition.
 
+Every state-mutating Tool Protocol request originating from a Runtime execution is bound to its Attempt and current fencing generation. The backend must reject mutations from a stale, terminal, or superseded Attempt even if an old Runner later reconnects.
 The system protocol is fixed, small, and cannot be overridden by Role instructions.
 
 ## Boundary
@@ -129,6 +130,7 @@ On success the system should, as one reliable boundary:
 
 The operation should be idempotent.
 
+It must also verify execution ownership/fencing before finalizing workspace state or mutating Node state. A superseded Attempt cannot complete a Node.
 If workspace finalization fails, Node must not already be marked COMPLETED.
 
 `complete_node()` does not judge whether work is semantically correct.
