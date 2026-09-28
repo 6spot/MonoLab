@@ -1,38 +1,19 @@
-# Backend Development Guidelines
+# Backend Development
 
-> Best practices for backend development in this project.
+Status: architecture-backed baseline; no product backend exists yet. See [root](../index.md) and [technology](../../../docs/11-technology-and-deployment.md).
 
----
+## Pre-Development Checklist
 
-## Overview
+- Read [directory structure](directory-structure.md) for ownership.
+- For commands/persistence, read [database](database-guidelines.md), [errors](error-handling.md) and [protocol](../protocol/commands.md).
+- For acceptance/messages/provider effects, read [delivery contracts](delivery-contracts.md).
+- Read [logging](logging-guidelines.md) and [quality](quality-guidelines.md) before workers.
+- Linux effects require [Runner](../runner/index.md); UI requires [Frontend](../frontend/index.md).
 
-This directory contains guidelines for backend development. Fill in each file with your project's specific conventions.
+## Quality Check
 
----
-
-## Guidelines Index
-
-| Guide | Description | Status |
-|-------|-------------|--------|
-| [Directory Structure](./directory-structure.md) | Module organization and file layout | To fill |
-| [Database Guidelines](./database-guidelines.md) | ORM patterns, queries, migrations | To fill |
-| [Error Handling](./error-handling.md) | Error types, handling strategies | To fill |
-| [Quality Guidelines](./quality-guidelines.md) | Code standards, forbidden patterns | To fill |
-| [Logging Guidelines](./logging-guidelines.md) | Structured logging, log levels | To fill |
-
----
-
-## How to Fill These Guidelines
-
-For each guideline file:
-
-1. Document your project's **actual conventions** (not ideals)
-2. Include **code examples** from your codebase
-3. List **forbidden patterns** and why
-4. Add **common mistakes** your team has made
-
-The goal is to help AI assistants and new team members understand how YOUR project works.
-
----
-
-**Language**: All documentation should be written in **English**.
+- State, receipts and outbox commit atomically; external effects run outside transactions.
+- Database and host/provider ownership prevent duplicate effects.
+- Later chat cannot block a frozen accepted delivery batch.
+- Rejected commands, admitted recovery and objective Runtime failures remain distinct.
+- Run established affected checks and report unverified external assumptions.

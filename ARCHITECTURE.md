@@ -4,7 +4,7 @@ This file is the architecture map. Detailed rules live in the linked modules.
 
 ## Selected implementation stack
 
-React/Vite/TypeScript Web → Fastify/Node.js TypeScript modular monolith → PostgreSQL (Drizzle/SQL). A separate Go Runner on Linux directly invokes Owner-installed/authenticated host Agent CLIs and supervises their processes and system Git operations. Web uses HTTPS/SSE; Runner initiates a versioned authenticated WSS connection; Agent tools use scoped HTTPS commands through a per-Attempt tool bridge (MCP by default). PostgreSQL outbox workers handle durable background work.
+React/Vite/TypeScript Web → Fastify/Node.js TypeScript modular monolith → PostgreSQL (Drizzle/SQL). A separate Go Runner on Linux directly invokes Owner-installed/authenticated host Agent CLIs and supervises their processes and system Git operations. Web uses HTTPS/SSE; Runner initiates a versioned authenticated WSS connection; Agents invoke the bundled `monolab` CLI, which sends Attempt-scoped HTTPS commands through the Tool Protocol. No MCP bridge installation or registration is required. PostgreSQL outbox workers handle durable background work.
 
 Initial deployment is one Linux host with backend/database in Docker Compose and a systemd-managed Go daemon. Adding Runners preserves this service boundary. See [Technology & Deployment](docs/11-technology-and-deployment.md) for ownership, repository layout, credentials and the local SQLite infrastructure journal.
 
@@ -169,6 +169,7 @@ UI reads canonical records plus rebuildable projections; it must not become anot
 - Workspace ownership includes physical writer isolation; Git/database completion uses recoverable, idempotent operations.
 - REVIEW exposes the integrated local result even when remote PR preparation fails.
 - Owner confirmations bind exact content/results and are enforced by command authorization. Delivery may partially succeed across repositories.
+- Owner acceptance freezes a delivery batch and its input cutoff. Later chat remains available without blocking that batch; subsequent implementation uses an independent Task after delivery. Explicit correction/cancellation obeys delivery guards.
 - Delivery exports the exact result tree with controlled public ancestry, scans the actual candidate publication range, and never rewrites already-pushed delivery history. Private execution commits stay internal.
 - Owner-blocking control waits — planning issues, review feedback, Replan requests — have explicit Owner exits besides Cancel.
 

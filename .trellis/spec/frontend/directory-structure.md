@@ -1,54 +1,30 @@
-# Directory Structure
+# Frontend Structure
 
-> How frontend code is organized in this project.
+Sources: [layout](../../../docs/11-technology-and-deployment.md), [information architecture](../../../docs/07-owner-review-and-ui.md).
 
----
+## Destination and ownership
 
-## Overview
+Web belongs in future `apps/web`: a React/Vite TypeScript SPA served by the backend under the same origin. It consumes API contracts from `packages/protocol`, never `packages/db`, server secrets or Runner filesystem paths.
 
-<!--
-Document your project's frontend directory structure here.
+Suggested internal organization for scaffolding, not existing paths:
 
-Questions to answer:
-- Where do components live?
-- How are features/modules organized?
-- Where are shared utilities?
-- How are assets organized?
--->
-
-(To be filled by the team)
-
----
-
-## Directory Layout
-
-```
-<!-- Replace with your actual structure -->
-src/
-├── ...
-└── ...
+```text
+apps/web/src/
+  app/             # providers, navigation, route composition
+  features/        # todos, tasks, projects, settings
+  components/ui/   # owned shadcn Base UI source
+  lib/             # API/stream adapters and genuinely shared utilities
 ```
 
----
+Choose route/file conventions during scaffolding; add actual references here. Keep feature queries, local components and behavior together. Extract shared components only for stable repeated contracts.
 
-## Module Organization
+## Product surfaces
 
-<!-- How should new features be organized? -->
+Todo list + selected Discussion remain one desktop workspace, responsive to small screens. Execution Board owns execution attention. Task detail separates Conversation, Overview, Timeline and diagnostics. Settings owns Roles/Planner/Runtime configuration. Do not add a duplicate Activity dashboard, a normal-user DAG or a business Team layer.
 
-(To be filled by the team)
+## Dependency rules
 
----
+Use shadcn with Base UI and Tailwind. Add only necessary components and inspect generated changes. Do not create an empty universal design-system package before reuse warrants it. A client router or rendering library must be chosen for concrete requirements, not assumed installed by this spec.
 
-## Naming Conventions
-
-<!-- File and folder naming rules -->
-
-(To be filled by the team)
-
----
-
-## Examples
-
-<!-- Link to well-organized modules as examples -->
-
-(To be filled by the team)
+Wrong: a Task component imports a Drizzle table.
+Correct: it renders a validated API projection and invokes authenticated commands.

@@ -36,10 +36,12 @@ Adapter responsibilities include detect, start/resume, send, interrupt, normaliz
 
 - headless invocation with a structured event stream;
 - how assembled context and the fixed protocol are injected (system-prompt or instruction mechanism) without editing repository files;
-- registration of the per-Attempt Tool Protocol bridge (module 05);
+- invocation of the Runner-bundled `monolab` CLI, its Attempt-scoped credential channel, and structured command results (module 05);
 - a non-interactive permission mode and grants for the Attempt's reserved paths;
 - session capture/resume, including any launch-directory dependency;
 - whether one invocation can accept further input.
+
+Runner-to-Agent execution transport and Agent-to-MonoLab commands are separate boundaries. The Adapter uses the installed Runtime’s supported process/session interface to launch, send input, receive structured events, and stop execution. Agents invoke `monolab` to request formal platform actions; that CLI does not launch or control the coding Runtime. MCP is not required for either boundary in V1.
 
 These are verified implementation facts, not Role capabilities or a settings surface.
 
@@ -541,7 +543,7 @@ Dispatch contains stable IDs, the concrete Runner and its current authenticated 
 
 Runner identity survives ordinary daemon restart. Its connection incarnation changes on reconnect/re-registration to fence old daemon control channels; this is distinct from Node activation and Attempt fencing. Reconnect must reconcile already-running supervised processes before accepting new starts. A PID alone is not process identity: use dispatch/Attempt identity plus a supervisor handle or process birth identity to avoid PID reuse. The implementation must close the crash window between process creation and acknowledgement through discoverable supervision and durable start intent. If it cannot establish whether a process exists, hold the claim and expose recovery rather than starting a duplicate.
 
-When the control connection is lost, an already-running Runtime may continue local computation, but no new dispatch or formal lifecycle mutation is authorized offline. The Runner may spool log data and perform safe process termination; accepted system operations reconcile by operation identity on reconnect. Do not queue unaccepted Agent mutations and later apply them as if the old authority were still current. Agent tool calls report unavailable/retryable control access until their current claim can be checked.
+When the control connection is lost, an already-running Runtime may continue local computation, but no new dispatch or formal lifecycle mutation is authorized offline. The Runner may spool log data and perform safe process termination; accepted system operations reconcile by operation identity on reconnect. Do not queue unaccepted Agent mutations and later apply them as if the old authority were still current. Agent tool calls report unavailable/retryable control access until their current claim can be checked. Locally retained CLI request envelopes are recovery evidence, not an offline command queue. After reconnect, Runner queries the original receipts under its read-only recovery scope before any explicit still-authorized retry. Terminal Attempt results are recovered by Runner/backend, never by renewing the old Agent’s mutation authority (module 05).
 
 ## Placement includes workspace locality
 
@@ -566,6 +568,8 @@ Stage A guarantees queued follow-up and controlled stop-and-resume with the same
 Live steering is optional per Adapter and negotiated through fixed transport features, not a Role capability taxonomy. When implemented, it targets the expected active turn, serializes deliveries, and persists receipts. An ended/unsupported turn falls back to the durable follow-up path; never silently redirect to another active Attempt. A lost acknowledgement records uncertainty and triggers reconciliation or a visibly replayed follow-up, not a claim of exactly-once provider consumption. Live steering cannot publish a Specification revision or bypass requirement-change settlement.
 
 Task Conversation shares existing Runner capacity and task-host placement. No permanent Planner process, separate pool, or reserved machine is introduced. The UI distinguishes queued, processing, awaiting Owner, and failed operation attention. System orchestration and acceptance checks do not depend on a live Planner process.
+
+After Owner acceptance, Task Planner may run with conversation-only authority while the frozen delivery operation continues independently. It cannot dispatch guidance or change requirements, Plans or Node evidence for that batch. Later conversation queueing, failures and replies never gate its provider steps or completion. Only explicit guarded correction/cancellation or material result/authorization changes revoke delivery authority (module 04).
 
 ### Closing guidance obligations
 

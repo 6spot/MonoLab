@@ -1,39 +1,17 @@
-# Frontend Development Guidelines
+# Frontend Development
 
-> Best practices for frontend development in this project.
+Status: design baseline; no Web implementation exists. Sources: [UI](../../../docs/07-owner-review-and-ui.md), [technology](../../../docs/11-technology-and-deployment.md).
 
----
+## Pre-Development Checklist
 
-## Overview
+- [Structure](directory-structure.md): destinations and dependency boundaries.
+- [Components](component-guidelines.md): shadcn/ui + Base UI, accessibility.
+- [Hooks](hook-guidelines.md): queries, commands and stream cleanup.
+- [State](state-management.md): canonical facts versus local UI state.
+- [Types](type-safety.md): generated contracts and runtime validation.
+- [Quality](quality-guidelines.md): interaction and reconnect assertions.
+- Command changes also read [protocol](../protocol/commands.md) and [delivery](../backend/delivery-contracts.md).
 
-This directory contains guidelines for frontend development. Fill in each file with your project's specific conventions.
+## Quality Check
 
----
-
-## Guidelines Index
-
-| Guide | Description | Status |
-|-------|-------------|--------|
-| [Directory Structure](./directory-structure.md) | Module organization and file layout | To fill |
-| [Component Guidelines](./component-guidelines.md) | Component patterns, props, composition | To fill |
-| [Hook Guidelines](./hook-guidelines.md) | Custom hooks, data fetching patterns | To fill |
-| [State Management](./state-management.md) | Local state, global state, server state | To fill |
-| [Quality Guidelines](./quality-guidelines.md) | Code standards, forbidden patterns | To fill |
-| [Type Safety](./type-safety.md) | Type patterns, validation | To fill |
-
----
-
-## How to Fill These Guidelines
-
-For each guideline file:
-
-1. Document your project's **actual conventions** (not ideals)
-2. Include **code examples** from your codebase
-3. List **forbidden patterns** and why
-4. Add **common mistakes** your team has made
-
-The goal is to help AI assistants and new team members understand how YOUR project works.
-
----
-
-**Language**: All documentation should be written in **English**.
+Use one Base UI component family, add components/dependencies only as needed, preserve keyboard/focus behavior, and reflect server authorization. No optimistic formal state transitions. Later chat does not disable Retry or stall accepted delivery. Run established frontend checks once scaffolded; document unavailable checks truthfully.

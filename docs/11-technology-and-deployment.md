@@ -7,13 +7,13 @@ This is the accepted technology baseline. Modules 01–08 own domain and executi
 | Area | Selection | Responsibility |
 | --- | --- | --- |
 | Web | React, Vite, TypeScript | Responsive Owner workspace and review UI |
-| UI primitives | Tailwind CSS, Radix/shadcn/ui | Components and styling |
+| UI primitives | Tailwind CSS, shadcn/ui components added on demand, Base UI primitives | Repository-owned components and styling |
 | Server data in Web | TanStack Query | Cached reads, invalidation and reconnect refresh |
 | Backend | Node.js LTS, Fastify, TypeScript | Authenticated commands, domain services, orchestration and delivery coordination |
 | Primary database | PostgreSQL | Canonical records, claims, receipts, events, outbox and projections |
 | Database access | Drizzle with reviewed SQL migrations | Typed queries and explicit SQL where locks/transactions require it |
 | Runner | Go, independently built daemon | Runtime adapters, native process supervision, workspace effects and local recovery |
-| Agent tool bridge | MCP stdio server built with the Runner | Per-Attempt Tool Protocol access from Agent CLIs |
+| Agent command client | Go `monolab` CLI bundled with the Runner release | Attempt-scoped HTTPS Tool Protocol calls through native Agent command tools |
 | Execution host | Linux with Owner-installed/authenticated Agent CLIs | Native process execution and durable host workspace storage |
 | Git | System Git CLI invoked with structured argument arrays | Clone/fetch, worktrees, revision capture, integration and authorized push |
 | Remote delivery | GitHub App integration behind a provider adapter | Repository access, PR/checks and guarded merge |
@@ -21,6 +21,14 @@ This is the accepted technology baseline. Modules 01–08 own domain and executi
 | Tests | Vitest, Go testing/race detector, Playwright | Domain/protocol checks, Runner supervision and Owner flow verification |
 
 Use supported stable releases and pin concrete versions in lockfiles, `go.mod`, and deployment image references at scaffolding time. Do not equate the architecture decision with a commitment to an unverified package version.
+
+### Dependency policy
+
+Keep external dependencies small and justified. Prefer platform/standard-library APIs and already-selected packages when they meet the requirement. Add a package only for a concrete need, recording its purpose, why the existing stack is insufficient, runtime/transitive cost and maintenance status. A mature parser, database driver or accessible interaction primitive can justify a dependency; dependency minimization is not a reason to build an unsafe substitute. Do not preinstall libraries for hypothetical future work.
+
+Use shadcn/ui with Base UI as the frontend component baseline. Select the Base UI preset explicitly during scaffolding and retain its configuration in the Web package. Add only components required by the current slice and inspect their source/dependency changes. Keep generated component source in the Web package; do not add Radix alongside Base UI or a second full component suite for the same interaction. shadcn components may have runtime dependencies, including `@base-ui/react`; owning their source does not make them dependency-free. Forms start with native controls and local React state, server state uses the selected TanStack Query, and simple motion uses CSS. Add form, global-state, animation, date or utility packages only when actual requirements justify them. Do not add a monorepo build orchestrator, external queue or orchestration framework to the baseline.
+
+Official setup reference: [shadcn Base UI support](https://ui.shadcn.com/docs/changelog/2026-01-base-ui) and [Base UI Dialog](https://ui.shadcn.com/docs/components/base/dialog). Recheck the supported CLI syntax when scaffolding; the project chooses Base UI explicitly rather than relying on a changing CLI default.
 
 ## Runtime topology
 
@@ -47,7 +55,7 @@ Go Runner (Linux host service)
     └─ native Attempt processes
           ├─ Owner-installed Agent CLI and its existing authentication
           ├─ assigned host workspace/scratch directories
-          └─ per-Attempt MCP tool bridge → backend HTTPS Tool Protocol
+          └─ bundled monolab CLI → backend HTTPS Tool Protocol
 ```
 
 Planner is semantic Agent work executed through the same Runner/CLI infrastructure as Node work. Backend Planner code builds context and validates formal results; it does not silently replace Planner execution with an unrelated direct model API loop.
@@ -58,7 +66,7 @@ The backend and Runner are separate executable/deployment units from the first i
 
 - Web uses HTTPS JSON APIs. SSE carries persisted/provisional UI updates with resumable cursors; clients refresh authoritative state after gaps. A live connection is never lifecycle authority.
 - Runner initiates WSS to the backend, avoiding a required public inbound Runner port. RPC-style envelopes over that connection carry correlation IDs, stable operation IDs, schema versions and current ownership. Backend Workspace reads are routed through this service boundary rather than opening host paths.
-- Attempt tools call the backend HTTPS Tool Protocol with scoped credentials through the per-Attempt bridge (module 05). The default bridge is a small MCP stdio server built with the Runner and registered through each CLI's MCP configuration at launch. A CLI without MCP support may instead use a `monolab` command on PATH that implements the same contract. Either form must preserve the same authorization and idempotency behavior.
+- Agents invoke the `monolab` command on PATH through their native command-execution tools. This Go executable ships with the Runner release and sends scoped HTTPS Tool Protocol commands to the backend (module 05). Runner configures its managed path, backend address and private Unix-domain socket at launch. The existing daemon validates CLI peer process birth/boot identity and cgroup membership against dispatch ownership, persists immutable request envelopes and supplies scoped credentials (module 05); no separate package-manager install, MCP server, or MCP registration is required. Command invocation is on demand and does not add a resident service. Runtime Adapter process/session transport remains separate from this command path.
 - PostgreSQL outbox rows are committed with control transitions. Workers poll/claim bounded batches with transactional guards; notifications may wake workers but are not durable queue truth. No Redis, Kafka or Temporal is required in the baseline.
 - Keep large logs/content off the small command-response path: batch events, apply backpressure, and use authenticated HTTP transfer when needed. Runner-local spooling and acknowledged cursors remain mandatory.
 
@@ -74,7 +82,7 @@ Runner creates separate workspace/scratch directories and grants each Attempt it
 
 Use supported CLI-native permission/sandbox settings and host account permissions. Keep backend state and system delivery credentials protected under separate service identities. Native execution uses the permissions of its configured account, so MonoLab does not claim arbitrary-code containment or protection from credentials independently available to that account. A stricter sandbox can be an explicit future execution-environment option without changing Task/Node/Attempt semantics; it is not a prerequisite for using an already-installed CLI.
 
-Runner's durable journal uses local SQLite for operation metadata and filesystem spool files for logs. It is infrastructure bookkeeping, not a second database of Task/Node truth. Git objects, workspaces and journal/spool data live on durable host storage. PostgreSQL remains the canonical product/control database. Backup and disk-loss guarantees remain those in modules 04 and 06.
+Runner's durable journal uses local SQLite for operation metadata and immutable CLI request envelopes, plus filesystem spool files for logs. Request records include original attribution, schema/version guards, full payload or pinned immutable content, digest and send/receipt reconciliation facts; they contain no bearer credentials. Persist them before HTTPS submission, keep them service-private, and retain unresolved records across restart. It is infrastructure bookkeeping, not a second database of Task/Node truth. Git objects, workspaces and journal/spool data live on durable host storage. PostgreSQL remains the canonical product/control database. Backup and disk-loss guarantees remain those in modules 04 and 06.
 
 The Owner installs and authenticates coding tools on the execution host. Discovery verifies the executable and startability under the actual execution account, including its permissions and login context. MonoLab never installs those Runtimes or performs login on the Owner's behalf.
 
@@ -119,7 +127,7 @@ packages/
   db/                   # PostgreSQL schema, repositories and SQL migrations
 runner/
   cmd/monolab-runner/    # Go executable
-  cmd/monolab-bridge/    # per-Attempt MCP tool bridge
+  cmd/monolab/           # bundled Agent command client for Tool Protocol
   internal/             # transport, adapters, supervision, workspace, journal
   go.mod
 infra/
@@ -135,7 +143,7 @@ One Linux host runs PostgreSQL and the backend via Compose plus the Go host daem
 
 Adding machines installs the same Go daemon and enrolls each Runner with the backend. The backend keeps one canonical database and applies Runtime compatibility, capacity and Workspace locality checks. The first multi-Runner milestone distributes separate Tasks; workspace transfer and same-Task distributed execution remain later capabilities with their own verification gates.
 
-The first concrete host CLI/execution account, Owner sign-in mechanism and deployment domain/TLS setup are still environment-specific choices. They do not reopen the selected languages, frameworks, database or transport. Resolve them during the feasibility/setup phase before an externally accessible deployment; no public deployment may omit authentication.
+The first concrete host CLI/execution account and deployment domain/TLS setup remain environment-specific choices. Owner authentication uses the local-login baseline below. Resolve host/setup details during feasibility before an externally accessible deployment; no public deployment may omit authentication.
 
 ## Conversational Task implementation boundary
 
@@ -149,19 +157,19 @@ Ship a single-host deployment recipe with Compose configuration, reviewed migrat
 
 Bootstrap in this order:
 
-1. Create persistent backend/database and Runner/workspace locations with the documented service/execution ownership. Configure TLS ingress with an address reachable by both the host Runner and backend/browser deployment. Agent bridge callbacks use this configured backend URL, never a container's loopback address or an assumed host-path mount.
+1. Create persistent backend/database and Runner/workspace locations with the documented service/execution ownership. Configure TLS ingress with an address reachable by both the host Runner and backend/browser deployment. Agent `monolab` commands use this configured backend URL, never a container's loopback address or an assumed host-path mount.
 2. Start PostgreSQL; run migrations under one migration lock; start the backend only after compatible schema readiness. Serve a same-origin Web/API and health endpoint. SSE/WSS pass through ingress with suitable streaming/idle settings and reconnect support.
 3. Provision the sole Owner through a local administrative bootstrap command. The baseline is a local Owner login with a salted password hash and revocable server-side sessions in PostgreSQL; use Secure/HttpOnly/SameSite cookies, CSRF/origin checks and login rate limiting. Provision/reset credentials through an interactive local command, not command-line password arguments or an unauthenticated public setup route. Bootstrap is idempotent and cannot create a second Owner. This avoids making an external identity provider a V1 dependency.
 4. Enroll the Runner with a one-use, expiring token issued through the authenticated Owner or local administrative interface. Store its distinct long-lived credential in service-only storage; ordinary daemon restart retains Runner identity and gets a new connection incarnation. Revocation/rotation does not delete unresolved execution ownership records.
-5. Discover CLIs under the actual execution account, including its explicit home/login environment and executable paths. Verify non-interactive launch, tool bridge, structured output and physical Stop using that account. The Owner performs CLI login there. A login available only to an administrator's interactive shell does not satisfy this gate. The execution account also needs the project's build/test toolchains; unavailable tools produce actionable failure, not an automatic system-wide installer.
+5. Discover CLIs under the actual execution account, including its explicit home/login environment and executable paths. Verify non-interactive launch, bundled `monolab` commands, structured output and physical Stop using that account, including Planner command access with read-only repositories. The Owner performs CLI login there. A login available only to an administrator's interactive shell does not satisfy this gate. The execution account also needs the project's build/test toolchains; unavailable tools produce actionable failure, not an automatic system-wide installer.
 6. Configure Planner policy and at least one reusable Role referencing a verified Runtime. Configure GitHub App credentials/installation and Project repository/default ref/delivery settings, then select the Role for the Project. Verify scoped repository read and delivery permissions independently from CLI login. Capture/discussion can precede a runnable Project; Start reports exact missing prerequisites.
-7. Run the Stage A smoke flow against an authorized test repository. Report separate backend/schema, Runner connection/storage, CLI/tool-bridge and Git provider readiness. An HTTP health response alone never means Task execution is ready.
+7. Run the Stage A smoke flow against an authorized test repository. Report separate backend/schema, Runner connection/storage, Agent CLI/`monolab` command access and Git provider readiness. An HTTP health response alone never means Task execution is ready.
 
 Backend starts independently of Runner availability so the Owner can inspect state, cancel/withdraw and repair configuration while execution is offline. Runner reconnects with bounded backoff; startup does not require a live browser. Templates restart failed services, but process recovery follows recorded ownership rather than blindly restarting every Agent. Initial health checks must not publish or merge in arbitrary repositories.
 
 ### Privileged process launch and shared repository access
 
-The service-account daemon needs a concrete authorized path to start/supervise execution-account processes. Package a narrow local privileged launcher using fixed systemd/cgroup launch and stop operations, or an equivalently constrained systemd policy. It validates the Runner service identity, dispatch ID, fixed execution UID, reserved paths and unit ownership; it never exposes arbitrary root shell execution to the execution account or passes service secrets into the child environment. The helper is Runner infrastructure, not another orchestration service. Verify launch, freeze, kill, daemon restart and host reboot under the actual permissions before accepting the host profile.
+The service-account daemon needs a concrete authorized path to start/supervise execution-account processes. Package a narrow local privileged launcher using fixed systemd/cgroup launch and stop operations, or an equivalently constrained systemd policy. It validates the Runner service identity, dispatch ID, fixed execution UID, reserved paths and unit ownership; the execution account cannot migrate processes into another Attempt’s supervised cgroup; it never exposes arbitrary root shell execution to the execution account or passes service secrets into the child environment. The helper is Runner infrastructure, not another orchestration service. Verify launch, freeze, kill, daemon restart and host reboot under the actual permissions before accepting the host profile.
 
 Separate read-only repository cache objects from service-private credentials/journal. Grant the execution account traversal/read permission on the required cache repositories and no write permission; service Git can read finalized execution-owned objects through explicit access rules. Scoped `safe.directory` configuration is additional to filesystem permissions, not a substitute for them. Clone via Git transport (`--no-local`) across account ownership, without hardlinks or shared object alternates; do not rely on default local-clone optimizations across owners. Fetch/clone and candidate export must pass a real two-account permission test. Tokens stay outside cache config and Agent-readable files.
 

@@ -1,51 +1,36 @@
-# Quality Guidelines
+# Backend Quality Gate
 
-> Code quality standards for backend development.
+Sources: [Stage A](../../../docs/09-first-executable-slice.md), [readiness](../../../docs/10-architecture-readiness.md), [invariants](../../../docs/08-principles-and-non-goals.md).
 
----
+## Verification status
 
-## Overview
+No product manifest, migration suite or test runner exists. Vitest and PostgreSQL integration testing are selected, not executed. Scaffolding must establish actual lint/type/test/schema-generation commands.
 
-<!--
-Document your project's quality standards here.
+## Rules
 
-Questions to answer:
-- What patterns are forbidden?
-- What linting rules do you enforce?
-- What are your testing requirements?
-- What code review standards apply?
--->
+- Test deterministic rules independently of HTTP/Git/Runtime.
+- Use fakes for races, then real Linux/CLI/provider probes for external assumptions.
+- Validate external payloads and handle result variants exhaustively.
+- Never refresh a stale basis automatically to make an action succeed.
+- Preserve full collection cardinalities in the single-Node slice.
+- Apply the [dependency policy](../index.md); no speculative frameworks.
 
-(To be filled by the team)
+## High-value tests
 
----
+| Boundary | Assertion |
+| --- | --- |
+| Task creation | Different request IDs for one proposal yield one Task |
+| Claims/capacity | Workers cannot double-start or oversubscribe |
+| Completion/invalidation | Only current evidence unlocks descendants |
+| Replan | Changed definitions get new Node IDs; old writers settle |
+| Conversation | Atomic reply/watermark, Retry/Withdraw |
+| Acceptance | Input first blocks; acceptance first freezes a nonblocking cutoff |
+| Delivery | Expected-head guards, uncertain response, partial Retry |
+| Limits | Local hard failure BLOCKED; publication finding REVIEW |
+| Restart | Outbox/receipt recovery without session memory |
 
-## Forbidden Patterns
+Test observable behavior and races, not private-helper mirroring. Documentation-only work needs link/consistency/format checks rather than an invented runtime suite.
 
-<!-- Patterns that should never be used and why -->
+## Review exit
 
-(To be filled by the team)
-
----
-
-## Required Patterns
-
-<!-- Patterns that must always be used -->
-
-(To be filled by the team)
-
----
-
-## Testing Requirements
-
-<!-- What level of testing is expected -->
-
-(To be filled by the team)
-
----
-
-## Code Review Checklist
-
-<!-- What reviewers should check -->
-
-(To be filled by the team)
+Report executed checks and untested real-host assumptions. No code currently proves Stage A. Add real command paths and representative tests as scaffolding lands.

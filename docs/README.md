@@ -29,6 +29,8 @@ Read [../ARCHITECTURE.md](../ARCHITECTURE.md) first for the one-page map.
 
 ## Change rule
 
+[Engineering specs](../.trellis/spec/index.md) translate these contracts into backend, frontend, protocol and Runner implementation guidance. They currently describe the accepted baseline; product code and real-host verification are still to be built.
+
 [Multica conversation during execution](research/multica-task-conversation.md) records the research rationale for Task conversation and versioned requirements. Modules 01–08 own the adopted contracts; the research note is not a second source of rules.
 
 When a new decision replaces an older one, update the owning module directly and remove obsolete concepts. Do not preserve dead architecture merely for historical compatibility. Git history is the history.

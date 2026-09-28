@@ -1,51 +1,31 @@
-# Hook Guidelines
+# Queries, Commands and Streams
 
-> How hooks are used in this project.
+Sources: [stack](../../../docs/11-technology-and-deployment.md), [Tool Protocol](../../../docs/05-tool-protocol.md), [UI](../../../docs/07-owner-review-and-ui.md).
 
----
+## Server reads
 
-## Overview
+TanStack Query owns server-read caching. Keys include scope and identity: a Task's messages and another Task's messages must never share a cache entry. Illustrative key shapes, not existing hooks:
 
-<!--
-Document your project's hook conventions here.
+```ts
+const taskKey = (taskId: string) => ["tasks", taskId] as const;
+const messagesKey = (taskId: string) =>
+  ["tasks", taskId, "messages"] as const;
+```
 
-Questions to answer:
-- What custom hooks do you have?
-- How do you handle data fetching?
-- What are the naming conventions?
-- How do you share stateful logic?
--->
+Co-locate feature queries and commands; use `use...` only for actual hooks. Avoid generic hook frameworks and a second fetch cache.
 
-(To be filled by the team)
+## Mutation contract
 
----
+Create one request ID per intended command and retain the exact payload for transport retry. An uncertain result is queried/replayed under that ID; editing the payload or correcting a definitive validation failure is a new command. Never silently replace expected versions after conflict.
 
-## Custom Hook Patterns
+Do not issue formal commands from mount effects. UI double-click prevention improves UX but cannot replace backend idempotency. On success, refresh affected authoritative projections. Show accepted-operation progress separately from completed effects.
 
-<!-- How to create and structure custom hooks -->
+## SSE and lifecycle
 
-(To be filled by the team)
+SSE uses resumable cursors with authoritative refresh after gaps. Clean up connections/subscriptions when scope or component lifecycle changes; reconnect must not duplicate messages/events. Never stop cloud execution on unmount or browser disconnect.
 
----
+Provisional stream content is separate from committed Planner replies. Deduplicate the eventual reply by source identity rather than appending provisional text as canonical history.
 
-## Data Fetching
+## Tests
 
-<!-- How data fetching is handled (React Query, SWR, etc.) -->
-
-(To be filled by the team)
-
----
-
-## Naming Conventions
-
-<!-- Hook naming rules (use*, etc.) -->
-
-(To be filled by the team)
-
----
-
-## Common Mistakes
-
-<!-- Hook-related mistakes your team has made -->
-
-(To be filled by the team)
+Exercise scope changes, repeated mount/unmount, reconnect after cursor gap, lost mutation response and double submission. Assert retained drafts and one canonical result. Query cancellation must not become a Task cancellation.

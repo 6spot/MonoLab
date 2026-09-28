@@ -1,51 +1,31 @@
-# Logging Guidelines
+# Logs, Events and Content
 
-> How logging is done in this project.
+Sources: [formal data](../../../docs/06-state-and-formal-data.md), [transport](../../../docs/05-tool-protocol.md).
 
----
+## Distinct records
 
-## Overview
+| Record | Purpose |
+| --- | --- |
+| Service diagnostics | Failures, timing, correlation |
+| Attempt Execution Log | Ordered raw Runtime/tool activity |
+| Task Event | Formal lifecycle/output history |
 
-<!--
-Document your project's logging conventions here.
+Never promote stdout to a Task Event or canonical Planner reply. Timeline uses formal records. Managed Artifact content is immutable; a Runner path alone is not an Artifact.
 
-Questions to answer:
-- What logging library do you use?
-- What are the log levels and when to use each?
-- What should be logged?
-- What should NOT be logged (PII, secrets)?
--->
+## Correlation and redaction
 
-(To be filled by the team)
+Include relevant request/operation, Task, Node/activation, Attempt/fencing, Runner/incarnation and stream sequence. Ordinary queueing is informational; actionable failure and uncertain recovery need clear diagnostics.
 
----
+Never log cookies, bearer/enrollment/provider credentials or matching sensitive values. Findings identify commit/path/digest/rule and redact values. Full immutable request payloads belong only in the service-private recovery journal, not public execution logs.
 
-## Log Levels
+No logging library is selected by this spec. Reuse the framework logging path during scaffolding.
 
-<!-- When to use each level: debug, info, warn, error -->
+## Delivery and retention
 
-(To be filled by the team)
+Runner durably spools logs; server acknowledges persisted records. Deduplicate `(attempt_id, stream_id, sequence)`; reconnect resumes acknowledged cursors. Late logs cannot revive terminal execution. Apply backpressure and report disk failure instead of silently dropping required records.
 
----
+Notifications deduplicate by formal source and activation/delivery version. Read state does not resolve the condition.
 
-## Structured Logging
+## Verification
 
-<!-- Log format, required fields -->
-
-(To be filled by the team)
-
----
-
-## What to Log
-
-<!-- Important events to log -->
-
-(To be filled by the team)
-
----
-
-## What NOT to Log
-
-<!-- Sensitive data, PII, secrets -->
-
-(To be filled by the team)
+Exercise duplicate/reordered chunks, reconnect and spool failure. Assert no duplicate formal events or secret values. Managed Artifacts survive workspace cleanup. A “done” log never completes a Node.

@@ -130,6 +130,8 @@ Attempt fencing protects formal commands. Workspace handoff also requires stoppi
 
 Owner confirmation is enforced by the command backend and binds the exact proposed Task, Specification revision, Plan, or delivery result. Acceptance binds the effective Specification/Plan and exact result together. Changed content cannot inherit approval. For plain Git, publishing a delivery branch is preparation; final delivery requires recorded exact-version Owner acceptance and verified publication, and does not include a target-branch merge. Multi-repository delivery may partially succeed and must never be presented as atomic.
 
+Successful Owner acceptance freezes that delivery batch and its input cutoff. Earlier unresolved input prevents acceptance; later chat remains available but cannot block or alter the batch, including during checks, retries and partial delivery. Explicit correction/cancellation follows delivery guards. After delivery, further implementation uses an independent Task; accepted history is never reopened through conversation.
+
 ### One deployed Runner is not a singleton domain
 
 Stage A/V1 deployment limits do not change data cardinality or module contracts. Runtime policy uses logical integration IDs; process and workspace locations are Runner-scoped infrastructure. Multiple Runners first serve separate Tasks; same-Task distribution requires explicit workspace transport and ownership guarantees.

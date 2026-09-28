@@ -138,7 +138,6 @@ SpecificationRevision
 - specification   # Markdown
 - source_message_ids / authorization_receipt_id
 - created_at
-- created_at
 - created_by
 ~~~
 
@@ -177,6 +176,8 @@ Task Conversation is the Owner's persistent entry point for questions, guidance,
 The Task association with its Project and Todo remains stable. The initial Specification revision preserves creation intent. Orchestrator's Task control record holds `current_specification_revision_id`; each published revision is immutable. There is no second mutable Task specification or Task Working Requirement State competing with that pointer.
 
 Ordinary questions and guidance within the effective requirement do not create Specification revisions. Changes to scope, constraints, or acceptance expectations do. Each revision records exact Owner-authorized content and its source; chat alone does not mutate formal state. Module 02 defines interpretation and impact, module 05 authorization, and module 06 atomic publication.
+
+Owner acceptance freezes the current delivery batch. Later Task messages remain discussable but do not alter or block that accepted result. Further implementation after delivery starts as an independent Task through Todo Discussion; the original Task and its accepted history stay intact. Explicit correction/cancellation before delivery finishes follows module 04's guards.
 
 Specification revisions answer what to deliver; Plan revisions answer how work collaborates. Neither automatically forces a new version of the other. Existing Node identities and workspace history survive compatible requirement changes.
 

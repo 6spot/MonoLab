@@ -1,51 +1,23 @@
-# Type Safety
+# Frontend Type and Input Boundaries
 
-> Type safety patterns in this project.
+Sources: [wire schemas](../../../docs/11-technology-and-deployment.md), [command errors](../../../docs/05-tool-protocol.md).
 
----
+## Authority
 
-## Overview
+Generate transport types from versioned JSON Schemas in the future `packages/protocol`. Keep feature-only props/view models local. Do not copy DB types, manually duplicate wire enums or introduce a second schema authority.
 
-<!--
-Document your project's type safety conventions here.
+Treat network/stream data as unknown until validated at the API adapter boundary. Types do not validate JSON at runtime. Use the chosen schema validator and generated contracts; do not add another validator merely for a form.
 
-Questions to answer:
-- What type system do you use?
-- How are types organized?
-- What validation library do you use?
-- How do you handle type inference?
--->
+## Result handling
 
-(To be filled by the team)
+Exhaustively handle committed result, admitted operation and error variants. Exact discriminants will be defined in protocol schemas; sketches here are not alternate wire definitions.
 
----
+Preserve opaque string IDs, version fields, optional/null distinctions and server timestamps. Do not coerce unknown Task states to RUNNING or treat a missing operation as success. Protocol incompatibility requires refresh/upgrade handling.
 
-## Type Organization
+## Local conventions
 
-<!-- Where types are defined, shared types vs local types -->
+Use explicit component props and inferred types from validated values. Avoid `any`, blind assertions, non-null assertions at async boundaries and suppressed type errors. Use native form validation plus server errors until complexity justifies a form library.
 
-(To be filled by the team)
+## Tests
 
----
-
-## Validation
-
-<!-- Runtime validation patterns (Zod, Yup, io-ts, etc.) -->
-
-(To be filled by the team)
-
----
-
-## Common Patterns
-
-<!-- Type utilities, generics, type guards -->
-
-(To be filled by the team)
-
----
-
-## Forbidden Patterns
-
-<!-- any, type assertions, etc. -->
-
-(To be filled by the team)
+Verify malformed/unsupported payload handling, optional fields, stale-version errors and every UI result variant. Type-check generated contracts and app together once scaffolded; record the actual command then.

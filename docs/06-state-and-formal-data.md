@@ -90,7 +90,7 @@ provider_integrations            # GitHub App installation metadata; keys stay i
 
 Do not force every infrastructure concept into a first-class table. For example, Runtime Registry may be persisted or reconstructed from Runner discovery depending on implementation needs. Workspace paths and worktree bookkeeping live in the Runner's local journal; the control database keeps only the location-independent workspace records that control APIs address.
 
-The Runner journal (module 11) holds dispatch/start intents, supervision handles, local operation stages, and log-spool cursors. It is reconciliation bookkeeping, never a second copy of Task/Node truth.
+The Runner journal (module 11) holds dispatch/start intents, supervision handles, local operation stages, log-spool cursors, and immutable CLI request envelopes with original principal/scope, request ID, payload/content references, digest and schema/version guards. Local request persistence and send uncertainty are distinct from backend receipts; only the backend establishes command admission. Runner recovery may read receipts for its recorded dispatches but cannot replay a terminal Attempt’s unaccepted command. Retain unresolved request data through reconciliation without persisting bearer credentials. It is reconciliation bookkeeping, never a second copy of Task/Node truth.
 
 Attempt is the durable attribution boundary for Runtime execution. Execution Log belongs to Attempt. Runtime Session is opaque adapter infrastructure and should be persisted only when needed for recovery/resume.
 
@@ -418,8 +418,8 @@ Persist Owner authorization receipts, Task-scoped review feedback/blocker answer
 | Review routing waits/fails | Unresolved feedback operation | Remain REVIEW; operation status/attention and Retry, acceptance still blocked |
 | Raise planning issue | Current authorized Execution Task Planner during Task conversation/change routing, initial planning, Replan preparation, or review routing | Record issue and attention; close the Planner's mutation phase; Task state unchanged |
 | Withdraw feedback | Unresolved feedback operation | Resolve operation as withdrawn; revoke its Planner Attempt; remain REVIEW; acceptance admissible with a new receipt |
-| All work complete | No freeze or unsettled local operation | REVIEW; remote preparation waits for input/change/delivery admission guards |
-| Accept | REVIEW, no unresolved input/change/feedback guard, exact Specification/Plan/result receipt | Start/continue delivery; COMPLETED only after success |
+| All work complete | No freeze or unsettled local operation | REVIEW; automatic preparation waits for pre-acceptance input/change guards |
+| Accept | REVIEW, no unresolved input/change/feedback guard, exact Specification/Plan/result receipt | Atomically admit a frozen delivery batch and input cutoff; COMPLETED only after success; later chat does not block it |
 | Cancel | Nonterminal Task | Revoke execution/acceptance; CANCELLED; reconcile outstanding effects; close open review requests for undelivered items |
 
 CANCELLED and COMPLETED cannot be overwritten by late callbacks. An unresolved Replan request takes precedence over ordinary RUNNING/BLOCKED/REVIEW derivation. A pending feedback-routing operation does not change Task status; it guards acceptance and merge while Task remains REVIEW. Repeated callbacks are idempotent. A delivery failure cannot move REVIEW back to RUNNING. Remote success discovered after cancellation is recorded truthfully without undoing cancellation or pretending the merge was prevented.
@@ -463,7 +463,8 @@ These scenarios define the minimum verification surface for the first execution 
 | PR head changes after acceptance | Old acceptance cannot merge new code |
 | Second repository merge fails | First merge remains recorded; REVIEW shows partial delivery and retries only remaining work |
 | Plain-Git preparation push succeeds before acceptance | REVIEW remains correctable; no finalized delivery item or partial-delivery restriction |
-| Plain-Git final acceptance races with new input or Request Changes | One guarded outcome wins; a push alone cannot defeat input guards; retries preserve the exact accepted version |
+| Owner acceptance races with new input | Input first blocks acceptance; acceptance first attributes the message outside the batch and delivery proceeds |
+| Plain-Git finalization receives later chat or explicit Request Changes | Later chat does not block the accepted batch; explicit correction and finalization serialize; a preparation push alone is not final delivery |
 | Browser disconnects and reconnects | Execution continues; current attention and deduplicated notifications reload |
 
 Delivery operation records persist the candidate manifest (source workspace revision, result tree, delivery head, parent set), last reconciled published head, scan version/findings and any scoped overrides. Workspace revisions and delivery commits have distinct identities. Candidate replacement retains immutable operation history and cannot change an already-published parent chain. These are Delivery infrastructure records, not another Task state machine.
@@ -514,11 +515,11 @@ A requirement-only change reuses the current Plan. Completed affected Nodes and 
 
 | Operation | Guard | Effect |
 | --- | --- | --- |
-| Submit Task message | Authenticated Owner, matching Task | Persist input and queue Planner; guard acceptance/delivery admission until classified; no Task state transition |
+| Submit Task message | Authenticated Owner, matching Task | Persist input and queue Planner; before acceptance guard admission until classified; after acceptance record nonblocking conversation attribution; no Task state transition |
 | Commit question reply | Current Planner/input basis | Reply and resolve that input guard; no evidence invalidation |
 | Route guidance | Current scope/basis | Persist guidance and recipient intents; any correction keeps acceptance guarded until addressed |
 | Prepare requirement proposal | Current Specification/Plan and input basis | Pending exact proposal; no effective revision change |
-| Admit authorized change | Matching receipt, no competing publication or unresolved delivery outcome | Persist settlement operation, revoke acceptance, freeze affected dispatch |
+| Admit authorized change | Matching receipt, no competing publication, active accepted delivery or unresolved delivery outcome | Persist settlement operation, freeze affected dispatch |
 | Publish change with sufficient graph | Settlement and basis validated | Atomically switch Specification, carry forward/invalidate evidence; derive normal state |
 | Change needs graph revision | Actual graph insufficiency | REPLAN_REQUIRED; publish Specification and confirmed Plan atomically after settlement |
 | Withdraw unpublished change | No committed publication; reconcile admitted effects | Keep prior Specification; resolve linked input only as explicitly authorized; fresh acceptance required if revoked |
@@ -536,5 +537,15 @@ If a requirement change and Replan are linked, withdrawing the change does not d
 The admitted operation advances its own expected control version transactionally as it records settlement progress. Its own version increments do not invalidate itself. External changes to relevant activation/result facts or new input require re-evaluation; unrelated heartbeat/log updates do not. A progress-only reply can commit against its captured observation without taking publication authority. This separates stale-action rejection from starvation of ordinary conversation.
 
 Guidance obligations persist separately from delivery receipts and identify source input, recipient Node/activation, eventual handling evidence or withdrawal/supersession. A Node completion settles handled obligations with completion evidence atomically. Rework/revision invalidation also invalidates reliance on that handling evidence where affected; future Attempts receive still-applicable guidance. The acceptance query checks unresolved obligations even if all Nodes currently display COMPLETED.
+
+### Accepted delivery input cutoff
+
+Successful Owner acceptance commits the receipt consumption, delivery-operation identity, frozen Specification/Plan/result manifest, input cutoff and outbox intent together. This operation is infrastructure within the existing Delivery subsystem, not a new Task lifecycle. Message admission locks the same Task control boundary: a prior unresolved message blocks acceptance; a later message records the accepted operation it follows and has no guard for that batch. The server, not the client or Planner, assigns this disposition.
+
+Delivery workers validate their operation authority, exact result/item versions and provider prerequisites rather than requiring equality with a global control/message version that later chat advances. New messages, reply failure, restart and partial delivery do not revoke an accepted batch. No-change/non-Git acceptance may complete in the same transaction; racing later input then belongs to terminal conversation. Existing pre-acceptance guidance/change obligations must be resolved before acceptance and cannot be silently classified as later input.
+
+Explicit Request Changes can revoke an entirely undelivered batch under module 04's guards. Commit revocation and cancellation of pending dispatch atomically; settle existing effects, then reconsider the later messages as ordinary pending obligations on the unfinished Task without duplicating replies or losing their earlier attribution. If result drift invalidates acceptance before any item finalizes, recovery likewise closes the old batch and restores unresolved later requests to the pre-acceptance gate before allowing replacement acceptance. After any item finalizes, this reclassification/replacement path is forbidden: reconcile and recover the original accepted remainder where possible, otherwise explicitly cancel it; never accept a changed remainder or fold later requirements into this Task. A transient provider failure retains the same accepted operation and does not perform reclassification. Cancel Task remains terminal; later chat never reopens delivered work.
+
+Required assertions: both orders of message/acceptance admission; new chat before the first push, while CI waits and between repository items; backend restart preserving the cutoff; unavailable Planner not preventing delivery; later chat during plain-Git verification; explicit Request Changes racing finalization; and result drift requiring a fresh acceptance. Completion records the accepted version without claiming later requests were fulfilled.
 
 Task cancellation revokes unpublished proposal eligibility and execution obligations, retaining their cancelled dispositions and history. System reconciliation finishes already-admitted effects before releasing their physical ownership; neither pending input nor change recovery may reopen the Task. Unanswered Owner messages can still receive terminal-Task replies under the conversation-only scope. Successful historical delivery discovered during reconciliation retains the cancellation/delivery reporting rules of module 04.

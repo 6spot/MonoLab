@@ -31,7 +31,7 @@ Capture (no AI)
 | Client | Responsive Web capture, Discussion, Execution Board, Task detail/review, minimal configuration | Native mobile apps, external push/email |
 | Project | Owner Context, one GitHub repository, one selected reusable Role; resource belongs to Project | Repository picker polish and multiple repositories per Project |
 | Planning | Real Todo Planner and separate on-demand Task Planner, Task Conversation, Specification revisions, one-Node initial and confirmed replacement Plans, existing-Node review Rework, planning issues, feedback/change withdrawal and Replan dismissal | Multi-Node graphs and Planner repository inspection |
-| Runtime | One installed, Owner-authenticated CLI Adapter with its tool bridge, two concurrent execution slots by default, Stop/Retry/Continue and durable guidance through controlled follow-up/stop-and-resume | Live steering, second real CLI and automatic cross-runtime fallback |
+| Runtime | One installed, Owner-authenticated CLI Adapter with the bundled `monolab` command client, two concurrent execution slots by default, Stop/Retry/Continue and durable guidance through controlled follow-up/stop-and-resume | Live steering, second real CLI and automatic cross-runtime fallback |
 | Workspace | Lazy repository open, serial Task Workspace, private scratch, separate workspace directories, recoverable completion | Parallel worktrees and concurrent integration |
 | Delivery | One PR per modified repository, pre-push checks, checks/mergeability, same-PR correction, exact-head acceptance, PR closed on Cancel | Multi-repository partial delivery, plain-Git branch-only delivery and `after_acceptance` remote preparation |
 | Recovery | Durable dispatch, request idempotency, process fencing, restart reconciliation, attention | Permanent Runner-disk loss recovery |
@@ -44,10 +44,10 @@ Repository selection may initially accept one authorized GitHub repository ident
 
 ## Implementation order and module contracts
 
-0. **Boundary feasibility probe.** Before broad implementation, demonstrate the intended Runner OS/isolation with a real installed CLI: tool-bridge registration and authenticated tool calls, a non-interactive permission mode, lazy workspace exposure through reserved path grants (including a worktree's Git common directory), descendant-process termination, the module-11 host identity profile with no delivery-credential access, and recovery after losing a start acknowledgement. Measure how reliably the CLI makes its required commit/lifecycle calls and whether it exposes partial output for streaming. Also exercise the backend/Runner transport across separate process/filesystem roots. If these do not work, revise the Adapter/isolation choice before building product modules. This probe is not a full multi-Runner implementation.
+0. **Boundary feasibility probe.** Before broad implementation, demonstrate the intended Runner OS/isolation with a real installed CLI: bundled `monolab` discovery/invocation and authenticated commands, including Planner calls with read-only repository access, a non-interactive permission mode, lazy workspace exposure through reserved path grants (including a worktree's Git common directory), descendant-process termination, the module-11 host identity profile with no delivery-credential access, and recovery after losing a start acknowledgement. Measure how reliably the CLI makes its required commit/lifecycle calls and whether it exposes partial output for streaming. Also exercise the backend/Runner transport across separate process/filesystem roots. If these do not work, revise the Adapter/isolation choice before building product modules. This probe is not a full multi-Runner implementation.
 1. **Command and persistence foundation.** Implement authenticated caller scopes, request receipts, exact-content confirmation, Task control records, Node activation, event sequence, transactional dispatch, and read projections. Verify with deterministic fake Runtime and delivery adapters before starting real processes. Fakes are test fixtures, not another product Runtime.
 2. **Capture and Discussion.** Persist Original Capture without model invocation. Serialize Owner messages, commit replies/requirement state atomically, restore previews on reconnect, and create/start Tasks through authenticated commands. A replayed preview confirmation resolves to the same Task.
-3. **Runner and real CLI.** Probe the selected installed CLI, validate scoped tool invocation and isolation, start one Attempt, stream logs, terminate its whole process tree, and reconcile after disconnect. Fresh-session reconstruction is sufficient initially; native resume is enabled only after Adapter compatibility is verified.
+3. **Runner and real CLI.** Probe the selected installed CLI, validate scoped `monolab` invocation and isolation, start one Attempt, stream logs, terminate its whole process tree, and reconcile after disconnect. Fresh-session reconstruction is sufficient initially; native resume is enabled only after Adapter compatibility is verified.
 4. **Task conversation, planning and workspace execution.** Persist ordered Task messages and Planner replies/routing; publish authorized Specification revisions with impact and evidence guards; implement queued guidance and controlled stop-and-resume without requiring live steering. Publish a validated one-Node Plan, open the Project repository lazily, execute through the selected Role, finalize Git through a recoverable operation, and project REVIEW. Task Workspace contents stay private to the correct execution.
 5. **GitHub delivery and review.** Export the finalized result tree into a controlled delivery commit, scan its actual publication range, automatically prepare the PR, show the exact local/remote result mapping, accept with a result-bound receipt, and merge through the provider expected-head guard. Handle failed checks and uncertain remote responses without new Task states.
 6. **Correction and recovery UI.** Route Request Changes to the same Node, invalidate old evidence, start a new activation, update the same PR, and require new acceptance. Expose planning issues, feedback withdrawal, Replan dismissal, Retry, Stop/Continue, Cancel, and durable attention at the relevant scope.
@@ -85,6 +85,12 @@ Demonstrate the full flow against an Owner-designated test repository and one re
 | Kill backend after completion intent or Git integration | Recovery finishes once; no duplicated commit/integration or missing completion event |
 | Stop execution with a background child process | No successor writes until the old writers are terminated/isolated |
 | End Runtime without `complete_node` | BLOCKED with Retry; no false completion |
+| Invoke bundled `monolab` from a real Agent | No MCP registration or separate CLI installation; scoped JSON command results, stable request-ID retries, stale-attempt rejection, and operation lookup after a lost response |
+| CLI attribution with two concurrent Attempts under one execution account | Each CLI maps to its own supervised dispatch; another Attempt ID/socket hint cannot change identity, and an unrelated process or revoked Attempt is denied |
+| CLI response is lost and its input file changes | Retry uses the retained original envelope; same ID with different payload is rejected; no duplicate effect or automatic fresh ID |
+| Crash before/after request send and backend admission | Journal failure prevents sending; restart queries receipt truth; uncertainty is retained, and unaccepted work is never replayed under revoked authority |
+| Completion stops the CLI before its response; old credential expires | Runner/backend recover the admitted operation and UI result through scoped reads; no old-credential renewal or dependency on the stopped process |
+| Planner invokes `monolab` under read-only execution | Submit long JSON through stdin and, where required, reserved scratch files; CLI/socket/HTTPS access works without interactive approval while repository writes fail. Record the supported Runtime version/settings; unsupported combinations fail the probe |
 | Simulate lost PR-create or merge response | Query remote truth before retry; no duplicate PR or invented failure |
 | Request Changes after REVIEW | REVIEW while routing, then RUNNING on Rework with no REPLAN_REQUIRED; same Task/Node/PR, new activation; obsolete outputs not current evidence |
 | Change PR head after acceptance | Old acceptance cannot merge the changed result |
@@ -96,11 +102,12 @@ Demonstrate the full flow against an Owner-designated test repository and one re
 | Feedback changes scope within the same delivery | Inline Specification proposal; confirmed revision reworks the same Node when graph suffices; stale acceptance rejected |
 | Ask progress while a Node runs | Planner replies from current facts; execution continues and no revision is created |
 | Revise requirements during execution, then restart backend | Same Task/workspace lineage; retain or replace Node as the confirmed Plan requires; one new requirement revision; old writers reconciled before continuation |
-| Message arrives while Planner is busy or Node completes | Input preserved; later routing/follow-up; no silent loss or stale acceptance |
-| Confirm stale proposal or race change with Accept | Version guard prevents stale publication; admitted remote outcomes reconciled truthfully |
+| Message arrives while Planner is busy or Node completes | Before acceptance, input preserves routing/follow-up guards; after acceptance, later conversation cannot alter or block the frozen batch |
+| Confirm stale proposal or race input/change with Accept | Input/change first blocks acceptance; acceptance first rejects in-place changes and records later conversation; stale publication is rejected |
 | Chat before Start, while stopped, or after completion | Reply available; no implicit Start/Continue or reopening of terminal delivery |
 | Ask for further implementation in a terminal Task | Explain the terminal boundary; no Task-creation preview or automatic transfer to Todo. Owner returns to Todo Discussion and confirms an independent Task without inherited Task context |
-| Result includes an ignored, oversized, or credential-like file | No remote write; findings shown in REVIEW |
+| Result cannot be durably captured because of a local hard limit | Node BLOCKED with preserved recovery data; reconcile/repair before Retry, no false completion |
+| Finalized result includes a tracked ignored file, publication-oversized file or credential-like content | Findings shown in REVIEW before remote write; provider hard limits cannot be overridden; ignored untracked files are not silently added |
 | CLI asks for interactive approval | Owner attention appears; no silent wait |
 | Cancel a Task in REVIEW | Open PR closed and branch kept; local result retained |
 
@@ -116,7 +123,7 @@ Plain-Git delivery, the full repository picker, and broader settings/UI can foll
 
 [Technology & Deployment](11-technology-and-deployment.md) fixes React/Vite/TypeScript Web, Fastify/Node.js backend, PostgreSQL/Drizzle, a Go Runner on Linux invoking host-installed CLIs as native processes, and HTTPS/SSE/WSS transports. These are accepted choices, not open language/framework questions.
 
-Before broad implementation, verify PostgreSQL transaction/claim behavior, the native host process-supervision and workspace-permission design, and cross-process protocol generation/validation. Select an actually available Owner-installed host CLI and test its existing authentication, tool calls and lazy workspace access. Configure an authorized GitHub test repository and verify expected-head merge/check behavior. Choose the Owner sign-in and TLS setup before exposing the service.
+Before broad implementation, verify PostgreSQL transaction/claim behavior, the native host process-supervision and workspace-permission design, and cross-process protocol generation/validation. Select an actually available Owner-installed host CLI and test its existing authentication, `monolab` commands and lazy workspace access. Configure an authorized GitHub test repository and verify expected-head merge/check behavior. Choose the Owner sign-in and TLS setup before exposing the service.
 
 Concrete tool/package versions are pinned at scaffolding time. A selected stack does not waive any feasibility or fault-recovery acceptance gate.
 
@@ -134,7 +141,9 @@ A second backend worker against the same database must not double-claim an Attem
 - Withdraw an admitted change after writers stopped: reconcile, retain the previous Specification, release only its freeze, and resume eligible old-basis work without resurrecting acceptance or ignoring Owner Stop.
 - Route guidance immediately before/after completion admission: exactly one input disposition survives; delivered-but-unhandled guidance cannot unblock acceptance.
 - Withdraw failed input while Planner is unavailable: the Owner command resolves only that obligation and lets later queued conversation proceed.
-- Receive a new requirement after merge dispatch but before acknowledgement: reconcile actual delivery, complete only the originally accepted result, and retain the new message for an explicit follow-up decision.
+- Receive new input after acceptance but before any push, during CI, or after merge dispatch: preserve and answer it without blocking the frozen batch; no in-place change is applied, and completion binds only the originally accepted result.
+- Keep Planner unavailable while later messages wait, restart the backend, or fail the first push: delivery/Retry retains its input cutoff and proceeds without requiring those replies.
+- Explicitly Request Changes before any item finalizes: revoke the batch under the delivery guards, reconcile effects and restore later requests to ordinary input handling without duplicating replies.
 
 ## V1 single-host release gate
 
@@ -152,8 +161,8 @@ Stage A and Stage B are implementation ordering within this V1. Single host does
 | Runtime fallback | Two supported installed/authenticated CLIs can continue the same Node/workspace through ordered fallback with fresh formal context; no shared opaque session assumption |
 | Multiple repositories | A Task can deliver multiple repository items; partial success, remaining-item Retry and Cancel report remote truth without pretending atomicity |
 | Delivery modes | GitHub automatic preparation and after-acceptance preparation, plus supported plain-Git branch delivery, preserve exact-result acceptance; non-Git/no-change work can complete through Owner acceptance without a PR |
-| Plain-Git preparation versus acceptance | Push a branch, request corrections before acceptance, and update the same branch; only verified exact-version acceptance finalizes delivery. Exercise after-acceptance push failure/retry and new input during push; no target-branch merge is claimed |
-| Mixed GitHub/plain-Git delivery | Preparation pushes do not count as final success; confirmed merges and recorded branch acceptances do. Partial failure retains completed items and retries only the unchanged accepted remainder |
+| Plain-Git preparation versus acceptance | Preparation remains correctable before Owner acceptance; acceptance freezes the batch, then verified publication finalizes the item. Later chat cannot block push Retry or finalization; explicit Request Changes obeys finalization guards. No target-branch merge is claimed |
+| Mixed GitHub/plain-Git delivery | Preparation pushes do not count as final success; confirmed merges and recorded branch acceptances do. Partial failure retains completed items and retries only the unchanged accepted remainder, even while later conversation is queued |
 | Provider refresh without webhooks | PR checks/mergeability/remote outcomes advance via durable polling after the browser closes; transient access failure can recover through Retry |
 | Restart recovery | Independently restart backend, Runner and the entire host with persistent disks; reconcile Attempts, pending inputs, workspace and delivery operations before replacement execution |
 | Capacity saturation | With every execution slot occupied, chat shows queued status and authenticated Stop/Cancel/Withdraw remain usable without scheduling an Agent |

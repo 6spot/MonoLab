@@ -50,19 +50,23 @@ Use deterministic fault-injection tests for the control races, isolated process 
 
 ## Decisions that cannot remain implicit
 
-The selected stack, transports, Agent tool bridge, and host identity profile are defined in [Technology & Deployment](11-technology-and-deployment.md). Before broad implementation, probe native Linux process supervision and workspace access with the first Owner-installed Runtime Adapter. Verify PostgreSQL claim/transaction behavior, how the Runner journal and Git results survive supported restart, and how the GitHub adapter enforces expected-head merge. Exercise HTTPS/WSS transport and generated JSON Schema contracts in a separate-process test.
+The selected stack, transports, bundled Agent command CLI, and host identity profile are defined in [Technology & Deployment](11-technology-and-deployment.md). Before broad implementation, probe native Linux process supervision and workspace access with the first Owner-installed Runtime Adapter. Verify PostgreSQL claim/transaction behavior, how the Runner journal and Git results survive supported restart, and how the GitHub adapter enforces expected-head merge. Exercise HTTPS/WSS transport and generated JSON Schema contracts in a separate-process test.
 
-Runtime-native sandbox behavior, non-interactive permission modes, reserved-path grants for dynamic workspace exposure, tool-bridge registration, commit-call reliability, session resume, provider check semantics, and process-tree termination must be established by observation/documentation for the chosen implementation. They are not guaranteed by naming an Adapter interface.
+Runtime-native sandbox behavior, non-interactive permission modes, reserved-path grants for dynamic workspace exposure, `monolab` invocation under Node/Planner permissions and request-ID replay, commit-call reliability, session resume, provider check semantics, and process-tree termination must be established by observation/documentation for the chosen implementation. They are not guaranteed by naming an Adapter interface.
 
 Do not expand scope to automatic cross-Runner failover, distributed transactions, microservices, or external workspace storage in Stage A. Preserve their boundaries now; implement them only with the corresponding recovery guarantees. Permanent Runner-disk loss remains explicitly outside V1.
+
+## CLI command recovery gate
+
+Module 05 owns CLI attribution, immutable request replay and terminal-result lookup. Before product implementation, exercise the module-09 cases with two concurrent same-UID Attempts, a forged/missing scope hint, a modified input file after uncertain submission, journal-write failure, crash around backend admission, and expired credentials after completion stops the caller. Prove that the existing Runner can perform scoped result reads without restoring Agent write authority. Validate Planner long-payload submission, local socket access and backend HTTPS while repository writes remain denied. These are probe requirements, not claims that the installed CLI versions already satisfy them.
 
 ## Conversational Task gate
 
 The accepted model keeps Task identity stable while Specification revisions evolve through Task Planner conversation (modules 01–08). Stage A must verify ordered input, one Task Planner mutation owner, exact-content change authorization, atomic requirement/evidence publication, controlled continuation, and acceptance/delivery races. A single Runner/Node does not waive these contracts.
 
-Exercise a lost input acknowledgement, a late completion after change admission, new input during change settlement, stale confirmation, Replan dismissal with a pending requirement change, and a merge whose response is lost as a change arrives. Preserve per-recipient cardinality now; live steering and multi-Node delivery are later extensions. Their provider-specific behavior requires independent feasibility evidence.
+Exercise a lost input acknowledgement, a late completion after change admission, new input during change settlement, stale confirmation, and Replan dismissal with a pending requirement change. Verify both orders of input/Owner acceptance: earlier input blocks acceptance; later chat cannot block the frozen batch before its first write, during checks, on restart/Retry or after partial delivery. Explicit correction/cancellation and actual remote outcomes still serialize. Preserve per-recipient cardinality now; live steering and multi-Node delivery require independent feasibility evidence later.
 
-The conversation closure cases in module 09 are required alongside the original execution loop. In particular, Stage A now includes one-Node Replan publication; otherwise immutable Node definitions would prevent some promised requirement revisions. Guidance completion, operation-owned guard release, unavailable-Planner withdrawal, and post-dispatch delivery reconciliation must be tested explicitly.
+The conversation closure cases in module 09 are required alongside the original execution loop. Stage A includes one-Node Replan publication; otherwise immutable Node definitions would prevent some promised requirement revisions. Guidance completion, operation-owned guard release, unavailable-Planner withdrawal and the acceptance-time delivery cutoff require explicit tests. Also distinguish local capture hard-limit failure (Node BLOCKED) from publication-only findings on a finalized result (REVIEW); these are different recovery and validation gates.
 
 ## Single-host V1 gate
 
