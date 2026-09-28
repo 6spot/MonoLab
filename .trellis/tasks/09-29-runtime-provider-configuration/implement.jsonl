@@ -1,0 +1,6 @@
+{"file": ".trellis/spec/backend/configuration.md", "reason": "Runtime/provider configuration boundary"}
+{"file": ".trellis/spec/backend/logging-guidelines.md", "reason": "Runtime/provider configuration boundary"}
+{"file": ".trellis/spec/runner/execution-guidelines.md", "reason": "Runtime/provider configuration boundary"}
+{"file": ".trellis/spec/protocol/schema-generation.md", "reason": "Runtime/provider configuration boundary"}
+{"file": "docs/03-runtime-and-execution.md", "reason": "Runtime/provider configuration boundary"}
+{"file": "docs/11-technology-and-deployment.md", "reason": "Runtime/provider configuration boundary"}

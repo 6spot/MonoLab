@@ -38,3 +38,43 @@ no-store. Passwords are bounded to at least 12 characters and at most 1024 UTF-8
 
 This backend leaf does not yet add the configuration UI or automatically configure
 the deployed host's Owner credentials.
+
+## Minimum configuration APIs
+
+After login, GET `/v1/owner/configuration` returns the shared control version,
+Projects, reusable Roles, execution policies and safe GitHub metadata. POST
+`/v1/owner/configuration/commands` uses `schema_version:1`, a stable `request_id`,
+`expected_control_version`, `name` and typed `payload`. Supported names are
+`save_project`, `save_role`, `save_policies`, `save_github`. Read an uncertain
+result at `/v1/owner/configuration/commands/<request_id>` and replay the exact
+original request; do not replace its version automatically. Project archive and
+Role hide use `archived`; IDs/resources are stable.
+
+A policy has `default_target`, ordered `fallback_targets` and optional
+`duration_budget` (seconds; attention only). Targets use `runtime_id`, optional
+`runner_id` (hard pin; omitted means Auto), `model_id` and `thinking_level`.
+Unknown/new manual model IDs are permitted. Global/Planner policies are members
+of the `save_policies` payload; a Role can have `execution_policy`. These settings
+are storage for the forthcoming production Runtime integration, not a change to
+the boundary probe's fixed/free launch target.
+
+GitHub payload: `app_id`, `installation_id`, and write-only `private_key` PEM.
+Send secrets only in a same-origin HTTPS body, never argv, URLs, logs or source.
+The App must already be installed on the selected repositories with Contents and
+Metadata read permission. MonoLab mints only temporary read-only installation
+tokens for the repository picker. Future delivery requires separately validated
+write/PR permissions. Omit private_key only to retain the key for the same App.
+Snapshots show its public-key fingerprint, never PEM or tokens. GET
+`/v1/owner/github/repositories?page=1` lists up to 100 authorized repositories;
+follow explicit next_page. This does not publish Git refs or verify merge access.
+
+Provider keys are encrypted with a domain-separated key from
+`MONOLAB_SIGNING_KEY_FILE`. Preserve this private secret with database backups.
+After signing-key rotation, re-enter the GitHub App key; the service never ignores
+a decryption failure. App/installation IDs are authenticated with ciphertext.
+
+GET `/v1/owner/infrastructure` shows enrolled Runners and installation observations.
+New Runner builds discover the supported CLI under the configured probe execution
+account on reconnect. Online, current observation and detected installation are
+separate facts. Install/login to coding CLIs remains an Owner operation; a version
+check is not evidence of model access or complete Runtime acceptance.

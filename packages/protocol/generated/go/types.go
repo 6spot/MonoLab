@@ -60,25 +60,26 @@ type EffectResult struct {
 }
 
 type Frame struct {
-	Allowed         *bool            `json:"allowed,omitempty"`
-	AttemptID       *string          `json:"attempt_id,omitempty"`
-	BootID          *string          `json:"boot_id,omitempty"`
-	CorrelationID   *string          `json:"correlation_id,omitempty"`
-	Credential      *string          `json:"credential,omitempty"`
-	Dispatch        *Dispatch        `json:"dispatch,omitempty"`
-	DispatchID      *string          `json:"dispatch_id,omitempty"`
-	Error           *ErrorInfo       `json:"error,omitempty"`
-	Event           *RuntimeEvent    `json:"event,omitempty"`
-	ExpiresAt       *string          `json:"expires_at,omitempty"`
-	Incarnation     *int64           `json:"incarnation,omitempty"`
-	Operation       *Operation       `json:"operation,omitempty"`
-	OperationID     *string          `json:"operation_id,omitempty"`
-	OperationResult *OperationResult `json:"operation_result,omitempty"`
-	RunnerID        *string          `json:"runner_id,omitempty"`
-	SchemaVersion   int64            `json:"schema_version"`
-	Sequence        *int64           `json:"sequence,omitempty"`
-	StreamID        *string          `json:"stream_id,omitempty"`
-	Type            Type             `json:"type"`
+	Allowed         *bool                 `json:"allowed,omitempty"`
+	AttemptID       *string               `json:"attempt_id,omitempty"`
+	BootID          *string               `json:"boot_id,omitempty"`
+	CorrelationID   *string               `json:"correlation_id,omitempty"`
+	Credential      *string               `json:"credential,omitempty"`
+	Dispatch        *Dispatch             `json:"dispatch,omitempty"`
+	DispatchID      *string               `json:"dispatch_id,omitempty"`
+	Error           *ErrorInfo            `json:"error,omitempty"`
+	Event           *RuntimeEvent         `json:"event,omitempty"`
+	ExpiresAt       *string               `json:"expires_at,omitempty"`
+	Incarnation     *int64                `json:"incarnation,omitempty"`
+	Operation       *Operation            `json:"operation,omitempty"`
+	OperationID     *string               `json:"operation_id,omitempty"`
+	OperationResult *OperationResult      `json:"operation_result,omitempty"`
+	RunnerID        *string               `json:"runner_id,omitempty"`
+	Runtimes        []RuntimeInstallation `json:"runtimes,omitempty"`
+	SchemaVersion   int64                 `json:"schema_version"`
+	Sequence        *int64                `json:"sequence,omitempty"`
+	StreamID        *string               `json:"stream_id,omitempty"`
+	Type            Type                  `json:"type"`
 }
 
 type Dispatch struct {
@@ -129,6 +130,16 @@ type OperationResult struct {
 	OperationID string       `json:"operation_id"`
 	Result      EffectResult `json:"result"`
 	Success     bool         `json:"success"`
+}
+
+type RuntimeInstallation struct {
+	Availability     Availability `json:"availability"`
+	Executable       string       `json:"executable"`
+	ModelIDS         []string     `json:"model_ids"`
+	RuntimeID        string       `json:"runtime_id"`
+	SupportsModel    bool         `json:"supports_model"`
+	SupportsThinking bool         `json:"supports_thinking"`
+	Version          *string      `json:"version,omitempty"`
 }
 
 type RunnerInventory struct {
@@ -223,20 +234,39 @@ type OwnerSessionStatus struct {
 type ConfigurationCommand struct {
 	ExpectedControlVersion int64                    `json:"expected_control_version"`
 	Name                   ConfigurationCommandName `json:"name"`
-	Payload                Configuration            `json:"payload"`
+	Payload                PayloadClass             `json:"payload"`
 	RequestID              string                   `json:"request_id"`
 	SchemaVersion          int64                    `json:"schema_version"`
 }
 
-type Configuration struct {
-	Archived     bool                    `json:"archived"`
-	Context      *string                 `json:"context,omitempty"`
-	ID           string                  `json:"id"`
-	Name         string                  `json:"name"`
-	Resources    []GitRepositoryResource `json:"resources,omitempty"`
-	RoleIDS      []string                `json:"role_ids,omitempty"`
-	Description  *string                 `json:"description,omitempty"`
-	Instructions *string                 `json:"instructions,omitempty"`
+type PayloadClass struct {
+	Archived        *bool                   `json:"archived,omitempty"`
+	Context         *string                 `json:"context,omitempty"`
+	ID              *string                 `json:"id,omitempty"`
+	Name            *string                 `json:"name,omitempty"`
+	Resources       []GitRepositoryResource `json:"resources,omitempty"`
+	RoleIDS         []string                `json:"role_ids,omitempty"`
+	Description     *string                 `json:"description,omitempty"`
+	ExecutionPolicy *ExecutionPolicy        `json:"execution_policy,omitempty"`
+	Instructions    *string                 `json:"instructions,omitempty"`
+	Global          *ExecutionPolicy        `json:"global,omitempty"`
+	Planner         *ExecutionPolicy        `json:"planner,omitempty"`
+	AppID           *string                 `json:"app_id,omitempty"`
+	InstallationID  *string                 `json:"installation_id,omitempty"`
+	PrivateKey      *string                 `json:"private_key,omitempty"`
+}
+
+type ExecutionPolicy struct {
+	DefaultTarget   ExecutionTarget   `json:"default_target"`
+	DurationBudget  *int64            `json:"duration_budget,omitempty"`
+	FallbackTargets []ExecutionTarget `json:"fallback_targets"`
+}
+
+type ExecutionTarget struct {
+	ModelID       *string `json:"model_id,omitempty"`
+	RunnerID      *string `json:"runner_id,omitempty"`
+	RuntimeID     string  `json:"runtime_id"`
+	ThinkingLevel *string `json:"thinking_level,omitempty"`
 }
 
 type GitRepositoryResource struct {
@@ -244,6 +274,8 @@ type GitRepositoryResource struct {
 	DefaultRef        *string           `json:"default_ref,omitempty"`
 	ID                string            `json:"id"`
 	MergeMethod       *MergeMethod      `json:"merge_method,omitempty"`
+	Provider          *Provider         `json:"provider,omitempty"`
+	ProviderRepoID    *string           `json:"provider_repo_id,omitempty"`
 	RemotePreparation RemotePreparation `json:"remote_preparation"`
 	RemoteURL         string            `json:"remote_url"`
 }
@@ -257,10 +289,23 @@ type ConfigurationResult struct {
 }
 
 type ConfigurationSnapshot struct {
-	ControlVersion int64                  `json:"control_version"`
-	Projects       []ProjectConfiguration `json:"projects"`
-	Roles          []RoleConfiguration    `json:"roles"`
-	SchemaVersion  int64                  `json:"schema_version"`
+	ControlVersion int64                      `json:"control_version"`
+	Github         *GitHubConfigurationStatus `json:"github,omitempty"`
+	Policies       PolicyConfiguration        `json:"policies"`
+	Projects       []ProjectConfiguration     `json:"projects"`
+	Roles          []RoleConfiguration        `json:"roles"`
+	SchemaVersion  int64                      `json:"schema_version"`
+}
+
+type GitHubConfigurationStatus struct {
+	AppID          string `json:"app_id"`
+	InstallationID string `json:"installation_id"`
+	KeyFingerprint string `json:"key_fingerprint"`
+}
+
+type PolicyConfiguration struct {
+	Global  *ExecutionPolicy `json:"global,omitempty"`
+	Planner *ExecutionPolicy `json:"planner,omitempty"`
 }
 
 type ProjectConfiguration struct {
@@ -273,11 +318,50 @@ type ProjectConfiguration struct {
 }
 
 type RoleConfiguration struct {
-	Archived     bool   `json:"archived"`
-	Description  string `json:"description"`
-	ID           string `json:"id"`
-	Instructions string `json:"instructions"`
-	Name         string `json:"name"`
+	Archived        bool             `json:"archived"`
+	Description     string           `json:"description"`
+	ExecutionPolicy *ExecutionPolicy `json:"execution_policy,omitempty"`
+	ID              string           `json:"id"`
+	Instructions    string           `json:"instructions"`
+	Name            string           `json:"name"`
+}
+
+type GitHubConfigurationInput struct {
+	AppID          string  `json:"app_id"`
+	InstallationID string  `json:"installation_id"`
+	PrivateKey     *string `json:"private_key,omitempty"`
+}
+
+type InfrastructureSnapshot struct {
+	Runners       []RunnerConfiguration `json:"runners"`
+	SchemaVersion int64                 `json:"schema_version"`
+}
+
+type RunnerConfiguration struct {
+	Capacity int64     `json:"capacity"`
+	Online   bool      `json:"online"`
+	RunnerID string    `json:"runner_id"`
+	Runtimes []Runtime `json:"runtimes"`
+}
+
+type Runtime struct {
+	Current      bool                `json:"current"`
+	Installation RuntimeInstallation `json:"installation"`
+	ObservedAt   string              `json:"observed_at"`
+}
+
+type GitHubRepositoryPage struct {
+	NextPage      *int64             `json:"next_page,omitempty"`
+	Repositories  []GitHubRepository `json:"repositories"`
+	SchemaVersion int64              `json:"schema_version"`
+}
+
+type GitHubRepository struct {
+	DefaultBranch  string `json:"default_branch"`
+	FullName       string `json:"full_name"`
+	Private        bool   `json:"private"`
+	ProviderRepoID string `json:"provider_repo_id"`
+	RemoteURL      string `json:"remote_url"`
 }
 
 type CommandEnvelopeName string
@@ -374,6 +458,14 @@ const (
 	Recoverable         FailureKind = "recoverable"
 )
 
+type Availability string
+
+const (
+	Detected    Availability = "detected"
+	NotFound    Availability = "not_found"
+	Unavailable Availability = "unavailable"
+)
+
 type Type string
 
 const (
@@ -428,8 +520,10 @@ const (
 type ConfigurationCommandName string
 
 const (
-	SaveProject ConfigurationCommandName = "save_project"
-	SaveRole    ConfigurationCommandName = "save_role"
+	SaveGithub   ConfigurationCommandName = "save_github"
+	SavePolicies ConfigurationCommandName = "save_policies"
+	SaveProject  ConfigurationCommandName = "save_project"
+	SaveRole     ConfigurationCommandName = "save_role"
 )
 
 type MergeMethod string
@@ -438,6 +532,12 @@ const (
 	Merge  MergeMethod = "merge"
 	Rebase MergeMethod = "rebase"
 	Squash MergeMethod = "squash"
+)
+
+type Provider string
+
+const (
+	Github Provider = "github"
 )
 
 type RemotePreparation string

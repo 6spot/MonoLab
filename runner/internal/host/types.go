@@ -36,17 +36,18 @@ type Request struct {
 	Operation *protocol.Operation `json:"operation,omitempty"`
 }
 type Status struct {
-	Known               bool                   `json:"known"`
-	Exists              bool                   `json:"exists"`
-	Populated           bool                   `json:"populated"`
-	BootID              string                 `json:"boot_id"`
-	PID                 int                    `json:"pid"`
-	Birth               string                 `json:"birth"`
-	Cgroup              string                 `json:"cgroup"`
-	Error               string                 `json:"error,omitempty"`
-	FailureKind         *protocol.FailureKind  `json:"failure_kind,omitempty"`
-	Result              *protocol.EffectResult `json:"result,omitempty"`
-	MaterializationBase *string                `json:"materialization_base,omitempty"`
+	Known               bool                           `json:"known"`
+	Exists              bool                           `json:"exists"`
+	Populated           bool                           `json:"populated"`
+	BootID              string                         `json:"boot_id"`
+	PID                 int                            `json:"pid"`
+	Birth               string                         `json:"birth"`
+	Cgroup              string                         `json:"cgroup"`
+	Error               string                         `json:"error,omitempty"`
+	FailureKind         *protocol.FailureKind          `json:"failure_kind,omitempty"`
+	Result              *protocol.EffectResult         `json:"result,omitempty"`
+	MaterializationBase *string                        `json:"materialization_base,omitempty"`
+	Runtimes            []protocol.RuntimeInstallation `json:"runtimes,omitempty"`
 }
 type Supervisor interface {
 	Call(context.Context, Request) (Status, error)

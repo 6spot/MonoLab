@@ -31,6 +31,12 @@ type Manifest struct {
 
 func manifestPath(id string) string { return filepath.Join(Root, "launch", id+".json") }
 func ValidateRequest(r Request) error {
+	if r.Action == "discover" {
+		if r.AttemptID != "" || r.Dispatch != nil || r.Operation != nil {
+			return fmt.Errorf("discovery accepts no execution fields")
+		}
+		return nil
+	}
 	if !ValidID(r.AttemptID) {
 		return fmt.Errorf("invalid attempt ID")
 	}
@@ -437,6 +443,9 @@ func Handle(ctx context.Context, r Request) (Status, error) {
 		if err := trustedFile(p, 0); err != nil {
 			return Status{}, err
 		}
+	}
+	if r.Action == "discover" {
+		return discover(ctx)
 	}
 	lock, err := os.OpenFile(filepath.Join(Root, "launch", "helper.lock"), os.O_CREATE|os.O_RDWR, 0600)
 	if err != nil {

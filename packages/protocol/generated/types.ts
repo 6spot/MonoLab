@@ -81,6 +81,7 @@ export interface Frame {
     operation_id?:     string;
     operation_result?: OperationResult;
     runner_id?:        string;
+    runtimes?:         RuntimeInstallation[];
     schema_version:    number;
     sequence?:         number;
     stream_id?:        string;
@@ -150,6 +151,18 @@ export interface OperationResult {
 }
 
 export type FailureKind = "recoverable" | "capture_hard_limit" | "invalid_finalization";
+
+export interface RuntimeInstallation {
+    availability:      Availability;
+    executable:        string;
+    model_ids:         string[];
+    runtime_id:        string;
+    supports_model:    boolean;
+    supports_thinking: boolean;
+    version?:          string;
+}
+
+export type Availability = "detected" | "not_found" | "unavailable";
 
 export type Type = "hello" | "welcome" | "ready" | "heartbeat" | "start" | "effect" | "authorize_dispatch" | "authorization" | "event" | "event_ack" | "operation_result" | "operation_ack" | "error";
 
@@ -253,22 +266,41 @@ export interface OwnerSessionStatus {
 export interface ConfigurationCommand {
     expected_control_version: number;
     name:                     ConfigurationCommandName;
-    payload:                  Configuration;
+    payload:                  PayloadClass;
     request_id:               string;
     schema_version:           number;
 }
 
-export type ConfigurationCommandName = "save_project" | "save_role";
+export type ConfigurationCommandName = "save_project" | "save_role" | "save_policies" | "save_github";
 
-export interface Configuration {
-    archived:      boolean;
-    context?:      string;
-    id:            string;
-    name:          string;
-    resources?:    GitRepositoryResource[];
-    role_ids?:     string[];
-    description?:  string;
-    instructions?: string;
+export interface PayloadClass {
+    archived?:         boolean;
+    context?:          string;
+    id?:               string;
+    name?:             string;
+    resources?:        GitRepositoryResource[];
+    role_ids?:         string[];
+    description?:      string;
+    execution_policy?: ExecutionPolicy;
+    instructions?:     string;
+    global?:           ExecutionPolicy;
+    planner?:          ExecutionPolicy;
+    app_id?:           string;
+    installation_id?:  string;
+    private_key?:      string;
+}
+
+export interface ExecutionPolicy {
+    default_target:   ExecutionTarget;
+    duration_budget?: number;
+    fallback_targets: ExecutionTarget[];
+}
+
+export interface ExecutionTarget {
+    model_id?:       string;
+    runner_id?:      string;
+    runtime_id:      string;
+    thinking_level?: string;
 }
 
 export interface GitRepositoryResource {
@@ -276,11 +308,15 @@ export interface GitRepositoryResource {
     default_ref?:       string;
     id:                 string;
     merge_method?:      MergeMethod;
+    provider?:          Provider;
+    provider_repo_id?:  string;
     remote_preparation: RemotePreparation;
     remote_url:         string;
 }
 
 export type MergeMethod = "merge" | "squash" | "rebase";
+
+export type Provider = "github";
 
 export type RemotePreparation = "automatic" | "after_acceptance";
 
@@ -294,9 +330,22 @@ export interface ConfigurationResult {
 
 export interface ConfigurationSnapshot {
     control_version: number;
+    github?:         GitHubConfigurationStatus;
+    policies:        PolicyConfiguration;
     projects:        ProjectConfiguration[];
     roles:           RoleConfiguration[];
     schema_version:  number;
+}
+
+export interface GitHubConfigurationStatus {
+    app_id:          string;
+    installation_id: string;
+    key_fingerprint: string;
+}
+
+export interface PolicyConfiguration {
+    global?:  ExecutionPolicy;
+    planner?: ExecutionPolicy;
 }
 
 export interface ProjectConfiguration {
@@ -309,9 +358,48 @@ export interface ProjectConfiguration {
 }
 
 export interface RoleConfiguration {
-    archived:     boolean;
-    description:  string;
-    id:           string;
-    instructions: string;
-    name:         string;
+    archived:          boolean;
+    description:       string;
+    execution_policy?: ExecutionPolicy;
+    id:                string;
+    instructions:      string;
+    name:              string;
+}
+
+export interface GitHubConfigurationInput {
+    app_id:          string;
+    installation_id: string;
+    private_key?:    string;
+}
+
+export interface InfrastructureSnapshot {
+    runners:        RunnerConfiguration[];
+    schema_version: number;
+}
+
+export interface RunnerConfiguration {
+    capacity:  number;
+    online:    boolean;
+    runner_id: string;
+    runtimes:  Runtime[];
+}
+
+export interface Runtime {
+    current:      boolean;
+    installation: RuntimeInstallation;
+    observed_at:  string;
+}
+
+export interface GitHubRepositoryPage {
+    next_page?:     number;
+    repositories:   GitHubRepository[];
+    schema_version: number;
+}
+
+export interface GitHubRepository {
+    default_branch:   string;
+    full_name:        string;
+    private:          boolean;
+    provider_repo_id: string;
+    remote_url:       string;
 }

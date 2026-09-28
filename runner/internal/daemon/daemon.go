@@ -31,6 +31,14 @@ type Daemon struct {
 	workers sync.WaitGroup
 }
 
+func (d *Daemon) InstalledRuntimes(ctx context.Context) []protocol.RuntimeInstallation {
+	status, err := d.Host.Call(ctx, host.Request{Action: "discover"})
+	if err != nil {
+		return []protocol.RuntimeInstallation{{RuntimeID: "opencode", Executable: host.Runtime, Availability: "unavailable", SupportsModel: true, SupportsThinking: false, ModelIDS: []string{}}}
+	}
+	return status.Runtimes
+}
+
 func (d *Daemon) event(ctx context.Context, start journal.Start, kind protocol.RuntimeEventKind, text string) error {
 	e, err := d.DB.Event(protocol.RuntimeEvent{AttemptID: start.Dispatch.AttemptID, DispatchID: start.Dispatch.DispatchID, StreamID: "runtime", Kind: kind, Text: text, BootID: &d.Boot})
 	if err != nil {

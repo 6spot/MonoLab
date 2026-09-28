@@ -71,3 +71,9 @@ Project/Role configuration adds eight real database cases plus one pure reposito
 case. DB entrypoint: 69 passed; local suite: 63 passed (including four new wire
 fixtures). Linux Go race/vet passed; these checks do not establish live Runtime or
 provider discovery. Complete snapshots and receipt-failure rollback are exercised.
+
+Runtime/provider configuration adds five real database cases: 74 DB-entrypoint
+cases pass. Local suite is 70 cases after seven shared protocol fixtures. Linux
+Go race/vet and an actual execution-account OpenCode 1.18.30 version probe pass;
+GitHub tests use synthetic RSA keys and injected provider responses, not live App
+credentials or remote write permission evidence.

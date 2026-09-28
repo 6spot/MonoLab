@@ -5,6 +5,87 @@
     "version": "1.0.0"
   },
   "paths": {
+    "/v1/owner/infrastructure": {
+      "get": {
+        "security": [
+          {
+            "OwnerAuth": []
+          },
+          {
+            "OwnerCookie": []
+          }
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Authenticated response; admission is distinct from completed effects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InfrastructureSnapshot"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Deterministic protocol error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/owner/github/repositories": {
+      "get": {
+        "security": [
+          {
+            "OwnerAuth": []
+          },
+          {
+            "OwnerCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Authenticated response; admission is distinct from completed effects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GitHubRepositoryPage"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Deterministic protocol error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/owner/configuration": {
       "get": {
         "security": [
@@ -1301,6 +1382,13 @@
           },
           "error": {
             "$ref": "#/components/schemas/ErrorInfo"
+          },
+          "runtimes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RuntimeInstallation"
+            },
+            "maxItems": 32
           }
         },
         "allOf": [
@@ -1369,7 +1457,8 @@
               "properties": {
                 "schema_version": {},
                 "type": {},
-                "incarnation": {}
+                "incarnation": {},
+                "runtimes": {}
               },
               "additionalProperties": false
             }
@@ -2109,7 +2198,25 @@
               "squash",
               "rebase"
             ]
+          },
+          "provider": {
+            "type": "string",
+            "enum": [
+              "github"
+            ]
+          },
+          "provider_repo_id": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]{0,19}$"
           }
+        },
+        "dependencies": {
+          "provider": [
+            "provider_repo_id"
+          ],
+          "provider_repo_id": [
+            "provider"
+          ]
         }
       },
       "RoleConfiguration": {
@@ -2141,6 +2248,9 @@
           },
           "archived": {
             "type": "boolean"
+          },
+          "execution_policy": {
+            "$ref": "#/components/schemas/ExecutionPolicy"
           }
         }
       },
@@ -2215,7 +2325,9 @@
             "type": "string",
             "enum": [
               "save_project",
-              "save_role"
+              "save_role",
+              "save_policies",
+              "save_github"
             ]
           },
           "payload": {
@@ -2225,6 +2337,12 @@
               },
               {
                 "$ref": "#/components/schemas/RoleConfiguration"
+              },
+              {
+                "$ref": "#/components/schemas/PolicyConfiguration"
+              },
+              {
+                "$ref": "#/components/schemas/GitHubConfigurationInput"
               }
             ]
           }
@@ -2264,6 +2382,44 @@
               "properties": {
                 "payload": {
                   "$ref": "#/components/schemas/RoleConfiguration"
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "name": {
+                  "const": "save_policies"
+                }
+              },
+              "required": [
+                "name"
+              ]
+            },
+            "then": {
+              "properties": {
+                "payload": {
+                  "$ref": "#/components/schemas/PolicyConfiguration"
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "name": {
+                  "const": "save_github"
+                }
+              },
+              "required": [
+                "name"
+              ]
+            },
+            "then": {
+              "properties": {
+                "payload": {
+                  "$ref": "#/components/schemas/GitHubConfigurationInput"
                 }
               }
             }
@@ -2310,7 +2466,8 @@
           "schema_version",
           "control_version",
           "projects",
-          "roles"
+          "roles",
+          "policies"
         ],
         "properties": {
           "schema_version": {
@@ -2335,6 +2492,302 @@
               "$ref": "#/components/schemas/RoleConfiguration"
             },
             "maxItems": 1024
+          },
+          "policies": {
+            "$ref": "#/components/schemas/PolicyConfiguration"
+          },
+          "github": {
+            "$ref": "#/components/schemas/GitHubConfigurationStatus"
+          }
+        }
+      },
+      "ExecutionTarget": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "runtime_id"
+        ],
+        "properties": {
+          "runtime_id": {
+            "$ref": "#/components/schemas/Id"
+          },
+          "runner_id": {
+            "$ref": "#/components/schemas/Id"
+          },
+          "model_id": {
+            "type": "string",
+            "maxLength": 256,
+            "minLength": 1
+          },
+          "thinking_level": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1
+          }
+        }
+      },
+      "ExecutionPolicy": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "default_target",
+          "fallback_targets"
+        ],
+        "properties": {
+          "default_target": {
+            "$ref": "#/components/schemas/ExecutionTarget"
+          },
+          "fallback_targets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExecutionTarget"
+            },
+            "maxItems": 16
+          },
+          "duration_budget": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 604800
+          }
+        }
+      },
+      "PolicyConfiguration": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [],
+        "properties": {
+          "global": {
+            "$ref": "#/components/schemas/ExecutionPolicy"
+          },
+          "planner": {
+            "$ref": "#/components/schemas/ExecutionPolicy"
+          }
+        }
+      },
+      "GitHubConfigurationInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "app_id",
+          "installation_id"
+        ],
+        "properties": {
+          "app_id": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]{0,19}$"
+          },
+          "installation_id": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]{0,19}$"
+          },
+          "private_key": {
+            "type": "string",
+            "maxLength": 16384,
+            "minLength": 1
+          }
+        }
+      },
+      "GitHubConfigurationStatus": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "app_id",
+          "installation_id",
+          "key_fingerprint"
+        ],
+        "properties": {
+          "app_id": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "installation_id": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "key_fingerprint": {
+            "type": "string",
+            "maxLength": 64
+          }
+        }
+      },
+      "RuntimeInstallation": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "runtime_id",
+          "executable",
+          "availability",
+          "supports_model",
+          "supports_thinking",
+          "model_ids"
+        ],
+        "properties": {
+          "runtime_id": {
+            "$ref": "#/components/schemas/Id"
+          },
+          "executable": {
+            "type": "string",
+            "maxLength": 2048,
+            "minLength": 1
+          },
+          "availability": {
+            "type": "string",
+            "enum": [
+              "detected",
+              "not_found",
+              "unavailable"
+            ]
+          },
+          "version": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1
+          },
+          "supports_model": {
+            "type": "boolean"
+          },
+          "supports_thinking": {
+            "type": "boolean"
+          },
+          "model_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 256,
+              "minLength": 1
+            },
+            "maxItems": 128
+          }
+        }
+      },
+      "RunnerConfiguration": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "runner_id",
+          "online",
+          "capacity",
+          "runtimes"
+        ],
+        "properties": {
+          "runner_id": {
+            "$ref": "#/components/schemas/Id"
+          },
+          "online": {
+            "type": "boolean"
+          },
+          "capacity": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 32
+          },
+          "runtimes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "installation",
+                "observed_at",
+                "current"
+              ],
+              "properties": {
+                "installation": {
+                  "$ref": "#/components/schemas/RuntimeInstallation"
+                },
+                "observed_at": {
+                  "type": "string",
+                  "maxLength": 40
+                },
+                "current": {
+                  "type": "boolean"
+                }
+              }
+            },
+            "maxItems": 32
+          }
+        }
+      },
+      "InfrastructureSnapshot": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "schema_version",
+          "runners"
+        ],
+        "properties": {
+          "schema_version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "runners": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RunnerConfiguration"
+            },
+            "maxItems": 1024
+          }
+        }
+      },
+      "GitHubRepository": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "provider_repo_id",
+          "full_name",
+          "remote_url",
+          "default_branch",
+          "private"
+        ],
+        "properties": {
+          "provider_repo_id": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "full_name": {
+            "type": "string",
+            "maxLength": 256
+          },
+          "remote_url": {
+            "type": "string",
+            "maxLength": 2048
+          },
+          "default_branch": {
+            "type": "string",
+            "maxLength": 256
+          },
+          "private": {
+            "type": "boolean"
+          }
+        }
+      },
+      "GitHubRepositoryPage": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "schema_version",
+          "repositories"
+        ],
+        "properties": {
+          "schema_version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "repositories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GitHubRepository"
+            },
+            "maxItems": 100
+          },
+          "next_page": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000
           }
         }
       }

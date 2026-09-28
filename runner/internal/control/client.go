@@ -284,7 +284,13 @@ func (c *Client) Run(ctx context.Context, boot string, h Handler) error {
 	if err = h.Reconcile(ctx, inventory); err != nil {
 		return err
 	}
-	if err = c.Send(ctx, protocol.Frame{Type: protocol.Ready}); err != nil {
+	ready := protocol.Frame{Type: protocol.Ready}
+	if reporter, ok := h.(interface {
+		InstalledRuntimes(context.Context) []protocol.RuntimeInstallation
+	}); ok {
+		ready.Runtimes = reporter.InstalledRuntimes(ctx)
+	}
+	if err = c.Send(ctx, ready); err != nil {
 		return err
 	}
 	c.mu.Lock()

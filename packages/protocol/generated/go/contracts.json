@@ -650,6 +650,13 @@
         },
         "error": {
           "$ref": "#/definitions/ErrorInfo"
+        },
+        "runtimes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/RuntimeInstallation"
+          },
+          "maxItems": 32
         }
       },
       "allOf": [
@@ -718,7 +725,8 @@
             "properties": {
               "schema_version": {},
               "type": {},
-              "incarnation": {}
+              "incarnation": {},
+              "runtimes": {}
             },
             "additionalProperties": false
           }
@@ -1458,7 +1466,25 @@
             "squash",
             "rebase"
           ]
+        },
+        "provider": {
+          "type": "string",
+          "enum": [
+            "github"
+          ]
+        },
+        "provider_repo_id": {
+          "type": "string",
+          "pattern": "^[1-9][0-9]{0,19}$"
         }
+      },
+      "dependencies": {
+        "provider": [
+          "provider_repo_id"
+        ],
+        "provider_repo_id": [
+          "provider"
+        ]
       }
     },
     "RoleConfiguration": {
@@ -1490,6 +1516,9 @@
         },
         "archived": {
           "type": "boolean"
+        },
+        "execution_policy": {
+          "$ref": "#/definitions/ExecutionPolicy"
         }
       }
     },
@@ -1564,7 +1593,9 @@
           "type": "string",
           "enum": [
             "save_project",
-            "save_role"
+            "save_role",
+            "save_policies",
+            "save_github"
           ]
         },
         "payload": {
@@ -1574,6 +1605,12 @@
             },
             {
               "$ref": "#/definitions/RoleConfiguration"
+            },
+            {
+              "$ref": "#/definitions/PolicyConfiguration"
+            },
+            {
+              "$ref": "#/definitions/GitHubConfigurationInput"
             }
           ]
         }
@@ -1613,6 +1650,44 @@
             "properties": {
               "payload": {
                 "$ref": "#/definitions/RoleConfiguration"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "const": "save_policies"
+              }
+            },
+            "required": [
+              "name"
+            ]
+          },
+          "then": {
+            "properties": {
+              "payload": {
+                "$ref": "#/definitions/PolicyConfiguration"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "const": "save_github"
+              }
+            },
+            "required": [
+              "name"
+            ]
+          },
+          "then": {
+            "properties": {
+              "payload": {
+                "$ref": "#/definitions/GitHubConfigurationInput"
               }
             }
           }
@@ -1659,7 +1734,8 @@
         "schema_version",
         "control_version",
         "projects",
-        "roles"
+        "roles",
+        "policies"
       ],
       "properties": {
         "schema_version": {
@@ -1684,6 +1760,302 @@
             "$ref": "#/definitions/RoleConfiguration"
           },
           "maxItems": 1024
+        },
+        "policies": {
+          "$ref": "#/definitions/PolicyConfiguration"
+        },
+        "github": {
+          "$ref": "#/definitions/GitHubConfigurationStatus"
+        }
+      }
+    },
+    "ExecutionTarget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "runtime_id"
+      ],
+      "properties": {
+        "runtime_id": {
+          "$ref": "#/definitions/Id"
+        },
+        "runner_id": {
+          "$ref": "#/definitions/Id"
+        },
+        "model_id": {
+          "type": "string",
+          "maxLength": 256,
+          "minLength": 1
+        },
+        "thinking_level": {
+          "type": "string",
+          "maxLength": 64,
+          "minLength": 1
+        }
+      }
+    },
+    "ExecutionPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "default_target",
+        "fallback_targets"
+      ],
+      "properties": {
+        "default_target": {
+          "$ref": "#/definitions/ExecutionTarget"
+        },
+        "fallback_targets": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ExecutionTarget"
+          },
+          "maxItems": 16
+        },
+        "duration_budget": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 604800
+        }
+      }
+    },
+    "PolicyConfiguration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [],
+      "properties": {
+        "global": {
+          "$ref": "#/definitions/ExecutionPolicy"
+        },
+        "planner": {
+          "$ref": "#/definitions/ExecutionPolicy"
+        }
+      }
+    },
+    "GitHubConfigurationInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "app_id",
+        "installation_id"
+      ],
+      "properties": {
+        "app_id": {
+          "type": "string",
+          "pattern": "^[1-9][0-9]{0,19}$"
+        },
+        "installation_id": {
+          "type": "string",
+          "pattern": "^[1-9][0-9]{0,19}$"
+        },
+        "private_key": {
+          "type": "string",
+          "maxLength": 16384,
+          "minLength": 1
+        }
+      }
+    },
+    "GitHubConfigurationStatus": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "app_id",
+        "installation_id",
+        "key_fingerprint"
+      ],
+      "properties": {
+        "app_id": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "installation_id": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "key_fingerprint": {
+          "type": "string",
+          "maxLength": 64
+        }
+      }
+    },
+    "RuntimeInstallation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "runtime_id",
+        "executable",
+        "availability",
+        "supports_model",
+        "supports_thinking",
+        "model_ids"
+      ],
+      "properties": {
+        "runtime_id": {
+          "$ref": "#/definitions/Id"
+        },
+        "executable": {
+          "type": "string",
+          "maxLength": 2048,
+          "minLength": 1
+        },
+        "availability": {
+          "type": "string",
+          "enum": [
+            "detected",
+            "not_found",
+            "unavailable"
+          ]
+        },
+        "version": {
+          "type": "string",
+          "maxLength": 128,
+          "minLength": 1
+        },
+        "supports_model": {
+          "type": "boolean"
+        },
+        "supports_thinking": {
+          "type": "boolean"
+        },
+        "model_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 256,
+            "minLength": 1
+          },
+          "maxItems": 128
+        }
+      }
+    },
+    "RunnerConfiguration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "runner_id",
+        "online",
+        "capacity",
+        "runtimes"
+      ],
+      "properties": {
+        "runner_id": {
+          "$ref": "#/definitions/Id"
+        },
+        "online": {
+          "type": "boolean"
+        },
+        "capacity": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 32
+        },
+        "runtimes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "installation",
+              "observed_at",
+              "current"
+            ],
+            "properties": {
+              "installation": {
+                "$ref": "#/definitions/RuntimeInstallation"
+              },
+              "observed_at": {
+                "type": "string",
+                "maxLength": 40
+              },
+              "current": {
+                "type": "boolean"
+              }
+            }
+          },
+          "maxItems": 32
+        }
+      }
+    },
+    "InfrastructureSnapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "runners"
+      ],
+      "properties": {
+        "schema_version": {
+          "type": "integer",
+          "enum": [
+            1
+          ]
+        },
+        "runners": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/RunnerConfiguration"
+          },
+          "maxItems": 1024
+        }
+      }
+    },
+    "GitHubRepository": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "provider_repo_id",
+        "full_name",
+        "remote_url",
+        "default_branch",
+        "private"
+      ],
+      "properties": {
+        "provider_repo_id": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "full_name": {
+          "type": "string",
+          "maxLength": 256
+        },
+        "remote_url": {
+          "type": "string",
+          "maxLength": 2048
+        },
+        "default_branch": {
+          "type": "string",
+          "maxLength": 256
+        },
+        "private": {
+          "type": "boolean"
+        }
+      }
+    },
+    "GitHubRepositoryPage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "repositories"
+      ],
+      "properties": {
+        "schema_version": {
+          "type": "integer",
+          "enum": [
+            1
+          ]
+        },
+        "repositories": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/GitHubRepository"
+          },
+          "maxItems": 100
+        },
+        "next_page": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000
         }
       }
     }

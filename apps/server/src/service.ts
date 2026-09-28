@@ -104,9 +104,19 @@ export class BoundaryService {
       return Number(result.rows[0]!.incarnation);
     });
   }
-  async touch(runnerId: string, incarnation: number, ready = false): Promise<void> {
+  async touch(runnerId: string, incarnation: number, ready = false, runtimes?: Frame['runtimes']): Promise<void> {
+    if (runtimes !== undefined) {
+      validate('Frame', { schema_version: 1, type: 'ready', incarnation, runtimes });
+      if (!ready || new Set(runtimes.map((row) => row.runtime_id)).size !== runtimes.length) throw new CommandError('invalid_input', 'Runtime report must contain unique installation IDs');
+    }
     await transaction(this.db, async (tx) => {
-      checkChannel(await lockRunner(tx, runnerId), incarnation);
+      const runner = await lockRunner(tx, runnerId);
+      checkChannel(runner, incarnation);
+      if (runner.connection_instance !== this.instanceId) throw new CommandError('stale_execution', 'Runner must reconnect to this backend');
+      if (runtimes !== undefined) {
+        await tx.query('DELETE FROM runtime_installations WHERE runner_id=$1', [runnerId]);
+        for (const row of runtimes) await tx.query('INSERT INTO runtime_installations(runner_id,runtime_id,incarnation,observation) VALUES($1,$2,$3,$4)', [runnerId, row.runtime_id, incarnation, row]);
+      }
       await tx.query('UPDATE runners SET last_seen=now(),ready=ready OR $2 WHERE id=$1', [runnerId, ready]);
     });
   }

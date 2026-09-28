@@ -1,25 +1,29 @@
 import { transaction } from '../../../packages/db/src/index.ts';
 import type { Database, Transaction } from '../../../packages/db/src/index.ts';
 import { canonicalJSON, digest, MAX_BODY_BYTES, validate } from '../../../packages/protocol/src/index.ts';
-import type { ConfigurationCommand, ConfigurationResult, ConfigurationSnapshot, GitRepositoryResource, ProjectConfiguration, RoleConfiguration } from '../../../packages/protocol/src/index.ts';
+import type { ConfigurationCommand, ConfigurationResult, ConfigurationSnapshot, GitRepositoryResource, ProjectConfiguration, RoleConfiguration, PolicyConfiguration, GitHubConfigurationStatus, InfrastructureSnapshot, RuntimeInstallation } from '../../../packages/protocol/src/index.ts';
 import { CommandError } from '../../../packages/domain/src/commands.ts';
 import { repositoryIdentity, validateGitRef } from '../../../packages/domain/src/repositories.ts';
 import { authenticateOwner } from './owner-commands.ts';
 import { lockConfiguration } from './configuration-guards.ts';
+import type { GitHub, GitHubCredentials } from './github.ts';
 
 async function snapshot(tx: Transaction, version: number): Promise<ConfigurationSnapshot> {
-  const roles = (await tx.query<RoleConfiguration>('SELECT id,name,description,instructions,archived FROM roles ORDER BY id')).rows;
+  const roleRows = (await tx.query<RoleConfiguration & { execution_policy: RoleConfiguration['execution_policy'] | null }>('SELECT id,name,description,instructions,archived,execution_policy FROM roles ORDER BY id')).rows;
+  const roles = roleRows.map(({ execution_policy, ...role }) => ({ ...role, ...(execution_policy ? { execution_policy } : {}) }));
+  const policies = (await tx.query<{ policies: PolicyConfiguration }>('SELECT policies FROM execution_policies')).rows[0]!.policies;
+  const github = (await tx.query<GitHubConfigurationStatus>('SELECT app_id,installation_id,key_fingerprint FROM github_configuration')).rows[0];
   const projects = (await tx.query<Omit<ProjectConfiguration, 'resources' | 'role_ids'>>('SELECT id,name,context,archived FROM projects ORDER BY id')).rows;
   const resources = (await tx.query<{ project_id: string; settings: GitRepositoryResource }>('SELECT project_id,settings FROM project_resources WHERE active ORDER BY id')).rows;
   const selected = (await tx.query<{ project_id: string; role_id: string }>('SELECT project_id,role_id FROM project_roles ORDER BY role_id')).rows;
-  const result = { schema_version: 1, control_version: version, roles, projects: projects.map((project) => ({ ...project, resources: resources.filter((r) => r.project_id === project.id).map((r) => r.settings), role_ids: selected.filter((r) => r.project_id === project.id).map((r) => r.role_id) })) };
+  const result = { schema_version: 1, control_version: version, roles, policies, ...(github ? { github } : {}), projects: projects.map((project) => ({ ...project, resources: resources.filter((r) => r.project_id === project.id).map((r) => r.settings), role_ids: selected.filter((r) => r.project_id === project.id).map((r) => r.role_id) })) };
   if (Buffer.byteLength(JSON.stringify(result)) > MAX_BODY_BYTES) throw new CommandError('unmet_precondition', 'Configuration exceeds the current 2 MiB snapshot limit');
   return validate('ConfigurationSnapshot', result);
 }
 
 async function saveRole(tx: Transaction, role: RoleConfiguration): Promise<void> {
   if (!role.name.trim()) throw new CommandError('invalid_input', 'Role name is required');
-  await tx.query('INSERT INTO roles(id,name,description,instructions,archived) VALUES($1,$2,$3,$4,$5) ON CONFLICT(id) DO UPDATE SET name=$2,description=$3,instructions=$4,archived=$5', [role.id, role.name, role.description, role.instructions, role.archived]);
+  await tx.query('INSERT INTO roles(id,name,description,instructions,archived,execution_policy) VALUES($1,$2,$3,$4,$5,$6) ON CONFLICT(id) DO UPDATE SET name=$2,description=$3,instructions=$4,archived=$5,execution_policy=$6', [role.id, role.name, role.description, role.instructions, role.archived, role.execution_policy ?? null]);
 }
 
 async function saveProject(tx: Transaction, project: ProjectConfiguration): Promise<void> {
@@ -34,11 +38,14 @@ async function saveProject(tx: Transaction, project: ProjectConfiguration): Prom
   const ids = project.resources.map((resource) => resource.id);
   const identities = project.resources.map((resource) => repositoryIdentity(resource.remote_url));
   if (new Set(ids).size !== ids.length || new Set(identities).size !== identities.length) throw new CommandError('invalid_input', 'Duplicate repository resource or remote');
-  const existing = (await tx.query<{ id: string; project_id: string; remote_url: string; repository_identity: string }>('SELECT id,project_id,remote_url,repository_identity FROM project_resources WHERE project_id=$1 OR id=ANY($2::text[])', [project.id, ids])).rows;
+  const existing = (await tx.query<{ id: string; project_id: string; remote_url: string; repository_identity: string; settings: GitRepositoryResource }>('SELECT id,project_id,remote_url,repository_identity,settings FROM project_resources WHERE project_id=$1 OR id=ANY($2::text[])', [project.id, ids])).rows;
   for (const [index, resource] of project.resources.entries()) {
     if (resource.default_ref !== undefined) validateGitRef(resource.default_ref);
     if (resource.default_branch !== undefined) validateGitRef(resource.default_branch);
     const old = existing.find((row) => row.id === resource.id);
+    if (resource.provider && !identities[index]!.startsWith('github.com/')) throw new CommandError('invalid_input', 'GitHub metadata requires a GitHub remote');
+    if (old?.settings.provider_repo_id && (old.settings.provider_repo_id !== resource.provider_repo_id || old.settings.provider !== resource.provider)) throw new CommandError('payload_conflict', 'Provider repository identity is immutable');
+    if (resource.provider_repo_id && (existing.some((row) => row.project_id === project.id && row.id !== resource.id && row.settings.provider_repo_id === resource.provider_repo_id) || project.resources.some((row) => row.id !== resource.id && row.provider_repo_id === resource.provider_repo_id))) throw new CommandError('payload_conflict', 'Provider repository already has a resource ID');
     if (old && (old.project_id !== project.id || old.remote_url !== resource.remote_url)) throw new CommandError('payload_conflict', 'Resource identity is immutable; use a new ID for another remote');
     if (existing.some((row) => row.project_id === project.id && row.repository_identity === identities[index] && row.id !== resource.id)) throw new CommandError('payload_conflict', 'Repository already has a resource ID in this Project');
   }
@@ -57,7 +64,8 @@ async function saveProject(tx: Transaction, project: ProjectConfiguration): Prom
 
 export class Configuration {
   readonly db: Database;
-  constructor(db: Database) { this.db = db; }
+  private readonly github?: GitHub;
+  constructor(db: Database, github?: GitHub) { this.db = db; this.github = github; }
 
   async read(token: string): Promise<ConfigurationSnapshot> {
     return transaction(this.db, async (tx) => { await authenticateOwner(tx, token); return snapshot(tx, await lockConfiguration(tx)); });
@@ -77,11 +85,17 @@ export class Configuration {
         return prior.response;
       }
       if (version !== command.expected_control_version) throw new CommandError('version_conflict', 'Configuration changed; reload and review your edit', version);
-      if (command.name === 'save_project') await saveProject(tx, validate('ProjectConfiguration', command.payload));
-      else await saveRole(tx, validate('RoleConfiguration', command.payload));
+      switch (command.name) {
+        case 'save_project': await saveProject(tx, validate('ProjectConfiguration', command.payload)); break;
+        case 'save_role': await saveRole(tx, validate('RoleConfiguration', command.payload)); break;
+        case 'save_policies': await tx.query('UPDATE execution_policies SET policies=$1', [validate('PolicyConfiguration', command.payload)]); break;
+        case 'save_github':
+          if (!this.github) throw new CommandError('unmet_precondition', 'Provider key storage is not configured');
+          await this.github.configure(tx, validate('GitHubConfigurationInput', command.payload)); break;
+      }
       await tx.query('UPDATE configuration_control SET version=version+1');
       await snapshot(tx, version + 1); // Bounded complete snapshots; failure rolls back this edit.
-      const response = validate<ConfigurationResult>('ConfigurationResult', { schema_version: 1, request_id: command.request_id, status: 'committed', control_version: version + 1, entity_id: command.payload.id });
+      const response = validate<ConfigurationResult>('ConfigurationResult', { schema_version: 1, request_id: command.request_id, status: 'committed', control_version: version + 1, entity_id: command.payload.id ?? command.name });
       await tx.query('INSERT INTO configuration_receipts(request_id,digest,response) VALUES($1,$2,$3)', [command.request_id, hash, response]);
       return response;
     });
@@ -92,6 +106,27 @@ export class Configuration {
     return transaction(this.db, async (tx) => {
       await authenticateOwner(tx, token);
       return (await tx.query<{ response: ConfigurationResult }>('SELECT response FROM configuration_receipts WHERE request_id=$1', [requestId])).rows[0]?.response ?? { schema_version: 1, request_id: requestId, status: 'unknown' };
+    });
+  }
+
+  async repositories(token: string, page: number) {
+    const config = await transaction(this.db, async (tx) => {
+      await authenticateOwner(tx, token); await lockConfiguration(tx);
+      return (await tx.query<GitHubCredentials>('SELECT app_id,installation_id,encrypted_key,key_fingerprint FROM github_configuration')).rows[0];
+    });
+    if (!config || !this.github) throw new CommandError('unmet_precondition', 'Configure a GitHub App installation first');
+    // Network requests and short-lived tokens stay outside the DB transaction.
+    return this.github.repositories(config, page);
+  }
+
+  async infrastructure(token: string, instanceId: string): Promise<InfrastructureSnapshot> {
+    return transaction(this.db, async (tx) => {
+      await authenticateOwner(tx, token);
+      const rows = (await tx.query<{ runner_id: string; capacity: number; online: boolean; runtimes: { installation: RuntimeInstallation; observed_at: string; current: boolean }[] }>(`SELECT r.id AS runner_id,r.capacity,
+        (r.connected AND r.ready AND r.connection_instance=$1 AND r.last_seen>clock_timestamp()-interval '15 seconds') AS online,
+        COALESCE((SELECT jsonb_agg(jsonb_build_object('installation',i.observation,'observed_at',to_char(i.observed_at AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'),'current',i.incarnation=r.incarnation) ORDER BY i.runtime_id) FROM runtime_installations i WHERE i.runner_id=r.id),'[]'::jsonb) AS runtimes
+        FROM runners r ORDER BY r.id`, [instanceId])).rows;
+      return validate('InfrastructureSnapshot', { schema_version: 1, runners: rows });
     });
   }
 }

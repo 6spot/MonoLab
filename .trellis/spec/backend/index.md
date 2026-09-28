@@ -5,6 +5,7 @@ Status: Stage A boundary-probe backend is implemented in `apps/server` with Post
 ## Pre-Development Checklist
 
 - Read [directory structure](directory-structure.md) for ownership.
+- For Runtime policies, registry or GitHub secrets, read [infrastructure configuration](infrastructure-configuration.md).
 - For Project/Role edits and selection guards, read [configuration](configuration.md).
 - For login/bootstrap/Cookie security, read [Owner access](owner-access.md).
 - For overview/Timeline/cursors, read [Owner reads](owner-reads.md).

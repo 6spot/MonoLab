@@ -32,6 +32,8 @@ const get = (name, auth, parameters = []) => ({ security: security(auth), parame
 artifacts.set('generated/openapi.json', `${JSON.stringify({
   openapi: '3.1.0', info: { title: 'MonoLab boundary probe', version: '1.0.0' },
   paths: {
+    '/v1/owner/infrastructure': { get: get('InfrastructureSnapshot', 'OwnerAuth') },
+    '/v1/owner/github/repositories': { get: { ...get('GitHubRepositoryPage', 'OwnerAuth'), parameters: [{ name: 'page', in: 'query', required: false, schema: { type: 'integer', minimum: 1, maximum: 1000 } }] } },
     '/v1/owner/configuration': { get: get('ConfigurationSnapshot', 'OwnerAuth') },
     '/v1/owner/configuration/commands': { post: { security: security('OwnerAuth'), requestBody: { required: true, content: { 'application/json': { schema: reference('ConfigurationCommand') } } }, responses: responses('ConfigurationResult') } },
     '/v1/owner/configuration/commands/{request_id}': { get: get('ConfigurationResult', 'OwnerAuth', ['request_id']) },

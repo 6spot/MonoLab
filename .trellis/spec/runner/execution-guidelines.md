@@ -77,3 +77,15 @@ Correct: verify kernel peer/birth/cgroup against the daemon's durable dispatch r
 
 Wrong: check model availability in the Owner's default XDG cache, then launch in a fresh Attempt cache.
 Correct: refresh and validate the model in the same environment/cwd used by the actual invocation; retain Runtime errors separately from catalog diagnostics.
+
+## Installation discovery
+
+The constrained helper additionally accepts `{action:"discover",attempt_id:""}`
+with no dispatch/operation. `discovery.go` executes fixed OpenCode `--version` as
+`me` (non-root UID/GID), explicit home/PATH and no inherited service environment.
+Output is limited to 4096 bytes and a parsed semver; deadline is 10 seconds with
+process-group cancellation. Discovery on reconnect reports objective installation
+facts in optional `ready.runtimes`. Missing older-client reports retain history;
+they cannot mark it current for a new incarnation. A detected version establishes
+neither coding-CLI login nor real tool/Stop acceptance. See the backend
+[infrastructure contract](../backend/infrastructure-configuration.md).

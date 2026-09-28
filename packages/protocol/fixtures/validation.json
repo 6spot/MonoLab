@@ -468,5 +468,126 @@
       },
       "team_id": "team"
     }
+  },
+  {
+    "name": "runtime installation on ready",
+    "schema": "Frame",
+    "valid": true,
+    "value": {
+      "schema_version": 1,
+      "type": "ready",
+      "incarnation": 1,
+      "runtimes": [
+        {
+          "runtime_id": "opencode",
+          "executable": "/opt/opencode",
+          "availability": "detected",
+          "version": "1.18.30",
+          "supports_model": true,
+          "supports_thinking": false,
+          "model_ids": []
+        }
+      ]
+    }
+  },
+  {
+    "name": "no arbitrary installation settings",
+    "schema": "Frame",
+    "valid": false,
+    "value": {
+      "schema_version": 1,
+      "type": "ready",
+      "incarnation": 1,
+      "runtimes": [
+        {
+          "runtime_id": "opencode",
+          "executable": "/opt/opencode",
+          "availability": "detected",
+          "version": "1.18.30",
+          "supports_model": true,
+          "supports_thinking": false,
+          "model_ids": [],
+          "settings_ui": {}
+        }
+      ]
+    }
+  },
+  {
+    "name": "no runtime report on hello",
+    "schema": "Frame",
+    "valid": false,
+    "value": {
+      "schema_version": 1,
+      "type": "hello",
+      "runner_id": "r",
+      "boot_id": "b",
+      "runtimes": [
+        {
+          "runtime_id": "opencode",
+          "executable": "/opt/opencode",
+          "availability": "detected",
+          "version": "1.18.30",
+          "supports_model": true,
+          "supports_thinking": false,
+          "model_ids": []
+        }
+      ]
+    }
+  },
+  {
+    "name": "manual execution target",
+    "schema": "ExecutionPolicy",
+    "valid": true,
+    "value": {
+      "default_target": {
+        "runtime_id": "opencode",
+        "model_id": "vendor/new-model",
+        "runner_id": "fixed"
+      },
+      "fallback_targets": [
+        {
+          "runtime_id": "opencode"
+        }
+      ],
+      "duration_budget": 600
+    }
+  },
+  {
+    "name": "fallback target must be complete",
+    "schema": "ExecutionPolicy",
+    "valid": false,
+    "value": {
+      "default_target": {
+        "runtime_id": "opencode"
+      },
+      "fallback_targets": [
+        {
+          "model_id": "new"
+        }
+      ]
+    }
+  },
+  {
+    "name": "explicit provider repository metadata",
+    "schema": "GitRepositoryResource",
+    "valid": true,
+    "value": {
+      "id": "repo",
+      "remote_url": "https://github.com/a/b",
+      "remote_preparation": "automatic",
+      "provider": "github",
+      "provider_repo_id": "123"
+    }
+  },
+  {
+    "name": "provider metadata requires stable ID",
+    "schema": "GitRepositoryResource",
+    "valid": false,
+    "value": {
+      "id": "repo",
+      "remote_url": "https://github.com/a/b",
+      "remote_preparation": "automatic",
+      "provider": "github"
+    }
   }
 ]
