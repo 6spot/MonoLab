@@ -18,7 +18,7 @@ export class ProtocolVersionError extends Error {}
 export class ProtocolValidationError extends Error {}
 
 export function validate<T>(name: string, value: unknown): T {
-  if (['Frame', 'CommandEnvelope', 'OwnerCommand', 'OwnerLogin'].includes(name) && value && typeof value === 'object' && 'schema_version' in value && value.schema_version !== 1) throw new ProtocolVersionError('Unsupported schema version');
+  if (['Frame', 'CommandEnvelope', 'OwnerCommand', 'OwnerLogin', 'ConfigurationCommand'].includes(name) && value && typeof value === 'object' && 'schema_version' in value && value.schema_version !== 1) throw new ProtocolVersionError('Unsupported schema version');
   let validator = validators.get(name);
   if (!validator) {
     validator = ajv.compile({ $ref: `${schema.$id}#/definitions/${name}` });

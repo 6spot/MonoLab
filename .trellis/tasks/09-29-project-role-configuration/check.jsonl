@@ -1,0 +1,5 @@
+{"file": ".trellis/spec/backend/database-guidelines.md", "reason": "Project/Role configuration contract"}
+{"file": ".trellis/spec/backend/owner-access.md", "reason": "Project/Role configuration contract"}
+{"file": ".trellis/spec/protocol/schema-generation.md", "reason": "Project/Role configuration contract"}
+{"file": "docs/01-product-and-domain.md", "reason": "Project/Role configuration contract"}
+{"file": "docs/08-principles-and-non-goals.md", "reason": "Project/Role configuration contract"}

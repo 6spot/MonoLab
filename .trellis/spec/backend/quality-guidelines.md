@@ -66,3 +66,8 @@ Shared read schemas also pass Linux Go race/vet. UI/SSE remain later work.
 Owner access adds five real PostgreSQL/native CLI cases: the full DB entrypoint
 passes 60 cases (59 DB plus pure graph validation), local suite 58 cases, and Linux
 Go race/vet. Synthetic passwords only; deployed Owner credentials are untouched.
+
+Project/Role configuration adds eight real database cases plus one pure repository/ref
+case. DB entrypoint: 69 passed; local suite: 63 passed (including four new wire
+fixtures). Linux Go race/vet passed; these checks do not establish live Runtime or
+provider discovery. Complete snapshots and receipt-failure rollback are exercised.

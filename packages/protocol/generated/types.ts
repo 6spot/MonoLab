@@ -249,3 +249,69 @@ export interface OwnerSessionStatus {
     expires_at?:    string;
     schema_version: number;
 }
+
+export interface ConfigurationCommand {
+    expected_control_version: number;
+    name:                     ConfigurationCommandName;
+    payload:                  Configuration;
+    request_id:               string;
+    schema_version:           number;
+}
+
+export type ConfigurationCommandName = "save_project" | "save_role";
+
+export interface Configuration {
+    archived:      boolean;
+    context?:      string;
+    id:            string;
+    name:          string;
+    resources?:    GitRepositoryResource[];
+    role_ids?:     string[];
+    description?:  string;
+    instructions?: string;
+}
+
+export interface GitRepositoryResource {
+    default_branch?:    string;
+    default_ref?:       string;
+    id:                 string;
+    merge_method?:      MergeMethod;
+    remote_preparation: RemotePreparation;
+    remote_url:         string;
+}
+
+export type MergeMethod = "merge" | "squash" | "rebase";
+
+export type RemotePreparation = "automatic" | "after_acceptance";
+
+export interface ConfigurationResult {
+    control_version?: number;
+    entity_id?:       string;
+    request_id:       string;
+    schema_version:   number;
+    status:           OwnerCommandResultStatus;
+}
+
+export interface ConfigurationSnapshot {
+    control_version: number;
+    projects:        ProjectConfiguration[];
+    roles:           RoleConfiguration[];
+    schema_version:  number;
+}
+
+export interface ProjectConfiguration {
+    archived:  boolean;
+    context:   string;
+    id:        string;
+    name:      string;
+    resources: GitRepositoryResource[];
+    role_ids:  string[];
+}
+
+export interface RoleConfiguration {
+    archived:     boolean;
+    description:  string;
+    id:           string;
+    instructions: string;
+    name:         string;
+}

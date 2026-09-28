@@ -394,5 +394,79 @@
       "password": "synthetic-test-password",
       "owner": true
     }
+  },
+  {
+    "name": "configuration role command",
+    "schema": "ConfigurationCommand",
+    "valid": true,
+    "value": {
+      "schema_version": 1,
+      "request_id": "save-1",
+      "expected_control_version": 0,
+      "name": "save_role",
+      "payload": {
+        "id": "role",
+        "name": "Builder",
+        "description": "Reusable",
+        "instructions": "Test changes",
+        "archived": false
+      }
+    }
+  },
+  {
+    "name": "wrong configuration payload",
+    "schema": "ConfigurationCommand",
+    "valid": false,
+    "value": {
+      "schema_version": 1,
+      "request_id": "save-1",
+      "expected_control_version": 0,
+      "name": "save_project",
+      "payload": {
+        "id": "role",
+        "name": "Builder",
+        "description": "Reusable",
+        "instructions": "Test changes",
+        "archived": false
+      }
+    }
+  },
+  {
+    "name": "no Role-bound Runtime",
+    "schema": "ConfigurationCommand",
+    "valid": false,
+    "value": {
+      "schema_version": 1,
+      "request_id": "save-1",
+      "expected_control_version": 0,
+      "name": "save_role",
+      "payload": {
+        "id": "role",
+        "name": "Builder",
+        "description": "Reusable",
+        "instructions": "Test changes",
+        "archived": false,
+        "runtime_id": "opencode"
+      }
+    }
+  },
+  {
+    "name": "no team field",
+    "schema": "ConfigurationCommand",
+    "valid": false,
+    "value": {
+      "schema_version": 1,
+      "request_id": "save-1",
+      "expected_control_version": 0,
+      "name": "save_role",
+      "payload": {
+        "id": "role",
+        "name": "Builder",
+        "description": "Reusable",
+        "instructions": "Test changes",
+        "archived": false
+      },
+      "team_id": "team"
+    }
   }
 ]

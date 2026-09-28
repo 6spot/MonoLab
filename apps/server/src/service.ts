@@ -1,3 +1,4 @@
+import { lockConfiguration } from './configuration-guards.ts';
 import { randomUUID } from 'node:crypto';
 import { runnerForCredential, transaction } from '../../../packages/db/src/index.ts';
 import type { Database, Transaction } from '../../../packages/db/src/index.ts';
@@ -10,7 +11,7 @@ import { assertCurrentNode } from './task-records.ts';
 import { DispatchQueue } from './dispatch-queue.ts';
 
 interface RunnerRow { id: string; incarnation: string; connected: boolean; ready: boolean; available: boolean; capacity: number; connection_instance: string | null }
-interface TaskRow { id: string; resource_id: string; control_version: string }
+interface TaskRow { id: string; resource_id: string; control_version: string; project_id: string | null }
 interface AttemptRow {
   id: string; runner_id: string; task_id: string; node_id: string | null; dispatch_id: string;
   kind: 'node' | 'planner'; fencing_generation: string; node_activation: string;
@@ -131,6 +132,7 @@ export class BoundaryService {
     try { request = parseSubmission(body); } catch (error) { throw new CommandError(error instanceof ProtocolVersionError ? 'unsupported_version' : 'invalid_input', 'Command body, schema version or canonical digest is invalid'); }
     const { envelope: command, submission } = request;
     const result = await transaction(this.db, async (tx) => {
+      await lockConfiguration(tx);
       const { runner, task, attempt } = await lockAttempt(tx, identity.attempt_id);
       checkIdentity(attempt, identity);
       if (command.scope_id !== attempt.task_id) throw new CommandError('denied_scope', 'Command belongs to another scope');
@@ -140,6 +142,9 @@ export class BoundaryService {
         return receiptResponse(tx, receipt);
       }
       guardNewCommand(command, { kind: attempt.kind, taskId: attempt.task_id, resourceId: task.resource_id, mutationAllowed: attempt.mutation_allowed, processReleased: attempt.process_released, controlVersion: Number(task.control_version), sourceWatermark: attempt.launch.source_watermark, connectionAvailable: runner.available && runner.connection_instance === this.instanceId });
+      if (task.project_id && (command.name === 'open_workspace' || command.name === 'inspect_repository')) {
+        if (!(await tx.query('SELECT id FROM project_resources WHERE id=$1 AND project_id=$2 AND active', [command.payload.resource_id, task.project_id])).rowCount) throw new CommandError('denied_scope', 'Resource is not available in this Project');
+      }
       if (attempt.node_id) {
         const node = await assertCurrentNode(tx, { task_id: attempt.task_id, node_id: attempt.node_id, node_activation: Number(attempt.node_activation) });
         if (node.state !== 'RUNNING') throw new CommandError('stale_execution', 'Node is no longer running');

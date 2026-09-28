@@ -8,6 +8,7 @@ import type { BoundaryService } from './service.ts';
 import { OwnerCommands } from './owner-commands.ts';
 import { OwnerReads } from './owner-reads.ts';
 import { OwnerAccess } from './owner-access.ts';
+import { Configuration } from './configuration.ts';
 
 function bearer(request: { headers: { authorization?: string } }): string {
   const match = /^Bearer ([^\s]+)$/.exec(request.headers.authorization ?? '');
@@ -52,6 +53,10 @@ export function createApp(service: BoundaryService, tls?: { key: Buffer; cert: B
   const owner = new OwnerCommands(service.db);
   const reads = new OwnerReads(service.db);
   const access = new OwnerAccess(service.db);
+  const configuration = new Configuration(service.db);
+  app.get('/v1/owner/configuration', async (request) => configuration.read(ownerCredential(request)));
+  app.post('/v1/owner/configuration/commands', async (request) => configuration.save(ownerCredential(request), request.body));
+  app.get<{ Params: { request_id: string } }>('/v1/owner/configuration/commands/:request_id', async (request) => configuration.status(ownerCredential(request), request.params.request_id));
   app.post('/v1/owner/login', { bodyLimit: 4096 }, async (request, reply) => {
     sameOrigin(request);
     const body = validate<{ schema_version: 1; password: string }>('OwnerLogin', request.body);

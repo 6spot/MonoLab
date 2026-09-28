@@ -1416,6 +1416,276 @@
           }
         }
       ]
+    },
+    "GitRepositoryResource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "remote_url",
+        "remote_preparation"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/definitions/Id"
+        },
+        "remote_url": {
+          "type": "string",
+          "maxLength": 2048,
+          "minLength": 1
+        },
+        "default_ref": {
+          "type": "string",
+          "maxLength": 256,
+          "minLength": 1
+        },
+        "default_branch": {
+          "type": "string",
+          "maxLength": 256,
+          "minLength": 1
+        },
+        "remote_preparation": {
+          "type": "string",
+          "enum": [
+            "automatic",
+            "after_acceptance"
+          ]
+        },
+        "merge_method": {
+          "type": "string",
+          "enum": [
+            "merge",
+            "squash",
+            "rebase"
+          ]
+        }
+      }
+    },
+    "RoleConfiguration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "description",
+        "instructions",
+        "archived"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/definitions/Id"
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 200,
+          "minLength": 1
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 4000
+        },
+        "instructions": {
+          "type": "string",
+          "maxLength": 64000
+        },
+        "archived": {
+          "type": "boolean"
+        }
+      }
+    },
+    "ProjectConfiguration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "context",
+        "archived",
+        "role_ids",
+        "resources"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/definitions/Id"
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 200,
+          "minLength": 1
+        },
+        "context": {
+          "type": "string",
+          "maxLength": 64000
+        },
+        "archived": {
+          "type": "boolean"
+        },
+        "role_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Id"
+          },
+          "maxItems": 128,
+          "uniqueItems": true
+        },
+        "resources": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/GitRepositoryResource"
+          },
+          "maxItems": 128
+        }
+      }
+    },
+    "ConfigurationCommand": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "request_id",
+        "expected_control_version",
+        "name",
+        "payload"
+      ],
+      "properties": {
+        "schema_version": {
+          "type": "integer",
+          "enum": [
+            1
+          ]
+        },
+        "request_id": {
+          "$ref": "#/definitions/Id"
+        },
+        "expected_control_version": {
+          "$ref": "#/definitions/Counter"
+        },
+        "name": {
+          "type": "string",
+          "enum": [
+            "save_project",
+            "save_role"
+          ]
+        },
+        "payload": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/ProjectConfiguration"
+            },
+            {
+              "$ref": "#/definitions/RoleConfiguration"
+            }
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "const": "save_project"
+              }
+            },
+            "required": [
+              "name"
+            ]
+          },
+          "then": {
+            "properties": {
+              "payload": {
+                "$ref": "#/definitions/ProjectConfiguration"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "name": {
+                "const": "save_role"
+              }
+            },
+            "required": [
+              "name"
+            ]
+          },
+          "then": {
+            "properties": {
+              "payload": {
+                "$ref": "#/definitions/RoleConfiguration"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "ConfigurationResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "request_id",
+        "status"
+      ],
+      "properties": {
+        "schema_version": {
+          "type": "integer",
+          "enum": [
+            1
+          ]
+        },
+        "request_id": {
+          "$ref": "#/definitions/Id"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "committed",
+            "unknown"
+          ]
+        },
+        "control_version": {
+          "$ref": "#/definitions/Counter"
+        },
+        "entity_id": {
+          "$ref": "#/definitions/Id"
+        }
+      }
+    },
+    "ConfigurationSnapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "control_version",
+        "projects",
+        "roles"
+      ],
+      "properties": {
+        "schema_version": {
+          "type": "integer",
+          "enum": [
+            1
+          ]
+        },
+        "control_version": {
+          "$ref": "#/definitions/Counter"
+        },
+        "projects": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ProjectConfiguration"
+          },
+          "maxItems": 1024
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/RoleConfiguration"
+          },
+          "maxItems": 1024
+        }
+      }
     }
   }
 }

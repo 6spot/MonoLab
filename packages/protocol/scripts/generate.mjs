@@ -32,6 +32,9 @@ const get = (name, auth, parameters = []) => ({ security: security(auth), parame
 artifacts.set('generated/openapi.json', `${JSON.stringify({
   openapi: '3.1.0', info: { title: 'MonoLab boundary probe', version: '1.0.0' },
   paths: {
+    '/v1/owner/configuration': { get: get('ConfigurationSnapshot', 'OwnerAuth') },
+    '/v1/owner/configuration/commands': { post: { security: security('OwnerAuth'), requestBody: { required: true, content: { 'application/json': { schema: reference('ConfigurationCommand') } } }, responses: responses('ConfigurationResult') } },
+    '/v1/owner/configuration/commands/{request_id}': { get: get('ConfigurationResult', 'OwnerAuth', ['request_id']) },
     '/v1/owner/login': { post: { description: 'Same-origin password login; sets Secure HttpOnly __Host-monolab cookie.', requestBody: { required: true, content: { 'application/json': { schema: reference('OwnerLogin') } } }, responses: responses('OwnerSessionStatus') } },
     '/v1/owner/session': { get: get('OwnerSessionStatus', 'OwnerAuth') },
     '/v1/owner/logout': { post: { security: security('OwnerAuth'), description: 'Revokes current session and clears its cookie; cookie writes require same Origin.', responses: responses('OwnerSessionStatus') } },

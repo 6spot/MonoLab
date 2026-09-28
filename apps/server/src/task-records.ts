@@ -2,9 +2,10 @@ import type { Transaction } from '../../../packages/db/src/index.ts';
 import { CommandError } from '../../../packages/domain/src/commands.ts';
 import { canonicalJSON, digest, MAX_BODY_BYTES, validate } from '../../../packages/protocol/src/index.ts';
 import { consumeTaskConfirmation } from './owner-commands.ts';
+import { assertActiveProject, assertProjectRoles, lockConfiguration } from './configuration-guards.ts';
 
 export interface ControlBasis { control_version: number; specification_id: string; plan_id: string | null }
-interface ControlRow { id: string; control_version: string; specification_id: string; plan_id: string | null; state: string }
+interface ControlRow { id: string; control_version: string; specification_id: string; plan_id: string | null; state: string; project_id: string | null }
 export interface PlanNode { node_id: string; role_id: string; goal: string; dependencies: string[] }
 
 function contentJSON(value: unknown): string {
@@ -16,7 +17,7 @@ function contentJSON(value: unknown): string {
 
 async function control(tx: Transaction, taskId: string, expected?: ControlBasis): Promise<ControlRow> {
   validate('Id', taskId);
-  const row = (await tx.query<ControlRow>('SELECT id,control_version,specification_id,plan_id,state FROM tasks WHERE id=$1 FOR UPDATE', [taskId])).rows[0];
+  const row = (await tx.query<ControlRow>('SELECT id,control_version,specification_id,plan_id,state,project_id FROM tasks WHERE id=$1 FOR UPDATE', [taskId])).rows[0];
   if (!row) throw new CommandError('denied_scope', 'Unknown Task');
   if (expected && (Number(row.control_version) !== expected.control_version || row.specification_id !== expected.specification_id || row.plan_id !== expected.plan_id)) throw new CommandError('version_conflict', 'Task revision basis changed', Number(row.control_version));
   return row;
@@ -45,16 +46,18 @@ export function validatePlan(nodes: PlanNode[]): void {
 
 // Internal primitives: caller authenticates, checks its receipt first, and commits
 // these writes with the command receipt/event/outbox. No independent HTTP access.
-export async function initializeTask(tx: Transaction, input: { task_id: string; specification_id: string; specification: unknown }): Promise<ControlBasis> {
+export async function initializeTask(tx: Transaction, input: { task_id: string; specification_id: string; specification: unknown; project_id?: string }): Promise<ControlBasis> {
   validate('Id', input.task_id); validate('Id', input.specification_id);
   const json = contentJSON(input.specification);
-  await tx.query("INSERT INTO tasks(id,specification_id,state) VALUES($1,$2,'PLANNING')", [input.task_id, input.specification_id]);
+  if (input.project_id !== undefined) { validate('Id', input.project_id); await lockConfiguration(tx); await assertActiveProject(tx, input.project_id); }
+  await tx.query("INSERT INTO tasks(id,specification_id,state,project_id) VALUES($1,$2,'PLANNING',$3)", [input.task_id, input.specification_id, input.project_id ?? null]);
   await tx.query('INSERT INTO specification_revisions(id,task_id,content,content_digest) VALUES($1,$2,$3,$4)', [input.specification_id, input.task_id, json, digest(json)]);
   return { control_version: 1, specification_id: input.specification_id, plan_id: null };
 }
 
 export async function publishInitialPlan(tx: Transaction, input: { task_id: string; plan_id: string; expected: ControlBasis; nodes: PlanNode[]; claim: { attempt_id: string; fencing_generation: number } }): Promise<ControlBasis> {
   validate('Id', input.plan_id); validatePlan(input.nodes);
+  await lockConfiguration(tx);
   const identity = (await tx.query<{ runner_id: string }>('SELECT runner_id FROM attempts WHERE id=$1 AND task_id=$2', [input.claim.attempt_id, input.task_id])).rows[0];
   if (!identity) throw new CommandError('denied_scope', 'Planner claim belongs to another Task');
   await tx.query('SELECT id FROM runners WHERE id=$1 FOR UPDATE', [identity.runner_id]);
@@ -63,6 +66,7 @@ export async function publishInitialPlan(tx: Transaction, input: { task_id: stri
   if (claim.kind !== 'planner' || Number(claim.fencing_generation) !== input.claim.fencing_generation || !claim.mutation_allowed || claim.process_released) throw new CommandError('stale_execution', 'Planner claim is no longer current');
   if (claim.specification_id !== task.specification_id) throw new CommandError('version_conflict', 'Planner launch Specification is stale or unknown');
   if (task.state !== 'RUNNING' || task.plan_id !== null) throw new CommandError('unmet_precondition', 'Initial Plan requires a started Task with no Plan');
+  if (task.project_id) await assertProjectRoles(tx, task.project_id, input.nodes.map((node) => node.role_id));
   const json = contentJSON({ node_ids: input.nodes.map((node) => node.node_id), nodes: input.nodes });
   await tx.query('INSERT INTO plan_revisions(id,task_id,content,specification_id,content_digest) VALUES($1,$2,$3,$4,$5)', [input.plan_id, input.task_id, json, task.specification_id, digest(json)]);
   for (const node of input.nodes) {

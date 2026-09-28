@@ -220,6 +220,66 @@ type OwnerSessionStatus struct {
 	SchemaVersion int64   `json:"schema_version"`
 }
 
+type ConfigurationCommand struct {
+	ExpectedControlVersion int64                    `json:"expected_control_version"`
+	Name                   ConfigurationCommandName `json:"name"`
+	Payload                Configuration            `json:"payload"`
+	RequestID              string                   `json:"request_id"`
+	SchemaVersion          int64                    `json:"schema_version"`
+}
+
+type Configuration struct {
+	Archived     bool                    `json:"archived"`
+	Context      *string                 `json:"context,omitempty"`
+	ID           string                  `json:"id"`
+	Name         string                  `json:"name"`
+	Resources    []GitRepositoryResource `json:"resources,omitempty"`
+	RoleIDS      []string                `json:"role_ids,omitempty"`
+	Description  *string                 `json:"description,omitempty"`
+	Instructions *string                 `json:"instructions,omitempty"`
+}
+
+type GitRepositoryResource struct {
+	DefaultBranch     *string           `json:"default_branch,omitempty"`
+	DefaultRef        *string           `json:"default_ref,omitempty"`
+	ID                string            `json:"id"`
+	MergeMethod       *MergeMethod      `json:"merge_method,omitempty"`
+	RemotePreparation RemotePreparation `json:"remote_preparation"`
+	RemoteURL         string            `json:"remote_url"`
+}
+
+type ConfigurationResult struct {
+	ControlVersion *int64                   `json:"control_version,omitempty"`
+	EntityID       *string                  `json:"entity_id,omitempty"`
+	RequestID      string                   `json:"request_id"`
+	SchemaVersion  int64                    `json:"schema_version"`
+	Status         OwnerCommandResultStatus `json:"status"`
+}
+
+type ConfigurationSnapshot struct {
+	ControlVersion int64                  `json:"control_version"`
+	Projects       []ProjectConfiguration `json:"projects"`
+	Roles          []RoleConfiguration    `json:"roles"`
+	SchemaVersion  int64                  `json:"schema_version"`
+}
+
+type ProjectConfiguration struct {
+	Archived  bool                    `json:"archived"`
+	Context   string                  `json:"context"`
+	ID        string                  `json:"id"`
+	Name      string                  `json:"name"`
+	Resources []GitRepositoryResource `json:"resources"`
+	RoleIDS   []string                `json:"role_ids"`
+}
+
+type RoleConfiguration struct {
+	Archived     bool   `json:"archived"`
+	Description  string `json:"description"`
+	ID           string `json:"id"`
+	Instructions string `json:"instructions"`
+	Name         string `json:"name"`
+}
+
 type CommandEnvelopeName string
 
 const (
@@ -363,4 +423,26 @@ const (
 	ReplanRequired TaskOverviewState = "REPLAN_REQUIRED"
 	Review         TaskOverviewState = "REVIEW"
 	Running        TaskOverviewState = "RUNNING"
+)
+
+type ConfigurationCommandName string
+
+const (
+	SaveProject ConfigurationCommandName = "save_project"
+	SaveRole    ConfigurationCommandName = "save_role"
+)
+
+type MergeMethod string
+
+const (
+	Merge  MergeMethod = "merge"
+	Rebase MergeMethod = "rebase"
+	Squash MergeMethod = "squash"
+)
+
+type RemotePreparation string
+
+const (
+	AfterAcceptance RemotePreparation = "after_acceptance"
+	Automatic       RemotePreparation = "automatic"
 )
