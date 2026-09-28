@@ -124,19 +124,18 @@ On success the system should, as one reliable boundary:
 1. verify the current Attempt ownership/fencing generation;
 2. stop/freeze further mutation of the workspace being finalized;
 3. finalize Node workspace state;
-4. persist the Node result to durable Workspace Manager backing storage;
-5. perform required deterministic integration into the Task Workspace;
-6. persist the resulting durable Task Workspace state;
-7. write the formal completion event;
-8. transition the Node to COMPLETED;
-9. update Current Task State;
-10. unlock downstream Nodes whose dependencies are satisfied.
+4. perform required deterministic integration into the local Task Workspace;
+5. record the resulting Git/workspace completion state needed for same-Runner recovery;
+6. write the formal completion event;
+7. transition the Node to COMPLETED;
+8. update Current Task State;
+9. unlock downstream Nodes whose dependencies are satisfied.
 
 The operation should be idempotent.
 
 If the caller retries after an uncertain response, MonoLab should detect an already-finalized completion for that same valid Attempt/checkpoint and return the existing result rather than duplicate integration or completion events.
 
-A superseded Attempt cannot complete a Node. If workspace finalization, durable persistence, or required Task Workspace integration fails, the Node must not already be marked COMPLETED.
+A superseded Attempt cannot complete a Node. If workspace finalization or required Task Workspace integration fails, the Node must not already be marked COMPLETED.
 
 `complete_node()` does not judge whether work is semantically correct.
 
