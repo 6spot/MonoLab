@@ -165,3 +165,25 @@ Resumed Runtime acceptance sequentially without sub-agents. Approved LongCat pas
 ### Status
 
 [OK] **Completed**
+
+
+## Session 8: Rename product, CLI and repositories to monos
+<!-- trellis-session: v=2 fp=93012f688071f4bd -->
+
+**Date**: 2026-09-29
+**Task**: Rename product, CLI and repositories to monos
+**Branch**: `feat/stage-a-boundary-probe`
+
+### Summary
+
+Renamed product/UI/docs, four Go commands, workspace and Go module namespaces, environment variables, Owner cookie and fresh deployment templates to monos. Preserved v1 provider encryption bytes and added a frozen-ciphertext regression test; immutable historical Runtime evidence is unchanged. Passed 79 unit tests, 74 real PostgreSQL checks, 6 browser tests, 31 probe tests, TLS, lint/typecheck/build/protocol and Darwin Go race/vet/build checks. Renamed GitHub repository in place to 6spot/monos retaining ID 1390769584, updated origin and moved the checkout to /Users/me/IdeaProjects/monos. Verified tooling from new path, stopped the temporary DB with zero leftover schemas and archived the task. Source commit remains local; no push, remote deployment or Linux Runtime rerun.
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `b6ca132` | refactor: rename product and CLI to monos |
+
+### Status
+
+[OK] **Completed**
