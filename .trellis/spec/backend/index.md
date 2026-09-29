@@ -10,6 +10,7 @@ Status: Stage A boundary-probe backend is implemented in `apps/server` with Post
 - For login/bootstrap/Cookie security, read [Owner access](owner-access.md).
 - For overview/Timeline/cursors, read [Owner reads](owner-reads.md).
 - For selected Attempt queue/promotion, read [dispatch queue](dispatch-queue.md).
+- For production Runtime target choice and shared capacity, read [Runtime scheduling](runtime-scheduling.md).
 - For revision/activation publication, read [Task records](task-records.md).
 - For Owner sessions/proposal consumption, read [Owner commands](owner-commands.md).
 - For commands/persistence, read [database](database-guidelines.md), [errors](error-handling.md) and [protocol](../protocol/commands.md).

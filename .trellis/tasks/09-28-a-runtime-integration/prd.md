@@ -23,7 +23,12 @@ These are completion/evidence gates, not automatic scheduler dependencies. Paren
 
 ## Child tasks
 
-Child decomposition is deferred until upstream evidence is available. Before implementation, split this package into independently verifiable behavior slices; do not start the entire package as one implementation task.
+- [Runtime target selection and shared slots](../09-29-a-runtime-target-scheduling/prd.md)
+- [Production Runner dispatch and execution logs](../09-29-a-runtime-runner-logs/prd.md)
+- [Runtime Stop and restart reconciliation](../09-29-a-runtime-stop-recovery/prd.md)
+- [Production Runtime integration acceptance](../09-29-a-runtime-integration-acceptance/prd.md)
+
+The Runtime/host feasibility and command-foundation dependencies are complete. Implement and verify these leaves in order; the parent coordinates their combined acceptance.
 
 ## Acceptance criteria
 

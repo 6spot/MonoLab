@@ -1,0 +1,7 @@
+{"file":".trellis/spec/backend/index.md","reason":"Backend quality checklist"}
+{"file":".trellis/spec/backend/dispatch-queue.md","reason":"Capacity, fencing and replay verification"}
+{"file":".trellis/spec/backend/infrastructure-configuration.md","reason":"Policy and installation fact validation"}
+{"file":".trellis/spec/backend/quality-guidelines.md","reason":"Required backend validation"}
+{"file":".trellis/spec/runner/index.md","reason":"Runner boundary and physical release checks"}
+{"file":".trellis/spec/protocol/index.md","reason":"Cross-language wire compatibility"}
+{"file":".trellis/tasks/09-29-a-runtime-target-scheduling/research/current-boundary.md","reason":"Evidence limits and planned integration boundary"}

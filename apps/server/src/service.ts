@@ -116,6 +116,7 @@ export class BoundaryService {
       if (runtimes !== undefined) {
         await tx.query('DELETE FROM runtime_installations WHERE runner_id=$1', [runnerId]);
         for (const row of runtimes) await tx.query('INSERT INTO runtime_installations(runner_id,runtime_id,incarnation,observation) VALUES($1,$2,$3,$4)', [runnerId, row.runtime_id, incarnation, row]);
+        await tx.query('UPDATE runners SET runtime_report_incarnation=$2 WHERE id=$1', [runnerId, incarnation]);
       }
       await tx.query('UPDATE runners SET last_seen=now(),ready=ready OR $2 WHERE id=$1', [runnerId, ready]);
     });

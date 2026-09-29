@@ -1,0 +1,7 @@
+{"file":".trellis/spec/backend/index.md","reason":"Backend ownership and pre-development gate"}
+{"file":".trellis/spec/backend/dispatch-queue.md","reason":"Existing atomic Attempt queue and promotion invariants"}
+{"file":".trellis/spec/backend/infrastructure-configuration.md","reason":"Saved policy, Runner registry and adapter availability semantics"}
+{"file":".trellis/spec/backend/database-guidelines.md","reason":"Transaction, migration and lock-order conventions"}
+{"file":".trellis/spec/runner/index.md","reason":"Runner execution boundary and physical ownership"}
+{"file":".trellis/spec/protocol/index.md","reason":"Generated wire contract and compatibility rules"}
+{"file":".trellis/tasks/09-29-a-runtime-target-scheduling/research/current-boundary.md","reason":"Verified upstream evidence and current code gaps"}

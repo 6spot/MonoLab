@@ -3,8 +3,8 @@
 ## 1. Scope / Trigger
 
 Use `apps/server/src/dispatch-queue.ts` for already selected system work awaiting
-capacity. Runtime/model selection, Owner Start and semantic context construction
-remain owned by later modules. Existing WSS `pending` polling promotes durable
+capacity. Runtime/model selection is owned by [Runtime scheduling](runtime-scheduling.md);
+Owner Start and semantic context construction remain owned by later modules. Existing WSS `pending` polling promotes durable
 queued rows; memory wakeups are not authoritative.
 
 ## 2. Signatures
@@ -15,6 +15,7 @@ queued rows; memory wakeups are not authoritative.
   eligible queued Attempt and returns its Dispatch, or null when none can run.
 - Migration 6: `attempts.state`, `queue_digest`, `end_reason`, one queued owner,
   one Start intent, and `task_runner_locality`.
+- Migration 10: nullable `selection_context` on Attempts and the Runner's complete-report incarnation. Legacy probe rows remain valid.
 
 ## 3. Contracts
 
@@ -27,6 +28,7 @@ incarnation, free physical capacity, current Task/revision/activation basis and
 settled previous owner. Lock Runner -> one Task -> Attempt. Filter blocked owners
 before LIMIT and never hold several Task locks while scanning. Stage A serializes
 Node writers within one Task until isolated parallel worktrees are implemented.
+Selected production Attempts recheck current installation facts before Start. A complete current report of missing/unavailable Runtime cancels pre-start work; an omitted report or disconnected sole Runner leaves it queued. Stale heads are retried in separate transactions, at most 16 per poll, so one transaction never holds several Task locks.
 
 Set RUNNING, physical reservation, monotonic owner fence, Node RUNNING and the
 single Start outbox row in one transaction. A failure before commit leaves QUEUED;

@@ -1,0 +1,14 @@
+# Current boundary and evidence, 2026-09-29
+
+- Runtime feasibility passed AC1–AC10 for the tested Linux/OpenCode host, including native `monos` calls, two concurrent same-UID Attempts, live service restart, full-tree Stop and controlled host reboot. Source: archived `09-28-stage-a-boundary-probe/research/acceptance-status.md`. This does not prove a product-created Attempt or Stage A completion.
+- The command foundation archived four verified leaves. `apps/server/src/dispatch-queue.ts` accepts caller-selected Runner/Runtime/model/prompt and persists exact queued input, but does not resolve policy. Its `promoteNext` orders candidates by creation time and ID only; module 03 requires control work before Node work within shared slots.
+- `apps/server/src/configuration.ts` stores and exposes global/Planner policies, Role policies and Runner installation observations. `runtime_installations` are keyed by Runner/Runtime and may be non-current after reconnect. Current/online/version facts are distinct from ability to invoke a model.
+- The wire `Dispatch` schema in `packages/protocol/schemas/v1/contracts.json` currently enumerates only OpenCode and two probe models, and has no thinking field. `runner/internal/adapter/opencode.go` pins its configuration and argv to the approved LongCat free model. Do not silently interpret a different configured target as LongCat.
+- `apps/server/src/service.ts` promotes queued work from WSS `pending`, replays the durable Start outbox, deduplicates Runtime events, and admits Stop for missing formal completion. `runner/internal/daemon/daemon.go` retains Start intent and reconciles process identity. Keep semantic Task/Node creation with their owning packages.
+- `apps/server/src/fixtures.ts` already defaults fixture enrollment to two slots; verify whether a separate production enrollment path needs this default. Module 03 keeps queued work on the sole Runner through a temporary disconnect.
+- Stage A module 09 requires one installed CLI and two concurrent execution slots by default. Module 03 requires atomic ownership, control-work priority, capacity waiting as `QUEUED`, and no fallback merely for saturation. Second real CLI and automatic ordered fallback are Stage B.
+- The Owner-approved real trial model is `opencode/longcat-2.5-preview-free`; check its fresh catalog/status/tool calling and every zero-price field before a new live invocation. No real invocation is part of this first scheduling leaf.
+
+## Design implications
+
+The first leaf should add a backend policy-resolution boundary and queue scheduler behavior, with a narrow Stage A adapter compatibility check. It can keep the current probe model in the wire schema during this leaf if unsupported configured models receive an explicit pre-start result; it must not launch a model other than the selected one. Protocol broadening belongs with a reviewed adapter change, not a silent cast.

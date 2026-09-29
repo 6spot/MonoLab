@@ -11,8 +11,13 @@ export interface QueueInput {
   attempt_id: string; runner_id: string; task_id: string; node_id?: string;
   kind: 'node' | 'planner'; expected: ControlBasis; resource_id: string;
   runtime_id: Dispatch['runtime_id']; model: Dispatch['model']; prompt: string; source_watermark: number;
+  selection_context?: {
+    source: 'explicit' | 'planner' | 'role' | 'global'; configuration_version: number;
+    target: { runtime_id: string; runner_id?: string; model_id?: string; thinking_level?: string };
+    observed_version?: string; request_digest: string;
+  };
 }
-interface Queued { id: string; task_id: string; node_id: string | null; owner_key: string; state: string; launch: Dispatch; specification_id: string; plan_id: string | null }
+interface Queued { id: string; task_id: string; node_id: string | null; owner_key: string; state: string; launch: Dispatch; specification_id: string; plan_id: string | null; selection_context: QueueInput['selection_context'] | null }
 
 export class DispatchQueue {
   readonly db: Database;
@@ -57,9 +62,9 @@ export class DispatchQueue {
     };
     validate('Dispatch', launch);
     await tx.query(`INSERT INTO attempts(id,runner_id,task_id,node_id,owner_key,dispatch_id,kind,fencing_generation,node_activation,
-      launch,mutation_allowed,process_released,state,queue_digest,specification_id,plan_id)
-      VALUES($1,$2,$3,$4,$5,$6,$7,1,$8,$9,false,true,'QUEUED',$10,$11,$12)`,
-    [input.attempt_id, input.runner_id, input.task_id, input.node_id ?? null, owner, launch.dispatch_id, input.kind, activation, launch, hash, task.specification_id, task.plan_id]);
+      launch,mutation_allowed,process_released,state,queue_digest,specification_id,plan_id,selection_context)
+      VALUES($1,$2,$3,$4,$5,$6,$7,1,$8,$9,false,true,'QUEUED',$10,$11,$12,$13)`,
+    [input.attempt_id, input.runner_id, input.task_id, input.node_id ?? null, owner, launch.dispatch_id, input.kind, activation, launch, hash, task.specification_id, task.plan_id, input.selection_context ?? null]);
     return launch.dispatch_id;
   }
 
@@ -80,51 +85,73 @@ export class DispatchQueue {
   }
 
   async promoteNext(runnerId: string, connectionInstance: string, incarnation: number): Promise<Dispatch | null> {
-    const result = await transaction(this.db, async (tx) => {
-      const runner = (await tx.query<{ capacity: number; available: boolean }>("SELECT capacity,(connected AND ready AND connection_instance=$2 AND incarnation=$3 AND last_seen>now()-interval '15 seconds') AS available FROM runners WHERE id=$1 FOR UPDATE", [runnerId, connectionInstance, incarnation])).rows[0];
-      if (!runner?.available) return null;
-      const count = (await tx.query<{ count: string }>('SELECT count(*) FROM attempts WHERE runner_id=$1 AND NOT process_released', [runnerId])).rows[0]!;
-      if (Number(count.count) >= runner.capacity) return null;
-      // Filter unresolved owners before LIMIT. Hold at most one Task lock in this
-      // transaction, avoiding cross-Runner lock inversion while skipping waiters.
-      // Stage A serializes Node writers for a Task until parallel worktrees exist.
-      const candidates = (await tx.query<Queued>(`SELECT q.* FROM attempts q WHERE q.runner_id=$1 AND q.state='QUEUED'
-        AND NOT EXISTS (SELECT 1 FROM attempts a WHERE a.id<>q.id
-          AND (a.owner_key=q.owner_key OR (a.task_id=q.task_id AND a.kind='node' AND q.kind='node'))
-          AND (NOT a.process_released OR EXISTS (SELECT 1 FROM operations o WHERE o.attempt_id=a.id AND o.state<>'succeeded')))
-        ORDER BY q.created_at,q.id LIMIT 1`, [runnerId])).rows;
-      for (const candidate of candidates) {
-        const task = (await tx.query<{ state: string; control_version: string; specification_id: string; plan_id: string | null }>('SELECT state,control_version,specification_id,plan_id FROM tasks WHERE id=$1 FOR UPDATE', [candidate.task_id])).rows[0]!;
-        const row = (await tx.query<Queued>('SELECT * FROM attempts WHERE id=$1 FOR UPDATE', [candidate.id])).rows[0]!;
-        if (row.state !== 'QUEUED') continue;
-        let current = task.state === 'RUNNING' && Number(task.control_version) === row.launch.control_version && task.specification_id === row.specification_id && task.plan_id === row.plan_id;
-        if (current && row.node_id) {
-          try { current = (await assertCurrentNode(tx, { task_id: row.task_id, node_id: row.node_id, node_activation: row.launch.node_activation })).state === 'PENDING' && await this.dependenciesReady(tx, row.plan_id!, row.node_id); }
-          catch (error) { if (!(error instanceof CommandError)) throw error; current = false; }
+    const retry = Symbol('cancelled queued candidate');
+    // A stale row must not consume a whole Runner poll. Bound cleanup work per
+    // poll and commit each cancellation before taking another Task lock.
+    for (let scanned = 0; scanned < 16; scanned++) {
+      const result = await transaction(this.db, async (tx) => {
+        const runner = (await tx.query<{ capacity: number; available: boolean; runtime_report_incarnation: string | null }>("SELECT capacity,runtime_report_incarnation,(connected AND ready AND connection_instance=$2 AND incarnation=$3 AND last_seen>now()-interval '15 seconds') AS available FROM runners WHERE id=$1 FOR UPDATE", [runnerId, connectionInstance, incarnation])).rows[0];
+        if (!runner?.available) return null;
+        const count = (await tx.query<{ count: string }>('SELECT count(*) FROM attempts WHERE runner_id=$1 AND NOT process_released', [runnerId])).rows[0]!;
+        if (Number(count.count) >= runner.capacity) return null;
+        // Filter unresolved owners before LIMIT. Hold at most one Task lock in this
+        // transaction, avoiding cross-Runner lock inversion while skipping waiters.
+        // Stage A serializes Node writers for a Task until parallel worktrees exist.
+        const candidates = (await tx.query<Queued>(`SELECT q.* FROM attempts q WHERE q.runner_id=$1 AND q.state='QUEUED'
+          AND (q.selection_context IS NULL OR $3::boolean OR EXISTS (SELECT 1 FROM runtime_installations i
+            WHERE i.runner_id=q.runner_id AND i.runtime_id=(q.launch->>'runtime_id') AND i.incarnation=$2))
+          AND NOT EXISTS (SELECT 1 FROM attempts a WHERE a.id<>q.id
+            AND (a.owner_key=q.owner_key OR (a.task_id=q.task_id AND a.kind='node' AND q.kind='node'))
+            AND (NOT a.process_released OR EXISTS (SELECT 1 FROM operations o WHERE o.attempt_id=a.id AND o.state<>'succeeded')))
+          ORDER BY CASE WHEN q.kind='planner' THEN 0 ELSE 1 END,q.created_at,q.id LIMIT 1`, [runnerId, incarnation, Number(runner.runtime_report_incarnation) === incarnation])).rows;
+        for (const candidate of candidates) {
+          const task = (await tx.query<{ state: string; control_version: string; specification_id: string; plan_id: string | null }>('SELECT state,control_version,specification_id,plan_id FROM tasks WHERE id=$1 FOR UPDATE', [candidate.task_id])).rows[0]!;
+          const row = (await tx.query<Queued>('SELECT * FROM attempts WHERE id=$1 FOR UPDATE', [candidate.id])).rows[0]!;
+          if (row.state !== 'QUEUED') return retry;
+          let current = task.state === 'RUNNING' && Number(task.control_version) === row.launch.control_version && task.specification_id === row.specification_id && task.plan_id === row.plan_id;
+          if (current && row.node_id) {
+            try { current = (await assertCurrentNode(tx, { task_id: row.task_id, node_id: row.node_id, node_activation: row.launch.node_activation })).state === 'PENDING' && await this.dependenciesReady(tx, row.plan_id!, row.node_id); }
+            catch (error) { if (!(error instanceof CommandError)) throw error; current = false; }
+          }
+          if (!current) { await tx.query("UPDATE attempts SET state='CANCELLED',end_reason='stale_queue_basis' WHERE id=$1", [row.id]); return retry; }
+          if (row.selection_context) {
+            const observed = (await tx.query<{ incarnation: string; observation: { availability: string; supports_model: boolean } }>('SELECT incarnation,observation FROM runtime_installations WHERE runner_id=$1 AND runtime_id=$2', [runnerId, row.launch.runtime_id])).rows[0];
+            // An omitted discovery report after reconnect is not evidence that the
+            // installation vanished. Wait until the current incarnation reports.
+            if (!observed || Number(observed.incarnation) !== incarnation) {
+              if (Number(runner.runtime_report_incarnation) !== incarnation) continue;
+              await tx.query("UPDATE attempts SET state='CANCELLED',end_reason='runtime_missing_before_start' WHERE id=$1", [row.id]);
+              return retry;
+            }
+            if (observed.observation.availability !== 'detected' || !observed.observation.supports_model) {
+              await tx.query("UPDATE attempts SET state='CANCELLED',end_reason='runtime_unavailable_before_start' WHERE id=$1", [row.id]);
+              return retry;
+            }
+          }
+          const owner = await tx.query(`SELECT a.id FROM attempts a WHERE a.owner_key=$1 AND a.id<>$2 AND
+            (NOT a.process_released OR EXISTS (SELECT 1 FROM operations o WHERE o.attempt_id=a.id AND o.state<>'succeeded'))`, [row.owner_key, row.id]);
+          if (owner.rowCount) continue;
+          try { await this.checkLocality(tx, row.task_id, runnerId); }
+          catch (error) {
+            if (!(error instanceof CommandError)) throw error;
+            await tx.query("UPDATE attempts SET state='CANCELLED',end_reason='unsupported_runner_transfer' WHERE id=$1", [row.id]);
+            return retry;
+          }
+          await tx.query('INSERT INTO task_runner_locality(task_id,runner_id) VALUES($1,$2) ON CONFLICT DO NOTHING', [row.task_id, runnerId]);
+          const fence = (await tx.query<{ generation: string }>("SELECT COALESCE(max(fencing_generation),0)+1 AS generation FROM attempts WHERE owner_key=$1 AND state<>'QUEUED'", [row.owner_key])).rows[0]!;
+          const launch = { ...row.launch, fencing_generation: Number(fence.generation), mutation_allowed: true, process_released: false };
+          validate('Dispatch', launch);
+          await tx.query("UPDATE attempts SET state='RUNNING',mutation_allowed=true,process_released=false,fencing_generation=$2,launch=$3 WHERE id=$1", [row.id, launch.fencing_generation, launch]);
+          if (row.node_id) await tx.query("UPDATE nodes SET state='RUNNING' WHERE id=$1", [row.node_id]);
+          await tx.query("INSERT INTO outbox(id,runner_id,attempt_id,kind) VALUES($1,$2,$3,'start')", [randomUUID(), runnerId, row.id]);
+          this.hooks.beforeCommit?.();
+          return launch;
         }
-        if (!current) { await tx.query("UPDATE attempts SET state='CANCELLED',end_reason='stale_queue_basis' WHERE id=$1", [row.id]); continue; }
-        const owner = await tx.query(`SELECT a.id FROM attempts a WHERE a.owner_key=$1 AND a.id<>$2 AND
-          (NOT a.process_released OR EXISTS (SELECT 1 FROM operations o WHERE o.attempt_id=a.id AND o.state<>'succeeded'))`, [row.owner_key, row.id]);
-        if (owner.rowCount) continue;
-        try { await this.checkLocality(tx, row.task_id, runnerId); }
-        catch (error) {
-          if (!(error instanceof CommandError)) throw error;
-          await tx.query("UPDATE attempts SET state='CANCELLED',end_reason='unsupported_runner_transfer' WHERE id=$1", [row.id]);
-          continue;
-        }
-        await tx.query('INSERT INTO task_runner_locality(task_id,runner_id) VALUES($1,$2) ON CONFLICT DO NOTHING', [row.task_id, runnerId]);
-        const fence = (await tx.query<{ generation: string }>("SELECT COALESCE(max(fencing_generation),0)+1 AS generation FROM attempts WHERE owner_key=$1 AND state<>'QUEUED'", [row.owner_key])).rows[0]!;
-        const launch = { ...row.launch, fencing_generation: Number(fence.generation), mutation_allowed: true, process_released: false };
-        validate('Dispatch', launch);
-        await tx.query("UPDATE attempts SET state='RUNNING',mutation_allowed=true,process_released=false,fencing_generation=$2,launch=$3 WHERE id=$1", [row.id, launch.fencing_generation, launch]);
-        if (row.node_id) await tx.query("UPDATE nodes SET state='RUNNING' WHERE id=$1", [row.node_id]);
-        await tx.query("INSERT INTO outbox(id,runner_id,attempt_id,kind) VALUES($1,$2,$3,'start')", [randomUUID(), runnerId, row.id]);
-        this.hooks.beforeCommit?.();
-        return launch;
-      }
-      return null;
-    });
-    this.hooks.afterCommit?.();
-    return result;
+        return null;
+      });
+      this.hooks.afterCommit?.();
+      if (result !== retry) return result;
+    }
+    return null;
   }
 }

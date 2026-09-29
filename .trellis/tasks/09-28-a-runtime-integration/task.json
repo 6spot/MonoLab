@@ -18,7 +18,12 @@
   "commit": null,
   "pr_url": null,
   "subtasks": [],
-  "children": [],
+  "children": [
+    "09-29-a-runtime-target-scheduling",
+    "09-29-a-runtime-runner-logs",
+    "09-29-a-runtime-stop-recovery",
+    "09-29-a-runtime-integration-acceptance"
+  ],
   "parent": "09-28-stage-a-product-loop",
   "relatedFiles": [],
   "notes": "",

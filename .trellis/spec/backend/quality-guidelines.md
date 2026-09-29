@@ -8,6 +8,8 @@ The boundary probe has actual scripts in [package.json](../../../package.json): 
 
 The [Compose README](../../../infra/compose/README.md) describes the private database and real test command. SQL tests create/drop a unique test schema, not production tables or Runner journals. Main-session host evidence owns TLS, Linux processes, real CLI, service restart and reboot claims; no unit test can establish them. Full PostgreSQL multi-worker and authorized GitHub expected-head/merge gates remain separate.
 
+Runtime target selection and shared-slot scheduling passed 79 local tests and 81 real PostgreSQL-entrypoint cases on an isolated PostgreSQL 17.10 instance on 2026-09-29. The DB cases include Auto placement serialization, capacity contention, queue priority and pre-start Runtime loss. They do not establish a new live model run or production host restart. After moving a checkout, `pnpm build` must repair dangling generated `dist/*/node_modules` links before creating fresh links; never replace a real directory.
+
 ## Rules
 
 The real database entrypoint now includes `postgres.test.ts` (16 cases),
