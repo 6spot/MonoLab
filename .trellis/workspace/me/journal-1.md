@@ -187,3 +187,26 @@ Renamed product/UI/docs, four Go commands, workspace and Go module namespaces, e
 ### Status
 
 [OK] **Completed**
+
+
+## Session 9: Runtime target selection and shared slots
+<!-- trellis-session: v=2 fp=b604e39333388989 -->
+
+**Date**: 2026-09-29
+**Task**: Runtime target selection and shared slots
+**Branch**: `feat/stage-a-boundary-probe`
+
+### Summary
+
+Implemented policy-selected canonical Attempts, two shared Runner slots, Planner priority, Auto placement serialization and pre-start Runtime checks. Fixed stale generated build links. Passed 79 local tests, 81 real PostgreSQL cases, lint, typecheck, protocol check and build; no model call. Archived the scheduling leaf; Runner logs and Stop/recovery remain separate.
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `d7dd589` | fix: repair stale build dependency links |
+| `0a44f27` | feat: select runtime targets and schedule shared attempts |
+
+### Status
+
+[OK] **Completed**
