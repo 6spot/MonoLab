@@ -142,3 +142,26 @@ Recovered the requested session and completed four sequential leaves without sub
 ### Status
 
 [OK] **Completed**
+
+
+## Session 7: Runtime acceptance and authorized host reboot
+<!-- trellis-session: v=2 fp=42df56600e8cef9c -->
+
+**Date**: 2026-09-29
+**Task**: Runtime acceptance and authorized host reboot
+**Branch**: `feat/stage-a-boundary-probe`
+
+### Summary
+
+Resumed Runtime acceptance sequentially without sub-agents. Approved LongCat passed three Node and one Planner normal completion, two-Attempt live service restart, account isolation and expired-result recovery. Owner-authorized host reboot passed all ten checks with original ownership/request evidence retained, interrupted work BLOCKED and no replacement Start; Runner was manually started after boot. Final audit: 16 released Attempts, no residual writers, prior healthy shared-host services recovered. Preserved historical failures and expired first reboot window, recorded sanitized evidence and test limits, removed temporary reconnect key, and archived boundary probe plus Runtime parent. Production Runtime integration and full Stage A/V1 remain separate.
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `5b940b0` | chore: select approved LongCat model for Runtime acceptance |
+| `348cbdb` | docs: accept Runtime boundary and host reboot recovery |
+
+### Status
+
+[OK] **Completed**
