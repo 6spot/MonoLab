@@ -43,6 +43,25 @@ receipts, operations, request digests, ownership, events and scoped result reads
 Test refusal before service mutation and detection of lost receipts. A passing
 idle check never substitutes for live concurrent restart or host reboot.
 
+`probe.py ... reboot-hold <attempt>` writes a live Node checkpoint only when the
+bounded hold, exact process identity, descendants, claim and retained unsent request
+all agree. After host-wide authorization, persist reboot intent and revalidate
+immediately before interruption; a conversational/tool turn can exceed the 300-second
+hold. An expired window requires inspection and physical Stop, then a fresh trial ID.
+Never overwrite the old evidence or count cleanup as a reboot pass.
+
+`probe.py ... reboot-verify <attempt>` performs read-only post-boot verification:
+changed boot, old identity retained, descendants absent, Stop/release, BLOCKED work,
+immutable requests/receipts, no replacement Start, existing result readable and
+unsent handoff unknown. It never reboots, replays requests or starts Runner. Record
+whether Runner needed manual startup separately from container/service recovery.
+
+Final host audits must distinguish PID-zero absent/revoked records without a
+historical cgroup from a launched process whose cgroup status is unknown. Verify
+durable records and boot identity together with current unit/cgroup/process inventory;
+do not turn missing identity evidence into absence. Retain failed audit reports and
+state precisely why a corrected check changes the conclusion.
+
 ## Test layers
 
 - Unit: adapter event normalization, schema validation, bounded recovery decisions.

@@ -1,6 +1,6 @@
 # Boundary probe design
 
-Status: approved for implementation by the Owner. Execution-account configuration preparation is complete; the real-host acceptance results remain to be established.
+Status: implemented and accepted on 2026-09-29. See [acceptance status](research/acceptance-status.md) for the tested profile and limitations.
 
 ## Architecture and scope
 
@@ -24,7 +24,7 @@ Backend never opens a Runner path or exposes PostgreSQL to execution processes. 
 
 ## Environment and identities
 
-Use the Owner-supplied Debian host described in [host preflight](research/host-preflight.md). Resolve OpenCode directly at `/home/linuxbrew/.linuxbrew/bin/opencode`; set the execution home, PATH and working directory explicitly. Select `opencode/mimo-v2.6-flash-free` explicitly, recheck its zero-cost catalog entry for real trials, and never fall back to a paid model. Do not launch the Agent through an interactive root shell.
+Use the Owner-supplied Debian host described in [host preflight](research/host-preflight.md). Resolve OpenCode directly at `/home/linuxbrew/.linuxbrew/bin/opencode`; set the execution home, PATH and working directory explicitly. Select Owner-approved `opencode/longcat-2.5-preview-free` explicitly, recheck its zero-cost catalog entry for real trials, and never fall back to another model. Retain earlier MiMo schema values solely for historical dispatch decoding/recovery. Do not launch the Agent through an interactive root shell.
 
 | Identity | Responsibility and storage |
 | --- | --- |
@@ -49,7 +49,7 @@ Use a constrained launcher with fixed execution UID, task-owned executable/unit/
 | `runner/internal` | Adapter, supervision, socket attribution, journal, transport and fixture workspace effects |
 | `infra/compose`, `infra/runner` | Isolated probe deployment and host bootstrap/cleanup configuration |
 
-Do not create `apps/web` yet. Prefer standard APIs and the selected stack. Choose one pinned generator path and only required WSS, SQLite, database and schema tooling after checking schema fidelity and transitive cost; tool selection is a bounded scaffolding decision, not an assumed existing package.
+Frontend work is outside this probe (later separately accepted tasks now own `apps/web`). Prefer standard APIs and the selected stack. Choose one pinned generator path and only required WSS, SQLite, database and schema tooling after checking schema fidelity and transitive cost; tool selection is a bounded scaffolding decision, not an assumed existing package.
 
 ## Command and recovery data flow
 
@@ -64,7 +64,7 @@ Use real PostgreSQL for receipt durability and the limited admission tests in th
 
 ## CLI permissions and workspace feasibility
 
-Start with the installed OpenCode noninteractive `run --pure --format json --model <free-model> --dir <scratch>` interface and explicit permission rules. Exact config behavior is checked against release 1.18.30 before creating launch templates. Node runs start with known scratch/reserved workspace paths, including worktree Git common directories; these are placement grants, not restrictions on other execution-account paths. Planner runs receive read-only repository access with permitted scratch, socket and authenticated HTTPS access. Permission prompts must produce a structured failure/attention outcome rather than an unattended wait; verify that shell execution cannot bypass the Planner repository boundary.
+Start with the installed OpenCode noninteractive `run --pure --auto --format json --model <free-model> --agent monolab-probe --dir <scratch>` interface and explicit permission rules. Exact config behavior is checked against release 1.18.30 before creating launch templates. Node runs start with known scratch/reserved workspace paths, including worktree Git common directories; these are placement grants, not restrictions on other execution-account paths. Planner runs receive read-only repository access with permitted scratch, socket and authenticated HTTPS access. Permission prompts must produce a structured failure/attention outcome rather than an unattended wait; verify that shell execution cannot bypass the Planner repository boundary.
 
 Following the Owner's shell-freedom direction and Multica source review, permit normal native bash, external-directory access and Node edits. Do not implement shell-command allowlists, global read-only mounts, private PID namespaces or read-only XDG mounts solely to suppress installed-CLI maintenance. Reserved paths remain deterministic placement, not a host containment boundary. Keep the fixed nonroot execution account, service-private credentials and cgroup supervision.
 
@@ -88,4 +88,4 @@ Before deploying, inventory task-owned name/port collisions and prepare cleanup 
 
 Host reboot is a whole-machine interruption. Record the reboot checkpoint and recovery procedure first and obtain a specific execution window before running it. Until that evidence exists, mark the reboot criterion not run, not passed. This operational scheduling item does not prevent local implementation or isolated service-restart tests after plan approval.
 
-No remote Git push, PR creation or merge belongs to this task. The final report must distinguish probe outcome, PostgreSQL multi-worker feasibility still pending, GitHub expected-head/check feasibility still pending and the unimplemented full Stage A/V1 flow.
+No remote Git push, PR creation or merge belongs to this task. The final report must distinguish probe outcome, separately owned PostgreSQL multi-worker feasibility, separately owned GitHub expected-head/check feasibility and the unimplemented full Stage A/V1 flow.

@@ -36,6 +36,8 @@ Generate transport types from protocol schemas. Current entrypoints:
 - Missing launch evidence or mismatched process birth is uncertainty, not proof of absence. Persist the process-absence event before releasing local ownership so a daemon crash cannot strand the backend claim.
 - OpenCode model preflight must use the exact Attempt environment and scratch cwd returned by the Adapter, including all XDG paths. For the pinned free-model probe, run `opencode models opencode --pure --refresh --verbose` before `run`, with a 30-second deadline and 4 MiB stdout limit. A fresh XDG cache can otherwise select OpenCode's stale bundled catalog while the Owner's default cache advertises a newer model.
 - Validate the exact selected provider/model entry, active status, native tool-call support and explicit zero input/output/cache-read/cache-write prices, including any pricing tiers. Missing, malformed or nonzero pricing fails closed. OpenCode 1.18.30 can print refresh success after a fetch failure: neither exit zero nor that message substitutes for validating the resulting entry. Never select a fallback or copy Owner credentials to satisfy preflight.
+- The accepted probe baseline is OpenCode 1.18.30 with Owner-selected `opencode/longcat-2.5-preview-free`. Historical `opencode/mimo-v2.6-flash-free` dispatches remain schema-decodable for recovery; their presence in the schema does not authorize a new launch. Keep launch validation pinned to the selected model.
+- Host-reboot verification preserves the old dispatch/PID/birth/boot/cgroup record. A new boot establishes old-process absence, not successful semantic completion: reconcile Stop, revoke writes and release only after physical verification. Retained but unsent requests remain unadmitted; never replay them or start a successor as part of evidence verification.
 
 ## 4. Validation & Error Matrix
 
@@ -47,7 +49,8 @@ Generate transport types from protocol schemas. Current entrypoints:
 | Old connection incarnation | Reject control channel, reconcile processes |
 | UID matches but dispatch does not | Deny CLI attribution |
 | Journal failure | No request send; preserve recovery attention |
-| Host reboot | New boot identity; reconcile old operation truth |
+| Host reboot | Preserve old identity; verify writer absence, reconcile Stop/release, keep interrupted work BLOCKED and unsent handoff unknown |
+| Historical model in recovered dispatch | Decode retained record and serve scoped existing results; no fallback model launch |
 | Capacity full | Queue, no fallback |
 | Native CLI requests approval | Objective attention, not silence-based inference |
 | Planner shell writes to returned snapshot | OS ownership denies the write; snapshot tree remains unchanged |
@@ -62,6 +65,10 @@ Bad: kill one PID, release its slot and start a successor while descendants writ
 
 Model preflight: a refreshed, active, tool-capable zero-price entry permits the selected model; an already populated valid cache follows the same validation; a successful catalog command with no selected entry must not launch it.
 
+Reboot: valid live checkpoint plus changed boot permits old-process reconciliation;
+an expired checkpoint cannot justify a new interruption; a preserved unsent completion
+envelope cannot be treated as an admitted result.
+
 ## 6. Tests Required
 
 Real Linux cgroups/systemd tests: escaped/background descendants, freeze/kill, daemon restart, host reboot, birth identity and two concurrent same-UID Attempts. Probe read-only Planner commands, input files, worktree common-directory grants and completion-triggered CLI termination. Test local journal/spool write failure and receipt recovery after expiry.
@@ -70,6 +77,11 @@ Verify shell-based snapshot write/chmod/root-replacement attempts fail while Nod
 
 [Adapter catalog tests](../../../runner/internal/adapter/catalog_test.go) must verify exact env/cwd parity, bounded output, absent/duplicate model rejection, malformed/missing/nonzero pricing and no model execution after preflight failure. Real CLI trials must include fresh Attempt caches; a smoke run with the Owner's existing cache does not establish Adapter compatibility.
 
+Keep shared fixtures for the selected LongCat dispatch, historical MiMo decoding
+and an unapproved model rejection. Real reboot checks require changed boot,
+unchanged request digests/receipts, no replacement Start, BLOCKED interrupted work,
+successful physical Stop/release and scoped reads without fresh Agent authority.
+
 ## 7. Wrong vs Correct
 
 Wrong: map socket callers to Attempt using an environment variable.
@@ -77,6 +89,11 @@ Correct: verify kernel peer/birth/cgroup against the daemon's durable dispatch r
 
 Wrong: check model availability in the Owner's default XDG cache, then launch in a fresh Attempt cache.
 Correct: refresh and validate the model in the same environment/cwd used by the actual invocation; retain Runtime errors separately from catalog diagnostics.
+
+Wrong: reboot, replay the pending handoff and call that recovery of the old Attempt.
+Correct: reconcile the original records; preserve the unsent request as unknown and
+the interrupted Node as BLOCKED. Manual Runner startup proves recovery after startup,
+not that the installation automatically enables Runner at boot.
 
 ## Installation discovery
 

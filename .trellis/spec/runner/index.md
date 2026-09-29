@@ -1,6 +1,6 @@
 # Go Runner and Linux Execution
 
-Status: the Go boundary probe is implemented under `runner`; Linux installation recipes are in `infra/runner`. The active task tracks real-host acceptance separately from local tests. This is not the full Task scheduler or delivery implementation.
+Status: the Go boundary probe under `runner` passed real Linux/OpenCode acceptance on 2026-09-29; recipes are in `infra/runner`. The archived boundary-probe report records the exact LongCat model, four normal completions, live service restart and controlled reboot. Runner startup after reboot was manual. This is not production Runtime integration, the full Task scheduler or delivery implementation.
 
 ## Pre-Development Checklist
 

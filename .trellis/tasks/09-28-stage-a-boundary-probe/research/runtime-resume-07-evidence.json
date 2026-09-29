@@ -1,0 +1,1082 @@
+{
+  "completed_trials": [
+    {
+      "attempts": [
+        {
+          "attempt_id": "longcat-node-07",
+          "dispatch_id": "b06988fa-c81a-4f7b-b713-34502c90cc50",
+          "kind": "node",
+          "mutation_allowed": false,
+          "node_state": "COMPLETED",
+          "process_absent": true,
+          "process_released": true,
+          "started": true,
+          "task_state": "REVIEW"
+        }
+      ],
+      "checks": {
+        "bundled_help": true,
+        "complete_driver_evidence": true,
+        "correct_workspace_receipt": true,
+        "detached_descendant_writes_stopped": true,
+        "detached_descendants_absent": true,
+        "execution_identity": true,
+        "finalized_exact_git_result": true,
+        "forged_environment_keeps_own_result": true,
+        "forged_hints_denied": true,
+        "formal_handoff_receipt": true,
+        "immutable_journal_backend_digest": true,
+        "large_payload_received": true,
+        "long_payload_changed_content_conflicts": true,
+        "long_payload_retained_before_send": true,
+        "native_git_commit": true,
+        "node_formal_result": true,
+        "physical_cgroup_absent": true,
+        "process_released_after_absence": true,
+        "receipt_scope_matches_attempt_task": true,
+        "retry_ignores_changed_file": true,
+        "same_id_changed_payload_conflicts": true,
+        "separate_worktree_common": true,
+        "workspace_command": true,
+        "workspace_lazy_before_open": true
+      },
+      "journal_requests": [
+        {
+          "bytes": 160160,
+          "digest": "92be8e4676be38ddf014c58f9fc29c5c7916d95ef373de29265d720005a603e7",
+          "digest_matches_bytes": true,
+          "request_id": "probe-handoff"
+        },
+        {
+          "bytes": 175,
+          "digest": "105dc0fb8a395e7af2b4b27f9901fb8e0a8a4fc9a90d0169c81363548ac1e0e9",
+          "digest_matches_bytes": true,
+          "request_id": "shared-open"
+        }
+      ],
+      "operations": [
+        {
+          "created_epoch": 1790639435.300518,
+          "failure_kind": null,
+          "git_commit": null,
+          "git_tree": null,
+          "kind": "open_workspace",
+          "operation_id": "a2c41a4c-ffbf-498e-aa73-56c42a915788",
+          "state": "succeeded",
+          "writer_absent": null
+        },
+        {
+          "created_epoch": 1790639436.987998,
+          "failure_kind": null,
+          "git_commit": "813b0ba45e5b790e8b9300137854fa85d76df1de",
+          "git_tree": "79d37e70f5ba1a235f1b660ede6636aa65d52c27",
+          "kind": "complete_node",
+          "operation_id": "c77d1b40-3a6b-42f2-a2ca-930668c477db",
+          "state": "succeeded",
+          "writer_absent": true
+        }
+      ],
+      "outcome": "pass",
+      "ownership": {
+        "birth": "213562839",
+        "boot_id": "d93d5044-c1ea-4a29-9ec9-945ffbe3ab09",
+        "cgroup": "/system.slice/monolab-probe-a-longcat-node-07.service",
+        "dispatch_id": "b06988fa-c81a-4f7b-b713-34502c90cc50",
+        "phase": "absent",
+        "pid": 1616816
+      },
+      "physical": {
+        "cgroup_populated": false,
+        "descendants": [
+          {
+            "alive": false,
+            "identity": {
+              "birth": "213564427",
+              "boot_id": "d93d5044-c1ea-4a29-9ec9-945ffbe3ab09",
+              "cgroup": "/system.slice/monolab-probe-a-longcat-node-07.service",
+              "pid": 1618904
+            },
+            "name": "setsid"
+          },
+          {
+            "alive": false,
+            "identity": {
+              "birth": "213564430",
+              "boot_id": "d93d5044-c1ea-4a29-9ec9-945ffbe3ab09",
+              "cgroup": "/system.slice/monolab-probe-a-longcat-node-07.service",
+              "pid": 1618914
+            },
+            "name": "double-fork"
+          }
+        ]
+      },
+      "receipts": [
+        {
+          "command_name": "complete_node",
+          "digest": "92be8e4676be38ddf014c58f9fc29c5c7916d95ef373de29265d720005a603e7",
+          "long_value_length": 160000,
+          "operation_id": "c77d1b40-3a6b-42f2-a2ca-930668c477db",
+          "reply_length": null,
+          "request_id": "probe-handoff",
+          "schema_version": 1,
+          "scope_id": "task_longcat-node-07",
+          "status": "admitted"
+        },
+        {
+          "command_name": "open_workspace",
+          "digest": "105dc0fb8a395e7af2b4b27f9901fb8e0a8a4fc9a90d0169c81363548ac1e0e9",
+          "long_value_length": null,
+          "operation_id": "a2c41a4c-ffbf-498e-aa73-56c42a915788",
+          "reply_length": null,
+          "request_id": "shared-open",
+          "schema_version": 1,
+          "scope_id": "task_longcat-node-07",
+          "status": "admitted"
+        }
+      ]
+    },
+    {
+      "attempts": [
+        {
+          "attempt_id": "longcat-planner-07",
+          "dispatch_id": "daec76de-dbd5-45f5-a46f-5467a46ebc1f",
+          "kind": "planner",
+          "mutation_allowed": false,
+          "node_state": null,
+          "process_absent": true,
+          "process_released": true,
+          "started": true,
+          "task_state": "RUNNING"
+        }
+      ],
+      "checks": {
+        "bundled_help": true,
+        "complete_driver_evidence": true,
+        "correct_workspace_receipt": true,
+        "execution_identity": true,
+        "forged_environment_keeps_own_result": true,
+        "forged_hints_denied": true,
+        "formal_handoff_receipt": true,
+        "immutable_journal_backend_digest": true,
+        "large_payload_received": true,
+        "long_payload_changed_content_conflicts": true,
+        "long_payload_retained_before_send": true,
+        "normal_shell_write": true,
+        "physical_cgroup_absent": true,
+        "planner_reply_committed": true,
+        "planner_stop_succeeded": true,
+        "process_released_after_absence": true,
+        "receipt_scope_matches_attempt_task": true,
+        "retry_ignores_changed_file": true,
+        "same_id_changed_payload_conflicts": true,
+        "snapshot_chmod_denied": true,
+        "snapshot_readable": true,
+        "snapshot_root_rename_denied": true,
+        "snapshot_shell_write_denied": true,
+        "workspace_command": true
+      },
+      "journal_requests": [
+        {
+          "bytes": 160217,
+          "digest": "fbfe13ff15211f978389f4959c4fe7e6f0648033663880c59a087e2669c6e5a3",
+          "digest_matches_bytes": true,
+          "request_id": "probe-handoff"
+        },
+        {
+          "bytes": 182,
+          "digest": "a24f790488632e195c96eed438b963c4deec25420d6df2e16dc68f824817ecde",
+          "digest_matches_bytes": true,
+          "request_id": "shared-open"
+        }
+      ],
+      "operations": [
+        {
+          "created_epoch": 1790639511.476209,
+          "failure_kind": null,
+          "git_commit": null,
+          "git_tree": null,
+          "kind": "inspect_repository",
+          "operation_id": "e6a41700-1998-4460-bf72-97d9de659f47",
+          "state": "succeeded",
+          "writer_absent": null
+        },
+        {
+          "created_epoch": 1790639512.670069,
+          "failure_kind": null,
+          "git_commit": null,
+          "git_tree": null,
+          "kind": "stop",
+          "operation_id": "90252c06-e03b-41b7-a00c-d1ece0323b18",
+          "state": "succeeded",
+          "writer_absent": true
+        }
+      ],
+      "outcome": "pass",
+      "ownership": {
+        "birth": "213570602",
+        "boot_id": "d93d5044-c1ea-4a29-9ec9-945ffbe3ab09",
+        "cgroup": "/system.slice/monolab-probe-a-longcat-planner-07.service",
+        "dispatch_id": "daec76de-dbd5-45f5-a46f-5467a46ebc1f",
+        "phase": "absent",
+        "pid": 1621634
+      },
+      "physical": {
+        "cgroup_populated": false,
+        "descendants": []
+      },
+      "receipts": [
+        {
+          "command_name": "commit_task_turn",
+          "digest": "fbfe13ff15211f978389f4959c4fe7e6f0648033663880c59a087e2669c6e5a3",
+          "long_value_length": 160000,
+          "operation_id": "90252c06-e03b-41b7-a00c-d1ece0323b18",
+          "reply_length": 160000,
+          "request_id": "probe-handoff",
+          "schema_version": 1,
+          "scope_id": "task_longcat-planner-07",
+          "status": "committed"
+        },
+        {
+          "command_name": "inspect_repository",
+          "digest": "a24f790488632e195c96eed438b963c4deec25420d6df2e16dc68f824817ecde",
+          "long_value_length": null,
+          "operation_id": "e6a41700-1998-4460-bf72-97d9de659f47",
+          "reply_length": null,
+          "request_id": "shared-open",
+          "schema_version": 1,
+          "scope_id": "task_longcat-planner-07",
+          "status": "admitted"
+        }
+      ]
+    },
+    {
+      "attempts": [
+        {
+          "attempt_id": "longcat-pair-07-one",
+          "dispatch_id": "16bc586c-c11f-4e28-8499-f9a71f894226",
+          "kind": "node",
+          "mutation_allowed": false,
+          "node_state": "COMPLETED",
+          "process_absent": true,
+          "process_released": true,
+          "started": true,
+          "task_state": "REVIEW"
+        }
+      ],
+      "checks": {
+        "bundled_help": true,
+        "complete_driver_evidence": true,
+        "correct_workspace_receipt": true,
+        "detached_descendant_writes_stopped": true,
+        "detached_descendants_absent": true,
+        "execution_identity": true,
+        "finalized_exact_git_result": true,
+        "forged_environment_keeps_own_result": true,
+        "forged_hints_denied": true,
+        "formal_handoff_receipt": true,
+        "immutable_journal_backend_digest": true,
+        "large_payload_received": true,
+        "long_payload_changed_content_conflicts": true,
+        "long_payload_retained_before_send": true,
+        "native_git_commit": true,
+        "node_formal_result": true,
+        "physical_cgroup_absent": true,
+        "process_released_after_absence": true,
+        "receipt_scope_matches_attempt_task": true,
+        "retry_ignores_changed_file": true,
+        "same_id_changed_payload_conflicts": true,
+        "separate_worktree_common": true,
+        "workspace_command": true,
+        "workspace_lazy_before_open": true
+      },
+      "journal_requests": [
+        {
+          "bytes": 160164,
+          "digest": "5e926d2bc8f71620fa2890eee9979e3722dd866ff2e550c537bef2b35a174351",
+          "digest_matches_bytes": true,
+          "request_id": "probe-handoff"
+        },
+        {
+          "bytes": 179,
+          "digest": "8e5f09462164e54df66fa90cc7cffc307a2f560815bc653d593fa1c7b206dd49",
+          "digest_matches_bytes": true,
+          "request_id": "shared-open"
+        }
+      ],
+      "operations": [
+        {
+          "created_epoch": 1790639653.888263,
+          "failure_kind": null,
+          "git_commit": "826a0e1a5b98f1359daf9882444641085fa0eead",
+          "git_tree": "79d37e70f5ba1a235f1b660ede6636aa65d52c27",
+          "kind": "complete_node",
+          "operation_id": "70440598-9729-4342-9ab8-4df3f7d742f5",
+          "state": "succeeded",
+          "writer_absent": true
+        },
+        {
+          "created_epoch": 1790639628.152624,
+          "failure_kind": null,
+          "git_commit": null,
+          "git_tree": null,
+          "kind": "open_workspace",
+          "operation_id": "e68ca720-6356-4e90-a22a-7852aa1b36cf",
+          "state": "succeeded",
+          "writer_absent": null
+        }
+      ],
+      "outcome": "pass",
+      "ownership": {
+        "birth": "213581948",
+        "boot_id": "d93d5044-c1ea-4a29-9ec9-945ffbe3ab09",
+        "cgroup": "/system.slice/monolab-probe-a-longcat-pair-07-one.service",
+        "dispatch_id": "16bc586c-c11f-4e28-8499-f9a71f894226",
+        "phase": "absent",
+        "pid": 1627112
+      },
+      "physical": {
+        "cgroup_populated": false,
+        "descendants": [
+          {
+            "alive": false,
+            "identity": {
+              "birth": "213583717",
+              "boot_id": "d93d5044-c1ea-4a29-9ec9-945ffbe3ab09",
+              "cgroup": "/system.slice/monolab-probe-a-longcat-pair-07-one.service",
+              "pid": 1629107
+            },
+            "name": "setsid"
+          },
+          {
+            "alive": false,
+            "identity": {
+              "birth": "213583720",
+              "boot_id": "d93d5044-c1ea-4a29-9ec9-945ffbe3ab09",
+              "cgroup": "/system.slice/monolab-probe-a-longcat-pair-07-one.service",
+              "pid": 1629120
+            },
+            "name": "double-fork"
+          }
+        ]
+      },
+      "receipts": [
+        {
+          "command_name": "complete_node",
+          "digest": "5e926d2bc8f71620fa2890eee9979e3722dd866ff2e550c537bef2b35a174351",
+          "long_value_length": 160000,
+          "operation_id": "70440598-9729-4342-9ab8-4df3f7d742f5",
+          "reply_length": null,
+          "request_id": "probe-handoff",
+          "schema_version": 1,
+          "scope_id": "task_longcat-pair-07-one",
+          "status": "admitted"
+        },
+        {
+          "command_name": "open_workspace",
+          "digest": "8e5f09462164e54df66fa90cc7cffc307a2f560815bc653d593fa1c7b206dd49",
+          "long_value_length": null,
+          "operation_id": "e68ca720-6356-4e90-a22a-7852aa1b36cf",
+          "reply_length": null,
+          "request_id": "shared-open",
+          "schema_version": 1,
+          "scope_id": "task_longcat-pair-07-one",
+          "status": "admitted"
+        }
+      ]
+    },
+    {
+      "attempts": [
+        {
+          "attempt_id": "longcat-pair-07-two",
+          "dispatch_id": "32a15eaa-9de5-4ace-872a-ab005e158f2e",
+          "kind": "node",
+          "mutation_allowed": false,
+          "node_state": "COMPLETED",
+          "process_absent": true,
+          "process_released": true,
+          "started": true,
+          "task_state": "REVIEW"
+        }
+      ],
+      "checks": {
+        "bundled_help": true,
+        "complete_driver_evidence": true,
+        "correct_workspace_receipt": true,
+        "detached_descendant_writes_stopped": true,
+        "detached_descendants_absent": true,
+        "execution_identity": true,
+        "finalized_exact_git_result": true,
+        "forged_environment_keeps_own_result": true,
+        "forged_hints_denied": true,
+        "formal_handoff_receipt": true,
+        "immutable_journal_backend_digest": true,
+        "large_payload_received": true,
+        "long_payload_changed_content_conflicts": true,
+        "long_payload_retained_before_send": true,
+        "native_git_commit": true,
+        "node_formal_result": true,
+        "physical_cgroup_absent": true,
+        "process_released_after_absence": true,
+        "receipt_scope_matches_attempt_task": true,
+        "retry_ignores_changed_file": true,
+        "same_id_changed_payload_conflicts": true,
+        "separate_worktree_common": true,
+        "workspace_command": true,
+        "workspace_lazy_before_open": true
+      },
+      "journal_requests": [
+        {
+          "bytes": 160164,
+          "digest": "101e37fc925037cadc2dec37f0f63a9df64b49554775e95c459704b3566311a1",
+          "digest_matches_bytes": true,
+          "request_id": "probe-handoff"
+        },
+        {
+          "bytes": 179,
+          "digest": "a1dead6e8844deddc03fb76620f4cc0cd026d64e50d42600268369bcdca58940",
+          "digest_matches_bytes": true,
+          "request_id": "shared-open"
+        }
+      ],
+      "operations": [
+        {
+          "created_epoch": 1790639629.753413,
+          "failure_kind": null,
+          "git_commit": null,
+          "git_tree": null,
+          "kind": "open_workspace",
+          "operation_id": "066c34b3-bbd5-43e3-a263-a3b2066241cb",
+          "state": "succeeded",
+          "writer_absent": null
+        },
+        {
+          "created_epoch": 1790639653.928385,
+          "failure_kind": null,
+          "git_commit": "68a907f2c4ab86e33c4d99e78cc44da45907c3dd",
+          "git_tree": "79d37e70f5ba1a235f1b660ede6636aa65d52c27",
+          "kind": "complete_node",
+          "operation_id": "a263e416-fd68-4111-b293-dae479263e59",
+          "state": "succeeded",
+          "writer_absent": true
+        }
+      ],
+      "outcome": "pass",
+      "ownership": {
+        "birth": "213582475",
+        "boot_id": "d93d5044-c1ea-4a29-9ec9-945ffbe3ab09",
+        "cgroup": "/system.slice/monolab-probe-a-longcat-pair-07-two.service",
+        "dispatch_id": "32a15eaa-9de5-4ace-872a-ab005e158f2e",
+        "phase": "absent",
+        "pid": 1627456
+      },
+      "physical": {
+        "cgroup_populated": false,
+        "descendants": [
+          {
+            "alive": false,
+            "identity": {
+              "birth": "213583873",
+              "boot_id": "d93d5044-c1ea-4a29-9ec9-945ffbe3ab09",
+              "cgroup": "/system.slice/monolab-probe-a-longcat-pair-07-two.service",
+              "pid": 1629686
+            },
+            "name": "setsid"
+          },
+          {
+            "alive": false,
+            "identity": {
+              "birth": "213583876",
+              "boot_id": "d93d5044-c1ea-4a29-9ec9-945ffbe3ab09",
+              "cgroup": "/system.slice/monolab-probe-a-longcat-pair-07-two.service",
+              "pid": 1629689
+            },
+            "name": "double-fork"
+          }
+        ]
+      },
+      "receipts": [
+        {
+          "command_name": "complete_node",
+          "digest": "101e37fc925037cadc2dec37f0f63a9df64b49554775e95c459704b3566311a1",
+          "long_value_length": 160000,
+          "operation_id": "a263e416-fd68-4111-b293-dae479263e59",
+          "reply_length": null,
+          "request_id": "probe-handoff",
+          "schema_version": 1,
+          "scope_id": "task_longcat-pair-07-two",
+          "status": "admitted"
+        },
+        {
+          "command_name": "open_workspace",
+          "digest": "a1dead6e8844deddc03fb76620f4cc0cd026d64e50d42600268369bcdca58940",
+          "long_value_length": null,
+          "operation_id": "066c34b3-bbd5-43e3-a263-a3b2066241cb",
+          "reply_length": null,
+          "request_id": "shared-open",
+          "schema_version": 1,
+          "scope_id": "task_longcat-pair-07-two",
+          "status": "admitted"
+        }
+      ]
+    }
+  ],
+  "delayed_revoke": {
+    "attempts": [],
+    "checks": {
+      "created_and_revoked_with_runner_stopped": true,
+      "no_attempt_unit": true,
+      "retained_revocation_tombstone": true,
+      "runtime_never_started": true,
+      "verified_stop_released_claim": true
+    },
+    "journal_requests": [],
+    "operations": [],
+    "outcome": "pass",
+    "ownership": {},
+    "physical": {},
+    "receipts": []
+  },
+  "evidence_root": "/root/monolab-probe-evidence-runtime-resume-07",
+  "evidence_sha256": {
+    "after-restart-longcat-pair-07.json": "b0d3b2665825152205074a1fe8a24c9674cb6d4b4cd1d112ec2fd723d929e776",
+    "before-restart-longcat-pair-07.json": "b0d3b2665825152205074a1fe8a24c9674cb6d4b4cd1d112ec2fd723d929e776",
+    "delayed-revoke-longcat-delayed-07.json": "f7be3755b50ceecadf0b81e8c0d09865384f2d51c265b7a7a5b3dae4cbf86189",
+    "expired-reboot-window-longcat-reboot-07.json": "58b8570086d37199d61e76c20624d00a6a5bc3fe5b7f6311ae8abbb14eecd144",
+    "final-host-audit.json": "e5e91dffbaa6a8bd70537004132d8ac220b828b6babccb59320ede58e0900730",
+    "host-after-reboot.json": "7023073914896341095640648234fbcadf0369292216464286311dff3c0927ff",
+    "host-before-reboot.json": "973c6d1ff7f5c5a570d13d5cf8e8bcec3ed27c0f0304509631f01131e1732682",
+    "inspect-node-03.json": "8d9d3b3e72e11ba6c811c4cf9c54f8468c6350889f55c2385ee6979dedb7b838",
+    "installed-update.json": "a0b0e9139be724f6c8f4533cff82c419d4d86295852c95325ff72b5f9e051134",
+    "longcat-catalog.json": "c2b41b8da5863de79b7f2a189273bed4a433317a840d49044907d6803588cf58",
+    "longcat-node-07.json": "606fcbaa688b13b7695a9d32c8bf480a8ea2e482717981af2aa7a37cba13d95c",
+    "longcat-pair-07.json": "6f5d76e2c5fad75d45e681d3f09aa84d8c62486f779ccb5e669c1abc2371959d",
+    "longcat-planner-07.json": "022df90f67a2b9b64f546b1de5f7543f0de1c5ec843db6884a69e39058952eb0",
+    "permissions-longcat-node-07.json": "c68b621e5c09c236cd379d11492d5b98fcddd6e8932bc824c3fbd99b2b44b301",
+    "prepared-longcat-node-07.json": "8148a3a9de3d7bab001fbbe3fd07d15842917387c75a17815e5d35cc104200d5",
+    "prepared-longcat-pair-07-one.json": "c4507d0a2301806b28def64946ccfe2707a291cc2fc1d31f065dbec33c819a1a",
+    "prepared-longcat-pair-07-two.json": "f9ad09fa48306a22061d0f01014af30de810063d214e5f8a1a2c004777cb7478",
+    "prepared-longcat-planner-07.json": "8618dcad4592cddbaa528f977880688c0a093ec21889711184f8f422903fecba",
+    "prepared-longcat-reboot-07.json": "0c2f79d581f76edba2f664b1489c9a294b7d80f0449c774328f272c26b1c80a1",
+    "prepared-longcat-reboot-08.json": "e780edfacf686e8fe9fd858121fa3e46773e0eafde6bcc29915240a2655244fb",
+    "profile.json": "93e3d9281a492ca45f8ffbf14a4538e94a6ba7496bb157260d762025e9a541be",
+    "reboot-after-longcat-reboot-08.json": "19c46bbf97d2b434d527121296095d6fbd67c687ddb9ac9f01caa6a0cdc1a81c",
+    "reboot-before-longcat-reboot-07.json": "b60ea920fb65268a2aeea9863e7525e1f084b306ff1cd484e87b935cb2bf2437",
+    "reboot-before-longcat-reboot-08.json": "456c90f3f978bdbffcde79862a62c88379d1e42a0bc8e0467f2237b0b9f14315",
+    "reboot-intent-longcat-reboot-08.json": "431b9b85f499fc89d38d441e048b8d58650106490eabd907c68a79a790c628af",
+    "recovery-longcat-node-07.json": "9a62177cad4804cf10b375916c44dafc366911f45cfe3acaaa0fe76e61acb7f7",
+    "recovery-longcat-planner-07.json": "83da6e84474f42f9c711d96d607aeaeaaec2d4be0bc0719fecfb313403a0ba74",
+    "recovery-node-03.json": "39c7c07b5b1b8a655b6bef49f3adae5013577ffc4db7463f7f199115291b296d",
+    "retired-failed-units.json": "d62576e4d83a6a8b2dc66cca5cb0a0f8cf0062d774a98e70b34efedb73890c77",
+    "started-longcat-node-07.json": "9d8e3d4275ac9d80060f99101375f376bed8fae47277d1dff45cba35eab5aca7",
+    "started-longcat-pair-07-one.json": "c0cea15c3ce2a33aa9f85090dc94946a0d1bf9bd01e21a1ce999458299f4f170",
+    "started-longcat-pair-07-two.json": "298c938d61a8bd311b245ae5e85bcc3676411e70592c099ff791e1892e1c0f86",
+    "started-longcat-planner-07.json": "7aa449ab419c05c0e01eb2c31708c44056bce717007774b42860347812c1932b",
+    "started-longcat-reboot-07.json": "1da4452b68b960b8b047074e799e016ab2c14b1b1af7bcf9d990425b9d5be37d",
+    "started-longcat-reboot-08.json": "a3f8f5ca8835d1a09a72ad73043470c3209f93d00005f58244ca627451699059"
+  },
+  "expired_reboot_window": {
+    "checks": {
+      "released": true,
+      "stop_succeeded": true,
+      "unsent_handoff_unknown": true
+    },
+    "outcome": "pass",
+    "scenario": "Cleanup after checkpoint expired; no reboot occurred",
+    "state": {
+      "attempts": [
+        {
+          "attempt_id": "longcat-reboot-07",
+          "dispatch_id": "a4415ede-d536-4bc6-ad4a-b8a763f3d58e",
+          "kind": "node",
+          "mutation_allowed": false,
+          "node_state": "BLOCKED",
+          "process_absent": true,
+          "process_released": true,
+          "started": true,
+          "task_state": "BLOCKED"
+        }
+      ],
+      "boot_id": "d93d5044-c1ea-4a29-9ec9-945ffbe3ab09",
+      "driver": {
+        "attempt_id": "longcat-reboot-07",
+        "checks": {
+          "bundled_help": true,
+          "forged_environment_keeps_own_result": true,
+          "forged_hints_denied": true,
+          "long_payload_changed_content_conflicts": true,
+          "long_payload_retained_before_send": true,
+          "native_git_commit": true,
+          "retry_ignores_changed_file": true,
+          "same_id_changed_payload_conflicts": true,
+          "separate_worktree_common": true,
+          "workspace_command": true,
+          "workspace_lazy_before_open": true
+        },
+        "execution_uid": 1000,
+        "expected_git_tree": "79d37e70f5ba1a235f1b660ede6636aa65d52c27",
+        "hold_expires_at": 1790640687.7806082,
+        "kind": "node",
+        "schema_version": 1,
+        "stage": "ready_for_handoff"
+      },
+      "events": [
+        {
+          "kind": "output",
+          "sequence": 5,
+          "stream_id": "stdout",
+          "text_length": 28249
+        },
+        {
+          "kind": "started",
+          "sequence": 1,
+          "stream_id": "runtime",
+          "text_length": 25
+        },
+        {
+          "kind": "output",
+          "sequence": 1,
+          "stream_id": "stdout",
+          "text_length": 250
+        },
+        {
+          "kind": "output",
+          "sequence": 2,
+          "stream_id": "stdout",
+          "text_length": 1288
+        },
+        {
+          "kind": "output",
+          "sequence": 3,
+          "stream_id": "stdout",
+          "text_length": 250
+        },
+        {
+          "kind": "output",
+          "sequence": 4,
+          "stream_id": "stdout",
+          "text_length": 5471
+        },
+        {
+          "kind": "output",
+          "sequence": 6,
+          "stream_id": "stdout",
+          "text_length": 1754
+        },
+        {
+          "kind": "output",
+          "sequence": 7,
+          "stream_id": "stdout",
+          "text_length": 250
+        },
+        {
+          "kind": "output",
+          "sequence": 8,
+          "stream_id": "stdout",
+          "text_length": 4672
+        },
+        {
+          "kind": "output",
+          "sequence": 9,
+          "stream_id": "stdout",
+          "text_length": 250
+        },
+        {
+          "kind": "output",
+          "sequence": 10,
+          "stream_id": "stdout",
+          "text_length": 2459
+        }
+      ],
+      "journal_requests": [
+        {
+          "bytes": 160162,
+          "digest": "049162451fd16c88545175086c4ca9be6012027f33bfa97a7b6203eab59709ab",
+          "digest_matches_bytes": true,
+          "request_id": "probe-handoff"
+        },
+        {
+          "bytes": 177,
+          "digest": "f6f6e2abf6e38e3e2140b38c2a509d9217b110cc047a2454d7d57c908b307165",
+          "digest_matches_bytes": true,
+          "request_id": "shared-open"
+        }
+      ],
+      "live_identity": {
+        "present": false
+      },
+      "operations": [
+        {
+          "created_epoch": 1790640386.125646,
+          "failure_kind": null,
+          "git_commit": null,
+          "git_tree": null,
+          "kind": "open_workspace",
+          "operation_id": "eae90467-0ec7-472f-9ae2-c3da2de34c81",
+          "state": "succeeded",
+          "writer_absent": null
+        },
+        {
+          "created_epoch": 1790641345.391865,
+          "failure_kind": null,
+          "git_commit": null,
+          "git_tree": null,
+          "kind": "stop",
+          "operation_id": "331d1cd4-4b65-4e12-8dce-0da8ee4efdab",
+          "state": "succeeded",
+          "writer_absent": true
+        }
+      ],
+      "ownership": {
+        "birth": "213658170",
+        "boot_id": "d93d5044-c1ea-4a29-9ec9-945ffbe3ab09",
+        "cgroup": "/system.slice/monolab-probe-a-longcat-reboot-07.service",
+        "dispatch_id": "a4415ede-d536-4bc6-ad4a-b8a763f3d58e",
+        "phase": "absent",
+        "pid": 1657487
+      },
+      "physical": {
+        "cgroup_populated": false,
+        "descendants": [
+          {
+            "alive": false,
+            "identity": {
+              "birth": "213659511",
+              "boot_id": "d93d5044-c1ea-4a29-9ec9-945ffbe3ab09",
+              "cgroup": "/system.slice/monolab-probe-a-longcat-reboot-07.service",
+              "pid": 1659462
+            },
+            "name": "setsid"
+          },
+          {
+            "alive": false,
+            "identity": {
+              "birth": "213659514",
+              "boot_id": "d93d5044-c1ea-4a29-9ec9-945ffbe3ab09",
+              "cgroup": "/system.slice/monolab-probe-a-longcat-reboot-07.service",
+              "pid": 1659465
+            },
+            "name": "double-fork"
+          }
+        ]
+      },
+      "receipts": [
+        {
+          "command_name": "open_workspace",
+          "digest": "f6f6e2abf6e38e3e2140b38c2a509d9217b110cc047a2454d7d57c908b307165",
+          "long_value_length": null,
+          "operation_id": "eae90467-0ec7-472f-9ae2-c3da2de34c81",
+          "reply_length": null,
+          "request_id": "shared-open",
+          "schema_version": 1,
+          "scope_id": "task_longcat-reboot-07",
+          "status": "admitted"
+        }
+      ]
+    }
+  },
+  "final_audit": {
+    "attempt_cgroups": [],
+    "attempt_units": "",
+    "checks": {
+      "all_canonical_claims_released": true,
+      "all_journal_records_from_previous_boot": true,
+      "all_services_active": true,
+      "container_images_and_policies_preserved": true,
+      "intentional_init_containers_still_exited": true,
+      "no_attempt_cgroups": true,
+      "no_attempt_units": true,
+      "no_process_in_attempt_cgroup": true,
+      "previously_running_containers_recovered": true,
+      "recorded_executions_absent": true,
+      "runner_enablement_preserved": true,
+      "tls_database_ready": true
+    },
+    "claims": {
+      "mutation_allowed": 0,
+      "not_absent": 0,
+      "total": 16,
+      "unreleased": 0
+    },
+    "correction": "Initial one-off audit required a historical cgroup for PID-zero never-started records. Preserve that failed audit; verify absent/revoked records, changed boot and independent system-wide unit/cgroup/process absence here.",
+    "matching_processes": [],
+    "outcome": "pass",
+    "process_scan_errors": []
+  },
+  "host_after_reboot": {
+    "checks": {
+      "all_canonical_claims_released": true,
+      "all_services_active": true,
+      "container_images_and_policies_preserved": true,
+      "intentional_init_containers_still_exited": true,
+      "no_recorded_writer_live": false,
+      "previously_running_containers_recovered": true,
+      "runner_enablement_preserved": true,
+      "tls_database_ready": true
+    },
+    "claims": {
+      "mutation_allowed": 0,
+      "not_absent": 0,
+      "total": 16,
+      "unreleased": 0
+    },
+    "health": {
+      "database": "ready",
+      "probe": true,
+      "schema_version": 1
+    },
+    "known_preexisting_issue": "chronicle-gate-r3-95d04d3d-chronicle-worker-1 was restarting before reboot (3837 restarts); no unrelated repair attempted",
+    "outcome": "fail",
+    "runner_enabled": "disabled",
+    "services": {
+      "docker": "active",
+      "monolab-probe-runner.service": "active",
+      "ssh": "active",
+      "tailscaled": "active"
+    }
+  },
+  "installed": {
+    "/usr/local/bin/monolab": "80103ea7f0d2632381ed268a3a16aa9eb2172b543d70828fb699da06731566af",
+    "/usr/local/libexec/monolab-probe-exec": "354221f99df461c97b964bfd150eadffa1797c3df33b14ee98e60dc9ebb49306",
+    "/usr/local/libexec/monolab-probe-launch": "f4adbbeb2751cbdf26f32d8944921d8c364bfbc5c38802b5ccaff9a7dc66ebb1",
+    "/usr/local/libexec/monolab-runner": "c383f87fd0080158639905ef9fe39a8e5e5ca470b4735cf94d9dc4ed7aa16407",
+    "server_image": "sha256:f21099e7fa8d576bbc69fb70b20836edf3b5ccd8499f70005d7c5fc6799d64fc",
+    "source_commit": "5b940b049d4591b780b191e8f1de29777149b0d9"
+  },
+  "pair": {
+    "outcome": "pass",
+    "output_before_handoff": true,
+    "restart_identities": [
+      {
+        "after": {
+          "birth": "213581948",
+          "boot_id": "d93d5044-c1ea-4a29-9ec9-945ffbe3ab09",
+          "cgroup": "/system.slice/monolab-probe-a-longcat-pair-07-one.service",
+          "pid": 1627112,
+          "present": true,
+          "uid": 1000
+        },
+        "before": {
+          "birth": "213581948",
+          "boot_id": "d93d5044-c1ea-4a29-9ec9-945ffbe3ab09",
+          "cgroup": "/system.slice/monolab-probe-a-longcat-pair-07-one.service",
+          "pid": 1627112,
+          "present": true,
+          "uid": 1000
+        }
+      },
+      {
+        "after": {
+          "birth": "213582475",
+          "boot_id": "d93d5044-c1ea-4a29-9ec9-945ffbe3ab09",
+          "cgroup": "/system.slice/monolab-probe-a-longcat-pair-07-two.service",
+          "pid": 1627456,
+          "present": true,
+          "uid": 1000
+        },
+        "before": {
+          "birth": "213582475",
+          "boot_id": "d93d5044-c1ea-4a29-9ec9-945ffbe3ab09",
+          "cgroup": "/system.slice/monolab-probe-a-longcat-pair-07-two.service",
+          "pid": 1627456,
+          "present": true,
+          "uid": 1000
+        }
+      }
+    ],
+    "same_execution_uid": true,
+    "same_process_after_service_restarts": true
+  },
+  "permissions": {
+    "checks": {
+      "control_credential_private": true,
+      "execution_cache_not_writable": true,
+      "execution_cache_readable": true,
+      "journal_private": true,
+      "protected_files_exist": true,
+      "same_uid_without_owned_cgroup_denied": true,
+      "service_result_readable": true
+    },
+    "outcome": "pass"
+  },
+  "profile_before_reboot": {
+    "boot_id": "d93d5044-c1ea-4a29-9ec9-945ffbe3ab09",
+    "catalog": {
+      "cost": {
+        "cache": {
+          "read": 0,
+          "write": 0
+        },
+        "input": 0,
+        "output": 0
+      },
+      "model": "opencode/longcat-2.5-preview-free",
+      "status": "active",
+      "toolcall": true
+    },
+    "kernel": "6.12.107+deb13-amd64",
+    "machine": "x86_64",
+    "opencode": "1.18.30",
+    "reboot": "not_run",
+    "source_fingerprint": "034c4eab0a437f7f14e4e09b6089032b6d7721c9c4caa5e7be6fedf1cca4d4be",
+    "systemd": "systemd 257 (257.13-1~deb13u1)"
+  },
+  "reboot": {
+    "attempts": [
+      {
+        "attempt_id": "longcat-reboot-08",
+        "dispatch_id": "a6f64d0f-7a10-4382-b12b-68b58f306982",
+        "kind": "node",
+        "mutation_allowed": false,
+        "node_state": "BLOCKED",
+        "process_absent": true,
+        "process_released": true,
+        "started": true,
+        "task_state": "BLOCKED"
+      }
+    ],
+    "checkpoint_checks": {
+      "bounded_hold_active": true,
+      "claim_retained_before_reboot": true,
+      "descendants_running": true,
+      "driver_ready": true,
+      "live_owned_execution": true,
+      "long_request_retained_unsent": true,
+      "workspace_receipt_only": true
+    },
+    "checks": {
+      "boot_changed": true,
+      "claim_released_after_stop": true,
+      "existing_result_readable_unsent_unknown": true,
+      "immutable_requests_preserved": true,
+      "interrupted_work_not_completed": true,
+      "no_replacement_start": true,
+      "old_writers_absent": true,
+      "receipts_preserved_no_unsent_admission": true,
+      "retained_original_dispatch": true,
+      "valid_live_checkpoint": true
+    },
+    "journal_requests": [
+      {
+        "bytes": 160162,
+        "digest": "13dd4520ea184532ee4d2a72d760e3017bfc2f83416b8fdea312e571b4a0c1fa",
+        "digest_matches_bytes": true,
+        "request_id": "probe-handoff"
+      },
+      {
+        "bytes": 177,
+        "digest": "6b7e9ea5f80b52daaea4bfc287bbc54fd46bc722a0fb2da738513735923da8e0",
+        "digest_matches_bytes": true,
+        "request_id": "shared-open"
+      }
+    ],
+    "new_boot_id": "634f5290-1a55-4c0d-8f9c-71985e728562",
+    "old_boot_id": "d93d5044-c1ea-4a29-9ec9-945ffbe3ab09",
+    "operations": [
+      {
+        "created_epoch": 1790641455.489967,
+        "failure_kind": null,
+        "git_commit": null,
+        "git_tree": null,
+        "kind": "open_workspace",
+        "operation_id": "7cacf126-1390-4181-879c-ab7518407b2c",
+        "state": "succeeded",
+        "writer_absent": null
+      },
+      {
+        "created_epoch": 1790641732.800379,
+        "failure_kind": null,
+        "git_commit": null,
+        "git_tree": null,
+        "kind": "stop",
+        "operation_id": "ad55c195-efcc-4713-a1ad-9a2bd2af95ec",
+        "state": "succeeded",
+        "writer_absent": true
+      }
+    ],
+    "outcome": "pass",
+    "ownership": {
+      "birth": "213764918",
+      "boot_id": "d93d5044-c1ea-4a29-9ec9-945ffbe3ab09",
+      "cgroup": "/system.slice/monolab-probe-a-longcat-reboot-08.service",
+      "dispatch_id": "a6f64d0f-7a10-4382-b12b-68b58f306982",
+      "phase": "absent",
+      "pid": 1697699
+    },
+    "physical": {
+      "cgroup_populated": false,
+      "descendants": [
+        {
+          "alive": false,
+          "identity": {
+            "birth": "213766451",
+            "boot_id": "d93d5044-c1ea-4a29-9ec9-945ffbe3ab09",
+            "cgroup": "/system.slice/monolab-probe-a-longcat-reboot-08.service",
+            "pid": 1699570
+          },
+          "name": "setsid"
+        },
+        {
+          "alive": false,
+          "identity": {
+            "birth": "213766454",
+            "boot_id": "d93d5044-c1ea-4a29-9ec9-945ffbe3ab09",
+            "cgroup": "/system.slice/monolab-probe-a-longcat-reboot-08.service",
+            "pid": 1699590
+          },
+          "name": "double-fork"
+        }
+      ]
+    },
+    "receipts": [
+      {
+        "command_name": "open_workspace",
+        "digest": "6b7e9ea5f80b52daaea4bfc287bbc54fd46bc722a0fb2da738513735923da8e0",
+        "long_value_length": null,
+        "operation_id": "7cacf126-1390-4181-879c-ab7518407b2c",
+        "reply_length": null,
+        "request_id": "shared-open",
+        "schema_version": 1,
+        "scope_id": "task_longcat-reboot-08",
+        "status": "admitted"
+      }
+    ],
+    "verification_read_only": true
+  },
+  "recoveries": {
+    "longcat-node-07": {
+      "after_attempt_grant_expiry": true,
+      "operation_id": "c77d1b40-3a6b-42f2-a2ca-930668c477db",
+      "outcome": "pass",
+      "request_id": "probe-handoff",
+      "schema_version": 1,
+      "status": "committed"
+    },
+    "longcat-planner-07": {
+      "after_attempt_grant_expiry": true,
+      "operation_id": "90252c06-e03b-41b7-a00c-d1ece0323b18",
+      "outcome": "pass",
+      "request_id": "probe-handoff",
+      "schema_version": 1,
+      "status": "committed"
+    },
+    "node-03": {
+      "after_attempt_grant_expiry": true,
+      "operation_id": "c0e05425-5950-444b-a7b8-fe2baf9621f6",
+      "outcome": "pass",
+      "request_id": "probe-handoff",
+      "schema_version": 1,
+      "status": "committed"
+    }
+  },
+  "schema_version": 1,
+  "scope": "Sanitized Runtime boundary acceptance; no autonomous planning or full product acceptance claim",
+  "source_commit": "5b940b049d4591b780b191e8f1de29777149b0d9",
+  "ssh_key_cleanup": {
+    "all_other_authorized_key_bytes_preserved": true,
+    "local_temporary_key_files_removed": true,
+    "outcome": "pass",
+    "recorded_at": 1790642455.7641332,
+    "removed_exact_task_key_count": 1,
+    "task_key_comment": "monolab-runtime-reboot-07"
+  }
+}

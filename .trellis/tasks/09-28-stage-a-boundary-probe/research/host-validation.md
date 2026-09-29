@@ -372,3 +372,30 @@ The Owner subsequently explicitly selected `opencode/longcat-2.5-preview-free`
 (LongCat 2.5 Preview Free) for future required real-model tests. Recheck zero pricing
 before use and keep all historical model identities/evidence. The running Adapter
 has not yet been changed; database tasks continue first per the Owner's sequencing.
+
+
+## Runtime acceptance completed (resume-07, 2026-09-29)
+
+The Owner explicitly resumed the deferred work, selected LongCat 2.5 Preview Free
+and authorized a whole-host reboot including Chronicle/SSH interruption. Tested
+source `5b940b049d4591b780b191e8f1de29777149b0d9` passes four real uninterrupted
+normal completions (three Node, one Planner), live concurrent same-UID service
+restart, expired-result recovery and controlled host reboot. The prior deferral
+and outstanding-item statements above are historical checkpoints, not current status.
+
+`longcat-reboot-07` exceeded its bounded hold before reboot; the safety guard
+refused and explicit revoke/Stop succeeded. Fresh `longcat-reboot-08` was checkpointed,
+revalidated and rebooted in one remote command. New boot identity, original durable
+records, physical absence, Stop/release, BLOCKED work, no unsent handoff admission
+and no replacement Start all pass. Runner was manually started after boot and
+remains disabled for automatic startup. All previously healthy shared-host
+containers recovered; the already restarting Chronicle worker is a preexisting issue.
+
+A final one-off host audit initially misclassified PID-zero/no-cgroup records;
+its original failure is retained. Independent unit/cgroup/process inspection and
+journal/boot checks in `final-host-audit.json` pass with 16 released Attempts and
+no remaining writers. Raw root-private evidence is under
+`/root/monolab-probe-evidence-runtime-resume-07`. See the complete
+[resumption report](runtime-resume-07.md), [sanitized evidence](runtime-resume-07-evidence.json)
+and [AC1–AC10 acceptance](acceptance-status.md). These supersede no original trial
+results and make no full product, semantic-planning or power-loss guarantee.

@@ -33,16 +33,16 @@ This task implements Stage A step 0, not the complete Stage A product loop.
 
 ## Acceptance Criteria
 
-- [ ] **AC1 — Transport and schemas (R1):** A real separate-process run completes authenticated Runner registration/dispatch, an Agent command and a Runner-owned read with disjoint filesystem roots. Shared fixtures validate both generated language representations; incompatible versions and unauthorized scopes are rejected.
-- [ ] **AC2 — Real CLI and Planner access (R2):** The selected installed/authenticated CLI invokes bundled `monolab`, submits a payload beyond convenient inline argument size and receives structured results. A Planner can use its socket and HTTPS command path while attempted repository writes fail. An unexpected interactive permission request produces an observable failure/attention result rather than an indefinite silent wait.
-- [ ] **AC3 — Lazy workspace and account permissions (R3):** A running Attempt accesses a subsequently materialized reserved workspace and a worktree's Git common directory. The execution account can clone/read the service cache through permitted Git transport but cannot write the cache, service journal or control secrets; service finalization can read the execution-owned result. Record residual access under the non-hostile-Agent threat model.
-- [ ] **AC4 — Caller attribution (R4):** Two concurrent Attempts under the same execution UID cannot select each other's scope using forged or missing hints. Ambiguous, revoked and mismatched process attribution is denied; PID reuse and a changed boot identity cannot revive old ownership.
-- [ ] **AC5 — Whole-tree stop (R4):** Stop/freeze covers background and escaped descendants. Workspace reuse and slot release remain disallowed until old writer absence/isolation is established, including after Runner restart.
-- [ ] **AC6 — Immutable retry (R5):** After an uncertain submission, changing the original input file does not change `retry --request-id` content. Reusing that ID with different content fails deterministically. Injected journal-write failure causes zero sends; crashes around backend admission reconcile to one existing receipt/effect.
-- [ ] **AC7 — Dispatch and restart recovery (R6):** Losing the start acknowledgement and replaying dispatch does not spawn a second process. Reconnect fences the old channel; a revoked delayed Start is denied. Backend restart, Runner restart and a controlled Linux host reboot reconcile retained records before replacement execution; an unresolved process state holds its claim.
-- [ ] **AC8 — Completion recovery (R6):** An admitted completion stops its invoking process tree, survives loss of its response and remains queryable by scoped Runner recovery after the Agent credential expires. Replaying the completed request returns its existing result; recovery does not enable a fresh Agent mutation.
-- [ ] **AC9 — Evidence and recommendation (R7, R8):** A checked-in report records the source revision, OS/kernel/systemd profile, toolchain/Runtime/model versions, zero-cost catalog evidence, execution permissions, invocation mode, observed lifecycle/commit-call successes and failures, streaming capability and each AC result. Include reproduction and cleanup instructions without secrets. Fake-only results cannot satisfy real-host criteria; a failed compatibility result explicitly blocks use of that Adapter until resolved or the architecture is deliberately revised.
-- [ ] **AC10 — Remaining gates (R7):** The report names PostgreSQL multi-worker transaction/claim tests and authorized GitHub expected-head/check/merge verification as separate remaining pre-broad-implementation work. This task's result does not claim either gate or the complete Stage A/V1 loop has passed.
+- [x] **AC1 — Transport and schemas (R1):** A real separate-process run completes authenticated Runner registration/dispatch, an Agent command and a Runner-owned read with disjoint filesystem roots. Shared fixtures validate both generated language representations; incompatible versions and unauthorized scopes are rejected.
+- [x] **AC2 — Real CLI and Planner access (R2):** The selected installed/authenticated CLI invokes bundled `monolab`, submits a payload beyond convenient inline argument size and receives structured results. A Planner can use its socket and HTTPS command path while attempted repository writes fail. An unexpected interactive permission request produces an observable failure/attention result rather than an indefinite silent wait.
+- [x] **AC3 — Lazy workspace and account permissions (R3):** A running Attempt accesses a subsequently materialized reserved workspace and a worktree's Git common directory. The execution account can clone/read the service cache through permitted Git transport but cannot write the cache, service journal or control secrets; service finalization can read the execution-owned result. Record residual access under the non-hostile-Agent threat model.
+- [x] **AC4 — Caller attribution (R4):** Two concurrent Attempts under the same execution UID cannot select each other's scope using forged or missing hints. Ambiguous, revoked and mismatched process attribution is denied; PID reuse and a changed boot identity cannot revive old ownership.
+- [x] **AC5 — Whole-tree stop (R4):** Stop/freeze covers background and escaped descendants. Workspace reuse and slot release remain disallowed until old writer absence/isolation is established, including after Runner restart.
+- [x] **AC6 — Immutable retry (R5):** After an uncertain submission, changing the original input file does not change `retry --request-id` content. Reusing that ID with different content fails deterministically. Injected journal-write failure causes zero sends; crashes around backend admission reconcile to one existing receipt/effect.
+- [x] **AC7 — Dispatch and restart recovery (R6):** Losing the start acknowledgement and replaying dispatch does not spawn a second process. Reconnect fences the old channel; a revoked delayed Start is denied. Backend restart, Runner restart and a controlled Linux host reboot reconcile retained records before replacement execution; an unresolved process state holds its claim.
+- [x] **AC8 — Completion recovery (R6):** An admitted completion stops its invoking process tree, survives loss of its response and remains queryable by scoped Runner recovery after the Agent credential expires. Replaying the completed request returns its existing result; recovery does not enable a fresh Agent mutation.
+- [x] **AC9 — Evidence and recommendation (R7, R8):** A checked-in report records the source revision, OS/kernel/systemd profile, toolchain/Runtime/model versions, zero-cost catalog evidence, execution permissions, invocation mode, observed lifecycle/commit-call successes and failures, streaming capability and each AC result. Include reproduction and cleanup instructions without secrets. Fake-only results cannot satisfy real-host criteria; a failed compatibility result explicitly blocks use of that Adapter until resolved or the architecture is deliberately revised.
+- [x] **AC10 — Separate gates (R7):** The report names PostgreSQL multi-worker transaction/claim tests and authorized GitHub expected-head/check/merge verification as separately owned pre-broad-implementation gates. This task's result does not claim either gate or the complete Stage A/V1 loop has passed.
 
 ## Out of scope and sequencing
 
@@ -50,15 +50,26 @@ This task implements Stage A step 0, not the complete Stage A product loop.
 - No second real Runtime, cross-Runner failover/workspace transfer, permanent disk-loss recovery, mandatory native session resume, live steering or hostile-code containment claim.
 - No automatic CLI installation/login or remote repository publication. Any later GitHub write/merge test requires an explicitly authorized test repository and effects.
 - Full PostgreSQL multi-worker claim checks and GitHub provider feasibility remain prerequisites before broad product implementation, even though their complete matrices are separate from this task. Public deployment also requires the accepted Owner authentication and TLS setup.
-- Follow-up development begins from observed probe results. [Implementation work packages](implement.md) assign backend/protocol, Runner and integrated-evidence responsibility with explicit dependencies. Implementers and reviewers are active; host evidence is recorded incrementally in [Linux validation](research/host-validation.md).
+- Follow-up development begins from observed probe results. [Implementation work packages](implement.md) assign backend/protocol, Runner and integrated-evidence responsibility with explicit dependencies. Implementation and main-session review are complete; [acceptance status](research/acceptance-status.md) consolidates the current evidence and limits.
 
 ## Operational constraint
 
-Service restarts must be limited to task-owned units. The required host-reboot case needs an agreed execution window because SSH access alone does not authorize interruption of unrelated workloads; until run, its evidence remains explicitly incomplete.
+Service restarts remain limited to task-owned units. The Owner explicitly approved
+an immediate whole-host reboot including Chronicle/SSH interruption. That reboot
+and recovery passed on 2026-09-29; prior healthy shared-host services recovered.
+Future reboot trials still require applicable host-wide authorization.
 
-## Planning status
+## Completion status
 
-The Owner approved the final planning summary and subsequently authorized the OpenCode/free-model substitution. The task is `in_progress` on `feat/stage-a-boundary-probe`. [Design](design.md), [implementation plan](implement.md), host research and curated contexts define the approved boundary. Execution-account preparation and the first bounded real-provider check are complete. Backend/protocol implementation passed its local checks and 15 real PostgreSQL tests; loopback HTTPS is deployed with verified TLS. Runner review and integrated native-runtime evidence remain in progress. The operational reboot window will be agreed before that test.
+AC1–AC10 were reviewed and accepted against source `5b940b0`; see
+[acceptance status](research/acceptance-status.md) and [resumption report](research/runtime-resume-07.md).
+The Owner-selected `opencode/longcat-2.5-preview-free` replaced MiMo for new trials
+following renewed zero-price/tool-capability checks in the exact Attempt environment.
+Historical MiMo dispatches remain decodable and their receipts remain readable.
+Four fresh normal completions, live concurrent service restart and authorized host
+reboot close the previously outstanding evidence. Runner startup after reboot was
+manual; semantic planning quality and production Runtime integration remain outside
+this probe. Earlier failures and their recoveries remain preserved.
 
 ## Source contracts
 

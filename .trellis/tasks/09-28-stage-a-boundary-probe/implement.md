@@ -2,15 +2,15 @@
 
 Status: implementation approved; task started on `feat/stage-a-boundary-probe`. Only checked items below are complete.
 
-Current verification checkpoint: [acceptance status](research/acceptance-status.md)
-consolidates the local/Linux/database checks and real-host evidence. Model-independent
-delayed-revoke and completed-result service restart pass. Real Planner, uninterrupted
-Node completion after the Stop repair, concurrent live restart and agreed host reboot
-remain outstanding. The Owner requests main-session-only execution for this session.
+Current verification checkpoint: [acceptance status](research/acceptance-status.md).
+AC1–AC10 are accepted after fresh LongCat Node/Planner completions, live concurrent
+service restart and authorized host reboot. Final host audit finds 16 released
+Attempts and no residual writers. Resumption, review and closure used only the main
+session, following the Owner's instruction; no sub-agent dispatch is required.
 
 ## Ownership and dependencies
 
-Use Trellis implement/check agents after `task.py start`, with native context injection preferred. Main session coordinates scope, host access, approvals, task artifacts and final evidence. Workers must be told they share the codebase, own only their assigned files, and must preserve others' changes.
+The initial implementation used the scoped assignments below. The Owner later required sequential main-session-only work; that direction governs resumption, review and acceptance.
 
 | Work package | Assigned responsibility | Dependency |
 | --- | --- | --- |
@@ -18,7 +18,7 @@ Use Trellis implement/check agents after `task.py start`, with native context in
 | B — Runner and CLI | Implement agent owns `runner`, `infra/runner`, supervision/attribution/journal and fixture Git effects | A's schemas, fixtures and authenticated backend boundary are available and reviewed; generation is coordinated through A's single source of truth |
 | C — integrated Linux evidence | Main coordinates host operations; implementation agent owns probe harness and sanitized evidence; check agent reviews/tests affected product files | A and B pass their local checks; actual execution account is configured and host bootstrap is approved |
 
-These are ordered work packages within one verifiable probe deliverable. A and B implementers have delivered their initial code; scoped reviewers are fixing findings, and C is beginning real-host validation. Do not parallelize edits to protocol schemas or root toolchain files without explicit ownership handoff.
+These are ordered work packages within one verifiable probe deliverable. A and B implementation and fixes are complete; C has completed real-host validation. Do not parallelize edits to protocol schemas or root toolchain files without explicit ownership handoff.
 
 ## Before starting
 
@@ -42,26 +42,26 @@ These are ordered work packages within one verifiable probe deliverable. A and B
 
 ## B — Runner, bundled command and real CLI boundary
 
-- [ ] Implement service-private SQLite start/effect/request records and bounded log handling. Inject journal-write failure and ensure no unpersisted command is sent.
-- [ ] Implement constrained systemd/cgroup launch, process inventory, birth/boot identity and whole-tree freeze/kill. Hold claims for ambiguous ownership; reject old connection/dispatch authority.
-- [ ] Implement the existing Runner's Unix socket credential/journal service with peer-process attribution before each operation; test two concurrent same-UID Attempts and forged hints.
-- [ ] Implement bundled `monolab` help, schema validation, stdin/input-file commands, immutable retry and status reads. No credentials in logs, arguments or journal records.
-- [ ] Implement the OpenCode 1.18.30 Adapter with an explicitly selected verified-free model, resolved executable and explicit environment; determine supported Planner and Node permission profiles without bypassing required isolation or falling back to paid models.
-- [ ] Implement reserved scratch/workspace/worktree-common paths, real cross-account cache clone/read and service-owned finalization/export fixtures; no remote publication.
-- [ ] Implement completion admission and recovery independently of the stopped CLI process; verify that expired Agent credentials cannot regain mutation authority.
+- [x] Implement service-private SQLite start/effect/request records and bounded log handling. Inject journal-write failure and ensure no unpersisted command is sent.
+- [x] Implement constrained systemd/cgroup launch, process inventory, birth/boot identity and whole-tree freeze/kill. Hold claims for ambiguous ownership; reject old connection/dispatch authority.
+- [x] Implement the existing Runner's Unix socket credential/journal service with peer-process attribution before each operation; test two concurrent same-UID Attempts and forged hints.
+- [x] Implement bundled `monolab` help, schema validation, stdin/input-file commands, immutable retry and status reads. No credentials in logs, arguments or journal records.
+- [x] Implement the OpenCode 1.18.30 Adapter with an explicitly selected verified-free model, resolved executable and explicit environment; determine supported Planner and Node permission profiles without bypassing required isolation or falling back to paid models.
+- [x] Implement reserved scratch/workspace/worktree-common paths, real cross-account cache clone/read and service-owned finalization/export fixtures; no remote publication.
+- [x] Implement completion admission and recovery independently of the stopped CLI process; verify that expired Agent credentials cannot regain mutation authority.
 
 ## C — host preparation and evidence
 
-- [ ] Recheck host versions, available ports/unit/path names, OpenCode executable and free-model catalog availability under `me`. Preserve the earlier authorized Codex configuration copy and other Owner settings.
-- [ ] Prepare a concrete bootstrap diff/script limited to task-owned accounts, paths, units, private database storage and the TLS endpoint. Do not expose the Docker socket or database to execution processes.
-- [ ] Verify the selected OpenCode free model in the deployed Runner execution context, building on A's initial usability check. Record sanitized errors; never select paid fallback models or configure paid credentials.
-- [ ] Run AC1–AC3: generated protocol fixtures, disjoint filesystem roots, Planner socket/HTTPS/read-only repository, Node lazy workspace grants and two-account Git operations.
-- [ ] Run AC4–AC6: same-UID spoofing, background/escaped descendants, changed-input retries, journal failure and uncertain admission.
-- [ ] Run AC7–AC8: lost start acknowledgement, duplicate/revoked dispatch, stale control channel, independent service restarts, completion stopping its caller and scoped terminal-result reads.
-- [ ] Agree the whole-host reboot window, checkpoint unresolved ownership, then run the reboot case and verify post-boot reconciliation before new dispatch. If it cannot be run, retain a not-run result and leave full probe acceptance incomplete.
-- [ ] Run repeated bounded real CLI lifecycle/commit scenarios and record attempts, failures and partial-output observations; do not rerun solely to hide earlier failures.
-- [ ] Produce AC9–AC10 evidence/recommendation, including command recipes, versions, source commit, sanitized host profile, remaining gates and cleanup/recovery instructions.
-- [ ] Dispatch Trellis check with the same curated contracts and host evidence; fix actual issues, rerun affected checks and report any acceptance item still unverified.
+- [x] Recheck host versions, available ports/unit/path names, OpenCode executable and free-model catalog availability under `me`. Preserve the earlier authorized Codex configuration copy and other Owner settings.
+- [x] Prepare a concrete bootstrap diff/script limited to task-owned accounts, paths, units, private database storage and the TLS endpoint. Do not expose the Docker socket or database to execution processes.
+- [x] Verify the selected OpenCode free model in the deployed Runner execution context, building on A's initial usability check. Record sanitized errors; never select paid fallback models or configure paid credentials.
+- [x] Run AC1–AC3: generated protocol fixtures, disjoint filesystem roots, Planner socket/HTTPS/read-only repository, Node lazy workspace grants and two-account Git operations.
+- [x] Run AC4–AC6: same-UID spoofing, background/escaped descendants, changed-input retries, journal failure and uncertain admission.
+- [x] Run AC7–AC8: lost start acknowledgement, duplicate/revoked dispatch, stale control channel, independent service restarts, completion stopping its caller and scoped terminal-result reads.
+- [x] Agree the whole-host reboot window, checkpoint unresolved ownership, then run the reboot case and verify post-boot reconciliation before new dispatch. If it cannot be run, retain a not-run result and leave full probe acceptance incomplete.
+- [x] Run repeated bounded real CLI lifecycle/commit scenarios and record attempts, failures and partial-output observations; do not rerun solely to hide earlier failures.
+- [x] Produce AC9–AC10 evidence/recommendation, including command recipes, versions, source commit, sanitized host profile, remaining gates and cleanup/recovery instructions.
+- [x] Complete Trellis check directly in the main session with the same contracts and host evidence, honoring the Owner prohibition on sub-agents; fixes, checks and acceptance limits are recorded.
 
 ## Validation commands to establish
 
@@ -101,3 +101,13 @@ consumers before updating the task-owned idle backend/Runner and preserve backup
 Order: fresh Node, fresh Planner, permissions/expired receipt recovery, concurrent
 live service restart, then whole-host reboot once its shared-host impact/window is
 resolved. No unrelated Chronicle services are part of task-scoped restarts.
+
+
+### Resumption outcome
+
+All ordered trials completed. Reboot approval explicitly included shared-host
+Chronicle/SSH interruption. The first bounded hold expired and was safely revoked;
+a fresh Attempt was checkpointed and rebooted without another tool-turn gap.
+`reboot-verify longcat-reboot-08` passes all ten checks. Current evidence and build
+validation are consolidated in the acceptance report; documentation, archive and
+journal close this task without more model requests.

@@ -4,9 +4,11 @@
 
 Close the existing native Runner and installed CLI probe.
 
-## Planning status
+## Acceptance status
 
-Roadmap level: **work-package**. Status: **planning / backlog**, not implementation-ready. The Owner approved the three-level roadmap structure on 2026-09-28. This PRD records scope and acceptance, not approval to start implementation.
+Roadmap level: **work-package**. Accepted on 2026-09-29 after reviewing the existing
+boundary probe's AC1–AC10 evidence. The Owner authorized continued Runtime acceptance
+and the final shared-host reboot. This parent adds no subsystem implementation.
 
 ## Background and scope
 
@@ -22,12 +24,33 @@ These are completion/evidence gates, not automatic scheduler dependencies. Paren
 
 ## Child tasks
 
-- [Existing boundary feasibility probe](../09-28-stage-a-boundary-probe/prd.md). Preserve its current in-progress state, approved scope and evidence.
+- [Boundary feasibility probe](../09-28-stage-a-boundary-probe/prd.md), completed and archived together with this parent. Preserve its original failed trials and current acceptance evidence.
 
 ## Acceptance criteria
 
-- [ ] Existing boundary-probe AC1-AC10 have reviewed evidence.
-- [ ] Any unsupported Runtime/host behavior is resolved or explicitly blocks product integration.
+- [x] Existing boundary-probe AC1-AC10 have reviewed evidence.
+- [x] Any unsupported Runtime/host behavior is resolved or explicitly blocks product integration.
+
+## Reviewed result
+
+The child's [acceptance matrix](../09-28-stage-a-boundary-probe/research/acceptance-status.md)
+and [host report](../09-28-stage-a-boundary-probe/research/runtime-resume-07.md) establish
+the boundary on source `5b940b0`: OpenCode 1.18.30, selected zero-price LongCat,
+three Node/one Planner normal completions, concurrent live service restart, immutable
+retry/expired-result recovery, two-account permissions and controlled host reboot.
+Final audit: 16 Attempts released, no residual writers; prior healthy shared-host
+services recovered. Initial expired reboot hold and earlier provider/implementation
+failures remain recorded alongside the successful fresh trials.
+
+Supported baseline: deterministic native-tool/Tool Protocol compatibility on the
+tested Linux host. Production integration must still implement its own service
+enablement and product execution flow. This test manually starts Runner after boot;
+it does not establish automatic boot enablement, autonomous planning reliability,
+token streaming, power-loss durability or additional Runtime/model compatibility.
+No installation/login automation or paid fallback is authorized by acceptance.
+
+PostgreSQL and GitHub gates retain their independent ownership/review. This parent
+does not accept the complete Stage 0, Stage A or V1 release.
 
 ## Out of scope
 

@@ -23,9 +23,9 @@
   ],
   "parent": "09-28-stage-0-feasibility",
   "relatedFiles": [],
-  "notes": "",
+  "notes": "Parent acceptance reviewed 2026-09-29: boundary probe AC1-AC10 pass on 5b940b0; manual Runner startup and semantic/streaming limits retained. No independent implementation branch.",
   "meta": {
     "roadmap_level": "work-package",
-    "planning_maturity": "backlog"
+    "planning_maturity": "accepted"
   }
 }
