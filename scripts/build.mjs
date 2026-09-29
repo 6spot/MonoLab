@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { cpSync, existsSync, mkdirSync, symlinkSync } from 'node:fs';
+import { cpSync, existsSync, lstatSync, mkdirSync, symlinkSync, unlinkSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 execFileSync('pnpm', ['exec', 'tsc', '-p', 'tsconfig.build.json'], { stdio: 'inherit' });
@@ -12,7 +12,12 @@ for (const directory of ['packages/protocol/schemas', 'packages/db/migrations'])
 for (const project of ['apps/server', 'packages/protocol', 'packages/domain', 'packages/db']) {
   cpSync(`${project}/package.json`, `dist/${project}/package.json`);
   const dependencyPath = `dist/${project}/node_modules`;
-  if (existsSync(`${project}/node_modules`) && !existsSync(dependencyPath)) symlinkSync(resolve(`${project}/node_modules`), dependencyPath, 'dir');
+  const installedPath = resolve(`${project}/node_modules`);
+  const old = lstatSync(dependencyPath, { throwIfNoEntry: false });
+  // A source-directory rename can leave a dangling link in generated output.
+  // Replace only dangling links in generated output, never real directories.
+  if (old?.isSymbolicLink() && !existsSync(dependencyPath)) unlinkSync(dependencyPath);
+  if (existsSync(installedPath) && !lstatSync(dependencyPath, { throwIfNoEntry: false })) symlinkSync(installedPath, dependencyPath, 'dir');
 }
 
 execFileSync('pnpm', ['--filter', '@monos/web', 'build'], { stdio: 'inherit' });
