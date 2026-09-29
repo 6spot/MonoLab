@@ -11,21 +11,21 @@ import (
 	"regexp"
 	"strings"
 
-	protocol "monolab.local/protocol"
+	protocol "monos.local/protocol"
 )
 
-const Root = "/var/lib/monolab-probe"
-const Socket = "/run/monolab-probe/command.sock"
-const Helper = "/usr/local/libexec/monolab-probe-launch"
-const Worker = "/usr/local/libexec/monolab-probe-exec"
-const CLI = "/usr/local/bin/monolab"
+const Root = "/var/lib/monos-probe"
+const Socket = "/run/monos-probe/command.sock"
+const Helper = "/usr/local/libexec/monos-probe-launch"
+const Worker = "/usr/local/libexec/monos-probe-exec"
+const CLI = "/usr/local/bin/monos"
 const Runtime = "/home/linuxbrew/.linuxbrew/bin/opencode"
 const FreeModel = "opencode/longcat-2.5-preview-free"
 
 var idPattern = regexp.MustCompile(`^[A-Za-z0-9_-]{1,128}$`)
 
 func ValidID(id string) bool       { return idPattern.MatchString(id) }
-func Unit(id string) string        { return "monolab-probe-a-" + id + ".service" }
+func Unit(id string) string        { return "monos-probe-a-" + id + ".service" }
 func AttemptRoot(id string) string { return filepath.Join(Root, "execution", id) }
 func Path(id, name string) string  { return filepath.Join(AttemptRoot(id), name) }
 

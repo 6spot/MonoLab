@@ -1,14 +1,18 @@
 # Runner work package implementation
 
+> Product terminology and command/path examples were normalized to `monos` on
+> 2026-09-29. Exact historical names and observations remain in the original Git
+> revisions and unchanged raw JSON attachments; this edit is not a new test run.
+
 Status: code implemented and locally checked; Linux host/runtime acceptance is
 still pending. This is work package B, not the final probe evidence report.
 
 ## Implemented boundary
 
-- `runner/cmd/monolab-runner`: separate nonroot daemon, authenticated WSS,
+- `runner/cmd/monos-runner`: separate nonroot daemon, authenticated WSS,
   reconciliation before ready, short-lived authorization RPCs and individual
   durable stream acknowledgements. PostgreSQL is never accessed by Runner.
-- `runner/cmd/monolab`: bounded JSON file/stdin input, generated-schema validation,
+- `runner/cmd/monos`: bounded JSON file/stdin input, generated-schema validation,
   service-private immutable journal acknowledgement, direct verified HTTPS send,
   exact-ID retry and scoped result lookup. Credentials are not stored with requests.
 - `runner/internal/journal`: SQLite WAL/FULL durability for dispatch intent,

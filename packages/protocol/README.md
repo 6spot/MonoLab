@@ -1,6 +1,6 @@
 # Boundary protocol v1
 
-Authority: `schemas/v1/contracts.json`. Run `pnpm protocol:generate` and `pnpm protocol:check`; never hand-edit generated types. JSON Schema validators remain mandatory: Go pointers/structs alone cannot reject null, missing fields or unknown properties. Go module import is `monolab.local/protocol`, with Runner `replace monolab.local/protocol => ../packages/protocol/generated/go`.
+Authority: `schemas/v1/contracts.json`. Run `pnpm protocol:generate` and `pnpm protocol:check`; never hand-edit generated types. JSON Schema validators remain mandatory: Go pointers/structs alone cannot reject null, missing fields or unknown properties. Go module import is `monos.local/protocol`, with Runner `replace monos.local/protocol => ../packages/protocol/generated/go`.
 
 All HTTPS/WSS clients must verify the task CA. Runner credentials and Attempt credentials are different Bearer tokens. No token appears in an envelope, journal, runtime event or log. `POST /v1/commands` accepts `CommandSubmission`: parse input, construct `CommandEnvelope`, canonicalize with RFC 8785, save exact UTF-8 bytes durably, then SHA256 those bytes. Backend requires canonical bytes and validates both digest and schema. Retry uses the retained bytes. Scope is the dispatch's `task_id`; backend derives Attempt/fence/activation from the credential and its records.
 

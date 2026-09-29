@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	protocol "monolab.local/protocol"
+	protocol "monos.local/protocol"
 )
 
 func unitProperties(ctx context.Context, unit string) (map[string]string, error) {
@@ -80,7 +80,7 @@ func confirmNeverLaunched(ctx context.Context, id string) error {
 	return nil
 }
 func validateUnit(values map[string]string, unit, description string) error {
-	if values["Transient"] != "yes" || values["User"] != "me" || values["Group"] != "monolab-probe-read" || values["Description"] != description {
+	if values["Transient"] != "yes" || values["User"] != "me" || values["Group"] != "monos-probe-read" || values["Description"] != description {
 		return fmt.Errorf("unit ownership mismatch")
 	}
 	if group := values["ControlGroup"]; group != "" && group != "/system.slice/"+unit {
@@ -97,7 +97,7 @@ type operationRecord struct {
 }
 
 func operationPath(id string) string { return filepath.Join(Root, "launch", id+".operation.json") }
-func operationUnit(id string) string { return "monolab-probe-o-" + id + ".service" }
+func operationUnit(id string) string { return "monos-probe-o-" + id + ".service" }
 func readOperation(path string) (operationRecord, error) {
 	var record operationRecord
 	if err := trustedFile(path, 0); err != nil {
@@ -133,7 +133,7 @@ func checkOperationWriters(ctx context.Context, attempt, boot string) error {
 			return err
 		}
 		if values["LoadState"] != "not-found" {
-			if err = validateUnit(values, operationUnit(record.Operation.OperationID), "MonoLab probe operation "+record.Operation.OperationID); err != nil {
+			if err = validateUnit(values, operationUnit(record.Operation.OperationID), "monos probe operation "+record.Operation.OperationID); err != nil {
 				return err
 			}
 		}
@@ -210,7 +210,7 @@ func runEffect(ctx context.Context, op protocol.Operation) (Status, error) {
 	if err = saveRecord(path, record); err != nil {
 		return Status{}, err
 	}
-	args := []string{"--quiet", "--wait", "--pipe", "--collect", "--service-type=exec", "--unit=" + operationUnit(op.OperationID), "--description=MonoLab probe operation " + op.OperationID}
+	args := []string{"--quiet", "--wait", "--pipe", "--collect", "--service-type=exec", "--unit=" + operationUnit(op.OperationID), "--description=monos probe operation " + op.OperationID}
 	for _, property := range properties(op.AttemptID, true) {
 		args = append(args, "--property="+property)
 	}

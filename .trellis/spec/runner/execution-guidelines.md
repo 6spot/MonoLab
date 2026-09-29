@@ -4,7 +4,7 @@ Sources: [Runtime](../../../docs/03-runtime-and-execution.md), [Tool Protocol](.
 
 ## 1. Scope / Trigger
 
-Go daemon, native Adapter, process launcher, bundled command CLI and local SQLite journal. Implementations live in `runner/cmd/monolab-runner`, `runner/cmd/monolab` and `runner/internal`.
+Go daemon, native Adapter, process launcher, bundled command CLI and local SQLite journal. Implementations live in `runner/cmd/monos-runner`, `runner/cmd/monos` and `runner/internal`.
 
 ## 2. Signatures
 
@@ -12,9 +12,9 @@ Dispatch carries stable Attempt/dispatch ID, owner/fencing, selected target, Run
 
 Generate transport types from protocol schemas. Current entrypoints:
 
-- `monolab-runner --config /etc/monolab-probe/runner.json`: endpoint, CA path, private token path, Runner ID, SQLite path, socket path and execution UID.
-- `monolab <command> --input <file|-> --request-id <id> --output json`; `retry` and `command-status` take the existing ID and no replacement input.
-- The service account invokes only `/usr/local/libexec/monolab-probe-launch` with no argv. Bounded JSON stdin selects a fixed action and validated dispatch/operation; it cannot choose executable, UID or arbitrary systemd properties. See [helper](../../../runner/internal/host/helper.go) and [bootstrap](../../../infra/runner/bootstrap.sh).
+- `monos-runner --config /etc/monos-probe/runner.json`: endpoint, CA path, private token path, Runner ID, SQLite path, socket path and execution UID.
+- `monos <command> --input <file|-> --request-id <id> --output json`; `retry` and `command-status` take the existing ID and no replacement input.
+- The service account invokes only `/usr/local/libexec/monos-probe-launch` with no argv. Bounded JSON stdin selects a fixed action and validated dispatch/operation; it cannot choose executable, UID or arbitrary systemd properties. See [helper](../../../runner/internal/host/helper.go) and [bootstrap](../../../infra/runner/bootstrap.sh).
 - [Socket attribution](../../../runner/internal/local/socket.go), [Linux process identity](../../../runner/internal/host/process_linux.go), [journal](../../../runner/internal/journal/journal.go) and [control reconciliation](../../../runner/internal/daemon/daemon.go) own the corresponding boundaries.
 
 ## 3. Contracts

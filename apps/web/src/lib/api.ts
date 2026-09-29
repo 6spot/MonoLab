@@ -13,14 +13,14 @@ export async function request<T>(path: string, schema: string, body?: unknown): 
   try {
     response = await fetch(path, { credentials: 'same-origin', cache: 'no-store', ...(body !== undefined ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : {}) });
     raw = await response.json();
-  } catch { throw body === undefined ? new APIError('unavailable', 'Unable to reach MonoLab. Check your connection and retry.') : new UncertainError(); }
+  } catch { throw body === undefined ? new APIError('unavailable', 'Unable to reach monos. Check your connection and retry.') : new UncertainError(); }
   if (!response.ok) {
     let result: CommandResult;
     try { result = validate('CommandResult', raw); } catch { throw body === undefined ? new APIError('invalid_response', 'The server returned an incompatible response.') : new UncertainError(); }
     if (response.status >= 500 && body !== undefined) throw new UncertainError();
     throw new APIError(result.error?.code ?? 'invalid_response', result.error?.message ?? 'The request could not be completed.');
   }
-  try { return validate<T>(schema, raw); } catch { throw body === undefined ? new APIError('invalid_response', 'The server returned an incompatible response. Refresh after updating MonoLab.') : new UncertainError(); }
+  try { return validate<T>(schema, raw); } catch { throw body === undefined ? new APIError('invalid_response', 'The server returned an incompatible response. Refresh after updating monos.') : new UncertainError(); }
 }
 
 export async function submit(command: ConfigurationCommand): Promise<ConfigurationResult> {

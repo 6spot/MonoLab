@@ -21,7 +21,7 @@ Inside a Workspace, an Agent may use the Runtime's native coding capabilities:
 - patch;
 - other normal coding tools.
 
-Outside the Workspace, formal system state is controlled by MonoLab Tool Protocol.
+Outside the Workspace, formal system state is controlled by monos Tool Protocol.
 
 An Agent must not directly manage:
 
@@ -144,7 +144,7 @@ On success the system should, as one reliable boundary:
 
 The operation should be idempotent.
 
-If the caller retries after an uncertain response, MonoLab detects the recorded request/operation for that Attempt and activation and returns its existing result rather than duplicating integration or events, including when that successful completion has since terminalized the Attempt.
+If the caller retries after an uncertain response, monos detects the recorded request/operation for that Attempt and activation and returns its existing result rather than duplicating integration or events, including when that successful completion has since terminalized the Attempt.
 
 A superseded Attempt cannot complete a Node. If workspace finalization or required Task Workspace integration fails, the Node must not already be marked COMPLETED.
 
@@ -237,13 +237,13 @@ Replan receipts bind the proposed graph digest and its formal-state basis, inclu
 
 ## Enforced execution boundary
 
-V1 invokes Owner-installed CLIs as native processes on an Owner-controlled host. Runner assigns separate workspace/scratch directories, configures supported CLI permission settings, and scopes every system tool request to the Attempt. Directory/worktree separation prevents normal execution from sharing a working tree; it is not by itself an OS sandbox against arbitrary host filesystem access. CLI filesystem access follows the host execution account and any enabled native sandbox. MonoLab does not claim hostile-code containment from a working-directory setting. Keep backend database/configuration and system delivery credentials outside that account's access using separate service identities and OS permissions. Module 11 defines the concrete host identities and hardening conditions; while any condition is violated, MonoLab does not claim this boundary.
+V1 invokes Owner-installed CLIs as native processes on an Owner-controlled host. Runner assigns separate workspace/scratch directories, configures supported CLI permission settings, and scopes every system tool request to the Attempt. Directory/worktree separation prevents normal execution from sharing a working tree; it is not by itself an OS sandbox against arbitrary host filesystem access. CLI filesystem access follows the host execution account and any enabled native sandbox. monos does not claim hostile-code containment from a working-directory setting. Keep backend database/configuration and system delivery credentials outside that account's access using separate service identities and OS permissions. Module 11 defines the concrete host identities and hardening conditions; while any condition is violated, monos does not claim this boundary.
 
-CLIs may run normal shell commands and write their Node workspaces under the execution account's permissions. V1 does not add a shell-command allowlist or general filesystem/PID-namespace sandbox. Native permissions must allow ordinary shell, build/cache access and the bundled `monolab` command without interactive approval stalls; reserved paths provide deterministic workspace placement rather than whole-host containment.
+CLIs may run normal shell commands and write their Node workspaces under the execution account's permissions. V1 does not add a shell-command allowlist or general filesystem/PID-namespace sandbox. Native permissions must allow ordinary shell, build/cache access and the bundled `monos` command without interactive approval stalls; reserved paths provide deterministic workspace placement rather than whole-host containment.
 
-Planner receives service-owned inspection snapshots at finalized revisions. Their directories/files deny execution-account writes, including writes through shell commands; a native edit-tool denial may reinforce this role but is not the enforcement boundary. The snapshot's readonly ownership must not prevent scratch writes, `monolab` invocation, the local socket or authenticated HTTPS. Verify those positive and negative cases on the real host. This protects the supplied snapshot, not every unrelated file independently accessible to the execution account, and does not claim hostile-code containment.
+Planner receives service-owned inspection snapshots at finalized revisions. Their directories/files deny execution-account writes, including writes through shell commands; a native edit-tool denial may reinforce this role but is not the enforcement boundary. The snapshot's readonly ownership must not prevent scratch writes, `monos` invocation, the local socket or authenticated HTTPS. Verify those positive and negative cases on the real host. This protects the supplied snapshot, not every unrelated file independently accessible to the execution account, and does not claim hostile-code containment.
 
-Runtime authentication remains Owner-managed on the Runner and is exposed only as needed by the selected CLI. MonoLab's provider delivery credentials stay in the system service boundary. MonoLab does not pass its provider write credentials to Agent execution; its repository read operations use appropriately scoped system credentials. Existing Owner-installed Git/CLI credentials follow host account permissions. If that account can independently push or merge, MonoLab cannot claim to prevent those out-of-band actions: the managed final-delivery authorization remains enforced in Tool Protocol, while a hard remote-write boundary additionally requires an execution account without those credentials. Do not silently alter the Owner's existing logins.
+Runtime authentication remains Owner-managed on the Runner and is exposed only as needed by the selected CLI. monos's provider delivery credentials stay in the system service boundary. monos does not pass its provider write credentials to Agent execution; its repository read operations use appropriately scoped system credentials. Existing Owner-installed Git/CLI credentials follow host account permissions. If that account can independently push or merge, monos cannot claim to prevent those out-of-band actions: the managed final-delivery authorization remains enforced in Tool Protocol, while a hard remote-write boundary additionally requires an execution account without those credentials. Do not silently alter the Owner's existing logins.
 
 Runner must account for descendant/background processes when stopping or freezing execution. Revoking tool tokens alone does not stop filesystem writes. If writers cannot be reliably stopped or isolated, block workspace handoff and finalization with an infrastructure error.
 
@@ -251,7 +251,7 @@ Completion admission persists the command before freezing the execution process 
 
 ## Agent command CLI
 
-Agents call the bundled `monolab` executable through their Runtime's native command-execution tool. Runner includes this Go binary in its release and puts its managed location on each Attempt's PATH. It is an on-demand command client, not a resident server, separate package-manager dependency, or MCP configuration. Agent CLIs and their authentication remain Owner-managed.
+Agents call the bundled `monos` executable through their Runtime's native command-execution tool. Runner includes this Go binary in its release and puts its managed location on each Attempt's PATH. It is an on-demand command client, not a resident server, separate package-manager dependency, or MCP configuration. Agent CLIs and their authentication remain Owner-managed.
 
 The CLI:
 
@@ -262,9 +262,9 @@ The CLI:
 - returns one structured result on stdout with `--output json`, including accepted operation references and deterministic errors; diagnostics go to stderr and nonzero exit status indicates failure, not a domain transition;
 - supports command/operation status reads after uncertain responses. A zero exit code with an accepted operation means admission only, not completion of its effects.
 
-The fixed Agent protocol documents the permitted commands, payload schemas, and retry rules; `monolab --help` and subcommand help expose the same contract. Before sending a mutation, preserve its full immutable command envelope, request identity and payload digest in Runner infrastructure bookkeeping so a completion-triggered process stop cannot erase the retry input. Do not interpret a transport timeout as permission to submit the same effect under a new request ID. The Runner credential channel cannot grant authority to a terminal or superseded Attempt; the backend retains the existing authenticated receipt-replay exception.
+The fixed Agent protocol documents the permitted commands, payload schemas, and retry rules; `monos --help` and subcommand help expose the same contract. Before sending a mutation, preserve its full immutable command envelope, request identity and payload digest in Runner infrastructure bookkeeping so a completion-triggered process stop cannot erase the retry input. Do not interpret a transport timeout as permission to submit the same effect under a new request ID. The Runner credential channel cannot grant authority to a terminal or superseded Attempt; the backend retains the existing authenticated receipt-replay exception.
 
-The CLI holds no lifecycle authority and never writes domain tables or performs finalization itself. Backend services validate and execute the same Tool Protocol operations regardless of the executable entry point. V1 requires no MonoLab MCP server or MCP registration. Third-party MCP tools configured independently by the Owner are outside this system command path.
+The CLI holds no lifecycle authority and never writes domain tables or performs finalization itself. Backend services validate and execute the same Tool Protocol operations regardless of the executable entry point. V1 requires no monos MCP server or MCP registration. Third-party MCP tools configured independently by the Owner are outside this system command path.
 
 ### CLI attribution through the local Runner
 
@@ -276,13 +276,13 @@ The CLI remains inside its Agent's supervised process tree. Runner performs jour
 
 Before the first send, the CLI reads stdin or `--input-file` once, validates configured size/schema limits, and asks Runner to durably retain the complete canonical envelope: original authenticated principal/scope, request ID, command, schema version, payload, expected control version and any authorization-receipt reference. Store referenced upload content durably or pin immutable managed references before dispatch. Store the digest alongside the content, excluding bearer credentials. The service-owned journal acknowledges persistence before the CLI sends HTTPS; a failed journal write means no send. These records are private command-recovery data, not execution logs or a new source of domain truth.
 
-Provide `monolab retry --request-id <id> --output json` for an existing request in the caller's current Attempt scope. It reloads the original retained envelope; it does not reread a mutable source file, replace expected versions, or generate a new ID. A repeated original subcommand with that ID must match the retained envelope or fail with a deterministic payload-conflict error before sending. A corrected command after a definitive validation failure uses a new ID. The fixed Agent protocol distinguishes correction from retry and instructs the Agent to query an uncertain result before making a new command.
+Provide `monos retry --request-id <id> --output json` for an existing request in the caller's current Attempt scope. It reloads the original retained envelope; it does not reread a mutable source file, replace expected versions, or generate a new ID. A repeated original subcommand with that ID must match the retained envelope or fail with a deterministic payload-conflict error before sending. A corrected command after a definitive validation failure uses a new ID. The fixed Agent protocol distinguishes correction from retry and instructs the Agent to query an uncertain result before making a new command.
 
 Runner records local persistence, send uncertainty and backend receipt/operation references separately. Local persistence is not backend admission and never authorizes deferred execution. Recovery queries backend truth first; resending an unresolved request requires the same still-authorized Attempt and original envelope. Never automatically replay an unaccepted request after cancellation, supersession or merely because connectivity returned. An absent receipt alone does not prove no request is in flight: retain uncertainty until existing admission/fencing reconciliation settles it. Retention keeps unresolved envelopes and pinned content until reconciliation is finished.
 
 ### Result lookup after execution ends
 
-Provide `monolab command-status --request-id <id> --output json` and operation reads for the current authorized Attempt. Once it is stopped or its credential expires, recovery no longer depends on that CLI process obtaining a new credential. Runner queries existing command receipts/operations through its authenticated Runner connection, using the original principal, scope and request identity recorded in its journal. The backend verifies that the request belongs to that Runner's recorded dispatch and permits this recovery path to read existing outcomes only; it cannot submit the command, impersonate the old Attempt, or grant new write authority. The Owner reads the same outcome through authenticated UI/API access.
+Provide `monos command-status --request-id <id> --output json` and operation reads for the current authorized Attempt. Once it is stopped or its credential expires, recovery no longer depends on that CLI process obtaining a new credential. Runner queries existing command receipts/operations through its authenticated Runner connection, using the original principal, scope and request identity recorded in its journal. The backend verifies that the request belongs to that Runner's recorded dispatch and permits this recovery path to read existing outcomes only; it cannot submit the command, impersonate the old Attempt, or grant new write authority. The Owner reads the same outcome through authenticated UI/API access.
 
 Backend workers finish admitted operations under their existing system authority. Runner reconciles their results independently of the stopped Agent. Unknown outcomes remain visible as pending recovery; a missing receipt is not invented success or failure. A successor Attempt receives relevant recovered facts through canonical context and cannot replay the predecessor's request as its own command. The existing receipt-replay exception permits authenticated access to prior outcomes, not renewal of general mutation credentials for a terminal Attempt.
 
@@ -292,7 +292,7 @@ Repository read-only access is distinct from temporary command-input storage. Pr
 
 ## Command envelope and deterministic failures
 
-All transports use one conceptual command envelope. The `monolab` CLI supplies authenticated infrastructure bindings without exposing credentials in model-visible arguments; the authenticated session supplies them. An Owner UI command uses its authenticated Owner session instead of an Attempt credential.
+All transports use one conceptual command envelope. The `monos` CLI supplies authenticated infrastructure bindings without exposing credentials in model-visible arguments; the authenticated session supplies them. An Owner UI command uses its authenticated Owner session instead of an Attempt credential.
 
 ```text
 command

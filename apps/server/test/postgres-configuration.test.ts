@@ -25,7 +25,7 @@ it('normalizes repository aliases and rejects local/credentialed remotes and inv
   for (const ref of ['main', 'release/v1', 'v1.0.0', 'a'.repeat(40)]) expect(() => validateGitRef(ref)).not.toThrow();
 });
 
-describe.skipIf(process.env.MONOLAB_TEST_DATABASE !== '1')('Project and Role configuration', () => {
+describe.skipIf(process.env.MONOS_TEST_DATABASE !== '1')('Project and Role configuration', () => {
   let db: Database; let admin: Database; let configuration: Configuration; let token: string;
   const namespace = `configuration_${randomUUID().replaceAll('-', '')}`;
   beforeAll(async () => {
@@ -124,7 +124,7 @@ describe.skipIf(process.env.MONOLAB_TEST_DATABASE !== '1')('Project and Role con
     const session = await issueOwnerSession(db); const c = await command(role());
     try {
       for (const headers of [{}, { authorization: 'Bearer runner-test-token' }]) expect((await app.inject({ method: 'GET', url: '/v1/owner/configuration', headers })).statusCode).toBe(401);
-      const cookie = `__Host-monolab=${session.token}`;
+      const cookie = `__Host-monos=${session.token}`;
       expect((await app.inject({ method: 'POST', url: '/v1/owner/configuration/commands', headers: { cookie }, payload: c })).statusCode).toBe(403);
       const headers = { authorization: `Bearer ${session.token}` };
       const saved = await app.inject({ method: 'POST', url: '/v1/owner/configuration/commands', headers, payload: c });

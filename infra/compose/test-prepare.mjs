@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import test from 'node:test';
 
 test('probe certificates satisfy strict TLS verification and preparation preserves existing state', () => {
-  const directory = mkdtempSync(join(tmpdir(), 'monolab-probe-tls-'));
+  const directory = mkdtempSync(join(tmpdir(), 'monos-probe-tls-'));
   try {
     const script = join(directory, 'prepare.mjs');
     copyFileSync(new URL('./prepare.mjs', import.meta.url), script);

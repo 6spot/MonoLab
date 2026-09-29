@@ -3,8 +3,8 @@ package adapter
 import (
 	"bytes"
 	"encoding/json"
-	protocol "monolab.local/protocol"
-	"monolab.local/runner/internal/host"
+	protocol "monos.local/protocol"
+	"monos.local/runner/internal/host"
 	"strings"
 	"testing"
 )
@@ -45,7 +45,7 @@ func TestOnlyExplicitFreeModelsAndUnrestrictedShell(t *testing.T) {
 		t.Fatal("model drift")
 	}
 	agents := v["agent"].(map[string]any)
-	for _, name := range []string{"monolab-probe", "title", "summary", "compaction"} {
+	for _, name := range []string{"monos-probe", "title", "summary", "compaction"} {
 		if agents[name].(map[string]any)["model"] != host.FreeModel {
 			t.Fatal(name)
 		}

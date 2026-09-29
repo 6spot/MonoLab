@@ -1,5 +1,9 @@
 # Isolated Linux Runner installation
 
+Use the [naming and upgrade contract](../../docs/12-product-naming-and-upgrades.md)
+before migrating an existing installation. Renamed paths/units do not automatically
+migrate recorded process identities, Git worktree paths or service-owned storage.
+
 The bootstrap installs only task-prefixed resources. Review it before running as
 root. It intentionally does not install/authenticate OpenCode, start the Runner,
 replace Owner configuration, publish Git repositories, or reboot the host.
@@ -12,44 +16,44 @@ changing the host toolchain. SQLite is statically compiled by its Go driver.
 
 ```sh
 # In a native Linux checkout (or task-owned Linux build container):
-sh infra/runner/build.sh /tmp/monolab-probe-binaries
+sh infra/runner/build.sh /tmp/monos-probe-binaries
 # After copying the root-owned binaries and reviewing path/account collisions:
-sh infra/runner/bootstrap.sh /tmp/monolab-probe-binaries --check
-sh infra/runner/bootstrap.sh /tmp/monolab-probe-binaries
+sh infra/runner/bootstrap.sh /tmp/monos-probe-binaries --check
+sh infra/runner/bootstrap.sh /tmp/monos-probe-binaries
 ```
 
 Main-session host preparation must provision these files privately:
 
-- `/etc/monolab-probe/runner-token`: Runner credential matching the backend;
-  mode `0640`, owner `root`, group `monolab-probe-read` is **not sufficient**,
-  because `me` belongs to that read group. Use owner `monolab-probe`, mode `0600`.
-- `/etc/monolab-probe/ca.pem`: public task CA certificate, mode `0644`.
-- `/etc/monolab-probe/runner.json`: non-secret settings, mode `0640`, owner
-  `monolab-probe`; never put a bearer in JSON or an argv.
+- `/etc/monos-probe/runner-token`: Runner credential matching the backend;
+  mode `0640`, owner `root`, group `monos-probe-read` is **not sufficient**,
+  because `me` belongs to that read group. Use owner `monos-probe`, mode `0600`.
+- `/etc/monos-probe/ca.pem`: public task CA certificate, mode `0644`.
+- `/etc/monos-probe/runner.json`: non-secret settings, mode `0640`, owner
+  `monos-probe`; never put a bearer in JSON or an argv.
 
 ```json
 {
   "endpoint": "https://127.0.0.1:18443",
-  "ca_file": "/etc/monolab-probe/ca.pem",
-  "token_file": "/etc/monolab-probe/runner-token",
+  "ca_file": "/etc/monos-probe/ca.pem",
+  "token_file": "/etc/monos-probe/runner-token",
   "runner_id": "runner-a",
-  "journal": "/var/lib/monolab-probe/service/journal.sqlite",
-  "socket": "/run/monolab-probe/command.sock",
+  "journal": "/var/lib/monos-probe/service/journal.sqlite",
+  "socket": "/run/monos-probe/command.sock",
   "execution_uid": 1000
 }
 ```
 
-Create a small initialized bare Git fixture as `monolab-probe` at
-`/var/lib/monolab-probe/cache/fixture.git`. Use umask `0027`; the shared read
+Create a small initialized bare Git fixture as `monos-probe` at
+`/var/lib/monos-probe/cache/fixture.git`. Use umask `0027`; the shared read
 group makes it execution-readable, while service ownership excludes execution
 writes. Do not put credentials in the fixture. Start the unit only after CA,
 backend/database and fixture are ready:
 
 ```sh
-systemctl start monolab-probe-runner.service
+systemctl start monos-probe-runner.service
 ```
 
-The no-argument sudo policy grants only `monolab-probe` the fixed root-owned
+The no-argument sudo policy grants only `monos-probe` the fixed root-owned
 helper. The helper rejects unknown JSON fields/actions, limits stdin to 1 MiB,
 derives units/paths and fixes the execution identity/properties. Unit control
 requires its root-owned retained manifest. The root helper never executes Git or
@@ -102,9 +106,9 @@ Owner's global config. System Git requests `core.fsync=committed,reference` and
 `core.fsyncMethod=fsync`; controlled restart tests do not establish power-loss
 recovery guarantees.
 
-Preserve `/var/lib/monolab-probe` after any unresolved run. Cleanup first stops
+Preserve `/var/lib/monos-probe` after any unresolved run. Cleanup first stops
 only units named in retained launch manifests, verifies whole-tree absence,
-then stops `monolab-probe-runner.service`. Do not delete journals/workspaces,
+then stops `monos-probe-runner.service`. Do not delete journals/workspaces,
 remove CLI installations, change root's source config, or touch unrelated
 units. Removing the sudoers file and disabling the Runner unit removes future
 probe launch access; it does not establish that existing writers have stopped.

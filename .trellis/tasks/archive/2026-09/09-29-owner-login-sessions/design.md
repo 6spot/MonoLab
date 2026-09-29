@@ -1,5 +1,9 @@
 # Single-Owner password and browser session access
 
+> Product terminology and command/path examples were normalized to `monos` on
+> 2026-09-29. Exact historical names and observations remain in the original Git
+> revisions and unchanged raw JSON attachments; this edit is not a new test run.
+
 Migration 7 adds one Owner access record: random salt, scrypt-derived password hash
 and failed-login window/count. Use Node crypto scrypt with fixed N=32768/r=8/p=1,
 64-byte key, random 32-byte salt and constant-time comparison. Password input is
@@ -13,7 +17,7 @@ attempts per minute produce a deterministic rate-limited result. Successful logi
 resets failures and creates the opaque Owner session in the same transaction.
 Session issuance reuses the existing hashed-token primitive through a transaction
 variant. The login response contains only expiry/authenticated state; token goes
-into __Host-monolab Cookie (Secure, HttpOnly, SameSite=Strict, Path=/, no Domain).
+into __Host-monos Cookie (Secure, HttpOnly, SameSite=Strict, Path=/, no Domain).
 
 Owner routes accept explicit Bearer first, otherwise this one cookie. Duplicate
 cookie names are invalid. Cookie-authenticated writes and login require Origin to

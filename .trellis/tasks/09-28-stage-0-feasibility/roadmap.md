@@ -1,4 +1,4 @@
-# MonoLab delivery task map
+# monos delivery task map
 
 Approved structure: stage → work package → implementation subtask. All newly created records are planning backlog, not approved implementation plans.
 

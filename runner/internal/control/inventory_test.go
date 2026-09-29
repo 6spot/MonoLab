@@ -3,7 +3,7 @@ package control
 import (
 	"context"
 	"encoding/json"
-	protocol "monolab.local/protocol"
+	protocol "monos.local/protocol"
 	"net/http"
 	"net/http/httptest"
 	"testing"

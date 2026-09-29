@@ -12,7 +12,7 @@ import probe
 
 
 def completed_state(kind="node"):
-    identity = {"dispatch_id": "dispatch-one", "pid": 123, "birth": "12345", "boot_id": "old-boot", "cgroup": "/system.slice/monolab-probe-a-one.service", "phase": "absent"}
+    identity = {"dispatch_id": "dispatch-one", "pid": 123, "birth": "12345", "boot_id": "old-boot", "cgroup": "/system.slice/monos-probe-a-one.service", "phase": "absent"}
     receipt = lambda request, command, operation, status: {"request_id": request, "scope_id": "task_one", "command_name": command, "operation_id": operation, "status": status, "digest": request, "long_value_length": 160000, "reply_length": 160000 if kind == "planner" else None}
     state = {
         "attempts": [{"attempt_id": "one", "dispatch_id": "dispatch-one", "kind": kind, "started": True, "mutation_allowed": False, "process_absent": True, "process_released": True, "task_state": "REVIEW", "node_state": "COMPLETED"}],

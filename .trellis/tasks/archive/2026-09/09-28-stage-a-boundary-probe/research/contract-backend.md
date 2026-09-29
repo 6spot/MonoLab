@@ -1,6 +1,10 @@
 # Backend and wire contract proposal
 
-Status: work package A implemented; local unit/schema, lint, type and generation checks pass. Real PostgreSQL and integrated Linux checks are pending the main session's isolated deployment. After the Codex connection failure, the Owner explicitly authorized substituting installed OpenCode with a free model. The main session observed OpenCode 1.18.30 under `me`, model `opencode/mimo-v2.6-flash-free`, returning exactly `MONOLAB_PROVIDER_OK` in 7.15 seconds with exit 0 and no error events. That clears initial provider usability only; it does not pass the Runner/CLI acceptance criteria.
+> Product terminology and command/path examples were normalized to `monos` on
+> 2026-09-29. Exact historical names and observations remain in the original Git
+> revisions and unchanged raw JSON attachments; this edit is not a new test run.
+
+Status: work package A implemented; local unit/schema, lint, type and generation checks pass. Real PostgreSQL and integrated Linux checks are pending the main session's isolated deployment. After the Codex connection failure, the Owner explicitly authorized substituting installed OpenCode with a free model. The main session observed OpenCode 1.18.30 under `me`, model `opencode/mimo-v2.6-flash-free`, returning exactly `MONOS_PROVIDER_OK` in 7.15 seconds with exit 0 and no error events. That clears initial provider usability only; it does not pass the Runner/CLI acceptance criteria.
 
 ## Ownership and state-change boundary
 

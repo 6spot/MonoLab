@@ -2,7 +2,7 @@ package host
 
 import (
 	"fmt"
-	protocol "monolab.local/protocol"
+	protocol "monos.local/protocol"
 	"os"
 	"path/filepath"
 	"syscall"
@@ -113,6 +113,6 @@ func Export(id, op, commit, tree string) error {
 	if actual != tree {
 		return invalidFinalization(fmt.Errorf("exported tree mismatch"))
 	}
-	_, err = git(destination, "--git-dir="+destination, "update-ref", "refs/monolab/result", commit)
+	_, err = git(destination, "--git-dir="+destination, "update-ref", "refs/monos/result", commit)
 	return err
 }

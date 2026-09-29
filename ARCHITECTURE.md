@@ -1,10 +1,10 @@
-# MonoLab Architecture
+# monos Architecture
 
 This file is the architecture map. Detailed rules live in the linked modules.
 
 ## Selected implementation stack
 
-React/Vite/TypeScript Web → Fastify/Node.js TypeScript modular monolith → PostgreSQL (Drizzle/SQL). A separate Go Runner on Linux directly invokes Owner-installed/authenticated host Agent CLIs and supervises their processes and system Git operations. Web uses HTTPS/SSE; Runner initiates a versioned authenticated WSS connection; Agents invoke the bundled `monolab` CLI, which sends Attempt-scoped HTTPS commands through the Tool Protocol. No MCP bridge installation or registration is required. PostgreSQL outbox workers handle durable background work.
+React/Vite/TypeScript Web → Fastify/Node.js TypeScript modular monolith → PostgreSQL (Drizzle/SQL). A separate Go Runner on Linux directly invokes Owner-installed/authenticated host Agent CLIs and supervises their processes and system Git operations. Web uses HTTPS/SSE; Runner initiates a versioned authenticated WSS connection; Agents invoke the bundled `monos` CLI, which sends Attempt-scoped HTTPS commands through the Tool Protocol. No MCP bridge installation or registration is required. PostgreSQL outbox workers handle durable background work.
 
 Initial deployment is one Linux host with backend/database in Docker Compose and a systemd-managed Go daemon. Adding Runners preserves this service boundary. See [Technology & Deployment](docs/11-technology-and-deployment.md) for ownership, repository layout, credentials and the local SQLite infrastructure journal.
 

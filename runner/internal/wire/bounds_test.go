@@ -2,7 +2,7 @@ package wire
 
 import (
 	"encoding/json"
-	protocol "monolab.local/protocol"
+	protocol "monos.local/protocol"
 	"strings"
 	"testing"
 )

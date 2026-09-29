@@ -116,7 +116,7 @@ Execution Log contains raw operation history.
 
 Workspace-internal coding is Runtime-native.
 
-Workspace-external formal state changes go through MonoLab tools.
+Workspace-external formal state changes go through monos tools.
 
 ### Valid result is not retained history
 

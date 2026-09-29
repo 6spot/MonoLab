@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"strings"
 
-	protocol "monolab.local/protocol"
+	protocol "monos.local/protocol"
 )
 
 func git(dir string, args ...string) (string, error) {
@@ -36,7 +36,7 @@ func gitEnv(dir string, extra []string, args ...string) (string, error) {
 	fixed = append(fixed, args...)
 	cmd := exec.Command("/usr/bin/git", fixed...)
 	cmd.Dir = dir
-	cmd.Env = []string{"PATH=/usr/bin:/bin", "HOME=/home/me", "LANG=C.UTF-8", "GIT_CONFIG_NOSYSTEM=1", "GIT_CONFIG_GLOBAL=" + config, "GIT_TERMINAL_PROMPT=0", "GIT_AUTHOR_NAME=MonoLab probe", "GIT_AUTHOR_EMAIL=probe@monolab.invalid", "GIT_COMMITTER_NAME=MonoLab probe", "GIT_COMMITTER_EMAIL=probe@monolab.invalid"}
+	cmd.Env = []string{"PATH=/usr/bin:/bin", "HOME=/home/me", "LANG=C.UTF-8", "GIT_CONFIG_NOSYSTEM=1", "GIT_CONFIG_GLOBAL=" + config, "GIT_TERMINAL_PROMPT=0", "GIT_AUTHOR_NAME=monos probe", "GIT_AUTHOR_EMAIL=probe@monos.invalid", "GIT_COMMITTER_NAME=monos probe", "GIT_COMMITTER_EMAIL=probe@monos.invalid"}
 	cmd.Env = append(cmd.Env, extra...)
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
@@ -56,7 +56,7 @@ func scopedGitConfig(scopes []string) (string, error) {
 		}
 		config.WriteString("\tdirectory = " + strconv.Quote(path) + "\n")
 	}
-	file, err := os.CreateTemp("", "monolab-git-config-*")
+	file, err := os.CreateTemp("", "monos-git-config-*")
 	if err != nil {
 		return "", err
 	}

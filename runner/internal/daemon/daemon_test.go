@@ -3,10 +3,10 @@ package daemon
 import (
 	"context"
 	"errors"
-	protocol "monolab.local/protocol"
-	"monolab.local/runner/internal/control"
-	"monolab.local/runner/internal/host"
-	"monolab.local/runner/internal/journal"
+	protocol "monos.local/protocol"
+	"monos.local/runner/internal/control"
+	"monos.local/runner/internal/host"
+	"monos.local/runner/internal/journal"
 	"os"
 	"path/filepath"
 	"testing"
@@ -62,7 +62,7 @@ func testDB(t *testing.T) *journal.DB {
 func TestDuplicateStartNeverSpawnsAgain(t *testing.T) {
 	db := testDB(t)
 	dispatch := protocol.Dispatch{AttemptID: "a", DispatchID: "d"}
-	if err := db.SaveStart(journal.Start{Dispatch: dispatch, Phase: "running", BootID: "boot", Cgroup: "/system.slice/monolab-probe-a-a.service"}); err != nil {
+	if err := db.SaveStart(journal.Start{Dispatch: dispatch, Phase: "running", BootID: "boot", Cgroup: "/system.slice/monos-probe-a-a.service"}); err != nil {
 		t.Fatal(err)
 	}
 	supervisor := &fakeSupervisor{}
@@ -79,7 +79,7 @@ func TestDuplicateStartNeverSpawnsAgain(t *testing.T) {
 func TestReconcileBootChangeDoesNotReviveOldOwnership(t *testing.T) {
 	db := testDB(t)
 	dispatch := protocol.Dispatch{AttemptID: "a", DispatchID: "d", MutationAllowed: true}
-	if err := db.SaveStart(journal.Start{Dispatch: dispatch, Phase: "running", BootID: "old", Cgroup: "/system.slice/monolab-probe-a-a.service"}); err != nil {
+	if err := db.SaveStart(journal.Start{Dispatch: dispatch, Phase: "running", BootID: "old", Cgroup: "/system.slice/monos-probe-a-a.service"}); err != nil {
 		t.Fatal(err)
 	}
 	supervisor := &fakeSupervisor{Status: host.Status{Known: true, BootID: "new", Populated: false}}
@@ -101,7 +101,7 @@ func TestUnmatchedLiveOwnershipBlocksReady(t *testing.T) {
 	if err := db.SaveStart(journal.Start{Dispatch: protocol.Dispatch{AttemptID: "a", DispatchID: "d"}, Phase: "running", BootID: "boot"}); err != nil {
 		t.Fatal(err)
 	}
-	daemon := Daemon{DB: db, Host: &fakeSupervisor{Status: host.Status{Known: true, BootID: "boot", Populated: true, Cgroup: "/system.slice/monolab-probe-a-a.service"}}}
+	daemon := Daemon{DB: db, Host: &fakeSupervisor{Status: host.Status{Known: true, BootID: "boot", Populated: true, Cgroup: "/system.slice/monos-probe-a-a.service"}}}
 	if err := daemon.Reconcile(context.Background(), protocol.RunnerInventory{}); err == nil {
 		t.Fatal("unknown live writer released")
 	}
@@ -114,7 +114,7 @@ func TestUnmatchedLiveOwnershipBlocksReady(t *testing.T) {
 func TestReusedPIDCannotReviveOwnership(t *testing.T) {
 	db := testDB(t)
 	dispatch := protocol.Dispatch{AttemptID: "a", DispatchID: "d", MutationAllowed: true}
-	s := journal.Start{Dispatch: dispatch, BootID: "boot", PID: 42, Birth: "old", Cgroup: "/system.slice/monolab-probe-a-a.service", Phase: "running"}
+	s := journal.Start{Dispatch: dispatch, BootID: "boot", PID: 42, Birth: "old", Cgroup: "/system.slice/monos-probe-a-a.service", Phase: "running"}
 	if err := db.SaveStart(s); err != nil {
 		t.Fatal(err)
 	}

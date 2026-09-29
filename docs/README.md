@@ -1,6 +1,6 @@
 # Architecture Modules
 
-These documents are the current source of truth for MonoLab architecture.
+These documents are the current source of truth for monos architecture.
 
 Read [../ARCHITECTURE.md](../ARCHITECTURE.md) first for the one-page map.
 
@@ -26,6 +26,7 @@ Read [../ARCHITECTURE.md](../ARCHITECTURE.md) first for the one-page map.
 ## Selected technology
 
 - [Technology & Deployment](11-technology-and-deployment.md) — accepted stack, concrete process/transport boundaries, repository layout and deployment.
+- [Product naming & upgrades](12-product-naming-and-upgrades.md) — canonical monos names, existing deployment migration boundaries and historical evidence.
 
 ## Change rule
 

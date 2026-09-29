@@ -6,7 +6,7 @@ import (
 	"io"
 	"syscall"
 
-	protocol "monolab.local/protocol"
+	protocol "monos.local/protocol"
 )
 
 // EffectError preserves a classified host failure across the helper boundary.

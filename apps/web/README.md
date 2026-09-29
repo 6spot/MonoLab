@@ -13,7 +13,7 @@ Use the root workspace Node/pnpm versions and `pnpm install --frozen-lockfile`.
 `apps/server/OWNER_ACCESS.md`. The production Docker target includes Web output.
 
 For development, run the TLS backend at `https://127.0.0.1:18443`, trust its test CA
-with `NODE_EXTRA_CA_CERTS`, and run `pnpm --filter @monolab/web dev`. Open exactly
+with `NODE_EXTRA_CA_CERTS`, and run `pnpm --filter @monos/web dev`. Open exactly
 `http://127.0.0.1:5173`. The fixed loopback proxy verifies TLS and translates only
 this local Origin to the backend origin; foreign/missing Origins still fail guards.
 Do not use the development server as production ingress.
@@ -21,9 +21,9 @@ Do not use the development server as production ingress.
 ## Verify
 
 - `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm protocol:check`, `pnpm build`.
-- Install test Chromium with `pnpm --filter @monolab/web exec playwright install chromium`.
-- Set `MONOLAB_TEST_WEB_DATABASE_URL` privately to a test-capable PostgreSQL database,
-  then run `pnpm --filter @monolab/web test:e2e`. Do not put credentials in argv or logs.
+- Install test Chromium with `pnpm --filter @monos/web exec playwright install chromium`.
+- Set `MONOS_TEST_WEB_DATABASE_URL` privately to a test-capable PostgreSQL database,
+  then run `pnpm --filter @monos/web test:e2e`. Do not put credentials in argv or logs.
 
 The browser fixture creates/migrates a unique `web_test_<uuid>` schema, uses synthetic
 Owner credentials, listens only on `127.0.0.1:18555`, and drops only its own schema

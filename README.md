@@ -1,6 +1,6 @@
-# MonoLab
+# monos
 
-MonoLab is a personal AI cloud development workspace for a single Owner.
+monos is a personal AI cloud development workspace for a single Owner.
 
 The core product loop is:
 
@@ -19,13 +19,17 @@ The product is developer-first, but the execution model is intentionally generic
 - Execution continues in the cloud even when Web or Mobile clients are closed.
 - Dirty process is allowed; formal state must stay clean.
 - Prefer the smallest sufficient model. Do not add enterprise/team-management abstractions unless they are truly required.
-- Multica is a mature implementation reference, not MonoLab's product model.
+- Multica is a mature implementation reference, not monos's product model.
 
 ## Documentation
 
 Start with [ARCHITECTURE.md](ARCHITECTURE.md).
 
 Detailed modules live under [docs/](docs/README.md).
+
+Repository: [6spot/monos](https://github.com/6spot/monos). The bundled Agent command
+is `monos`; see [naming and deployment upgrades](docs/12-product-naming-and-upgrades.md)
+before applying renamed templates to an existing installation.
 
 ## Technology
 

@@ -14,7 +14,7 @@ import { once } from 'node:events';
 import type { AddressInfo } from 'node:net';
 import type { Frame } from '../../../packages/protocol/src/index.ts';
 
-const enabled = process.env.MONOLAB_TEST_DATABASE === '1';
+const enabled = process.env.MONOS_TEST_DATABASE === '1';
 const signingKey = 'test-only-signing-key-never-for-deployment';
 describe.skipIf(!enabled)('real PostgreSQL boundary admission', () => {
   let db: Database;

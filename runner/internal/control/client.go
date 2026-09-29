@@ -20,8 +20,8 @@ import (
 	"time"
 
 	"github.com/coder/websocket"
-	protocol "monolab.local/protocol"
-	"monolab.local/runner/internal/wire"
+	protocol "monos.local/protocol"
+	"monos.local/runner/internal/wire"
 )
 
 type Config struct {

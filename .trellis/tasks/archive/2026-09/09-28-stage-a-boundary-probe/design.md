@@ -1,5 +1,9 @@
 # Boundary probe design
 
+> Product terminology and command/path examples were normalized to `monos` on
+> 2026-09-29. Exact historical names and observations remain in the original Git
+> revisions and unchanged raw JSON attachments; this edit is not a new test run.
+
 Status: implemented and accepted on 2026-09-29. See [acceptance status](research/acceptance-status.md) for the tested profile and limitations.
 
 ## Architecture and scope
@@ -15,7 +19,7 @@ Go Runner (service account; private SQLite journal)
     v
 OpenCode 1.18.30 / explicit free model (me; Attempt cgroup and scratch)
     | native command tool
-bundled monolab (same Attempt cgroup)
+bundled monos (same Attempt cgroup)
     | Unix socket: attributed credential/journal requests
     +--------------------> Runner
 ```
@@ -32,7 +36,7 @@ Use the Owner-supplied Debian host described in [host preflight](research/host-p
 | Dedicated Runner service account | Daemon, SQLite journal, private enrollment material, repository cache and system Git effect coordination |
 | Existing `me` account | Installed CLI/provider context, scratch, workspaces and uncredentialed execution Git |
 
-Use a task-owned prefix such as `/var/lib/monolab-probe` and distinct service-private, execution-owned and execution-readable-cache children. Runtime sockets live under a task-owned `/run` directory. Permission tests must prove that cache readability does not expose sibling journal/credential storage. Scope Git safe-directory exceptions to actual fixture repositories.
+Use a task-owned prefix such as `/var/lib/monos-probe` and distinct service-private, execution-owned and execution-readable-cache children. Runtime sockets live under a task-owned `/run` directory. Permission tests must prove that cache readability does not expose sibling journal/credential storage. Scope Git safe-directory exceptions to actual fixture repositories.
 
 The earlier Owner-authorized Codex configuration transfer remains private and intact, as recorded in host evidence. Its provider failed HTTPS handshakes under both root and `me`, so the Owner explicitly authorized selecting OpenCode with a free model instead. The initial OpenCode request succeeded without configuring paid credentials. This selects one working Runtime for the probe; it does not add a second Adapter implementation or automatic runtime fallback.
 
@@ -45,7 +49,7 @@ Use a constrained launcher with fixed execution UID, task-owned executable/unit/
 | `packages/protocol` | Versioned JSON Schemas, generated TS/Go types, shared compatibility fixtures |
 | `apps/server` | Authenticated transport, minimal command admission/status/recovery and controlled fault hooks |
 | `packages/domain`, `packages/db` | Only the existing domain guards and PostgreSQL records needed by admitted probe effects; reviewed migrations |
-| `runner/cmd/monolab-runner`, `runner/cmd/monolab` | Daemon and bundled command executable |
+| `runner/cmd/monos-runner`, `runner/cmd/monos` | Daemon and bundled command executable |
 | `runner/internal` | Adapter, supervision, socket attribution, journal, transport and fixture workspace effects |
 | `infra/compose`, `infra/runner` | Isolated probe deployment and host bootstrap/cleanup configuration |
 
@@ -54,7 +58,7 @@ Frontend work is outside this probe (later separately accepted tasks now own `ap
 ## Command and recovery data flow
 
 1. Backend transaction records the current Attempt/fencing/capacity claim and dispatch outbox intent. Runner verifies connection incarnation and authorization, journals start intent, then launches discoverably supervised execution.
-2. `monolab` connects to the existing Runner socket. Runner validates peer PID/UID, process birth and boot identity plus cgroup membership against the current dispatch; each journal/credential operation repeats attribution checks.
+2. `monos` connects to the existing Runner socket. Runner validates peer PID/UID, process birth and boot identity plus cgroup membership against the current dispatch; each journal/credential operation repeats attribution checks.
 3. CLI reads input once and validates it. Runner durably stores the canonical envelope and digest outside the Agent tree, including immutable content references and expected versions, before acknowledging permission to send. The record excludes bearer credentials.
 4. CLI sends the scoped HTTPS request. Backend authenticates, checks an existing receipt before new-effect guards, and commits receipt/state/operation/outbox atomically. External Git or Runner effects occur after the transaction.
 5. On uncertain transport outcome, retain the original request and query its receipt. Explicit authorized retry reloads that envelope; changed input conflicts. Missing receipts do not grant a stale Attempt new authority.
@@ -64,7 +68,7 @@ Use real PostgreSQL for receipt durability and the limited admission tests in th
 
 ## CLI permissions and workspace feasibility
 
-Start with the installed OpenCode noninteractive `run --pure --auto --format json --model <free-model> --agent monolab-probe --dir <scratch>` interface and explicit permission rules. Exact config behavior is checked against release 1.18.30 before creating launch templates. Node runs start with known scratch/reserved workspace paths, including worktree Git common directories; these are placement grants, not restrictions on other execution-account paths. Planner runs receive read-only repository access with permitted scratch, socket and authenticated HTTPS access. Permission prompts must produce a structured failure/attention outcome rather than an unattended wait; verify that shell execution cannot bypass the Planner repository boundary.
+Start with the installed OpenCode noninteractive `run --pure --auto --format json --model <free-model> --agent monos-probe --dir <scratch>` interface and explicit permission rules. Exact config behavior is checked against release 1.18.30 before creating launch templates. Node runs start with known scratch/reserved workspace paths, including worktree Git common directories; these are placement grants, not restrictions on other execution-account paths. Planner runs receive read-only repository access with permitted scratch, socket and authenticated HTTPS access. Permission prompts must produce a structured failure/attention outcome rather than an unattended wait; verify that shell execution cannot bypass the Planner repository boundary.
 
 Following the Owner's shell-freedom direction and Multica source review, permit normal native bash, external-directory access and Node edits. Do not implement shell-command allowlists, global read-only mounts, private PID namespaces or read-only XDG mounts solely to suppress installed-CLI maintenance. Reserved paths remain deterministic placement, not a host containment boundary. Keep the fixed nonroot execution account, service-private credentials and cgroup supervision.
 

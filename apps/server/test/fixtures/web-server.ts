@@ -7,8 +7,8 @@ import { createApp } from '../../src/app.ts';
 import { BoundaryService } from '../../src/service.ts';
 
 // Test-only process: never use an existing schema or deployed Owner credentials.
-const connection = process.env.MONOLAB_TEST_WEB_DATABASE_URL;
-if (!connection) throw new Error('MONOLAB_TEST_WEB_DATABASE_URL is required for isolated browser tests');
+const connection = process.env.MONOS_TEST_WEB_DATABASE_URL;
+if (!connection) throw new Error('MONOS_TEST_WEB_DATABASE_URL is required for isolated browser tests');
 const namespace = `web_test_${randomUUID().replaceAll('-', '')}`;
 const admin = database(connection);
 await admin.pool.query(`CREATE SCHEMA ${namespace}`);
@@ -28,7 +28,7 @@ for (const signal of ['SIGTERM', 'SIGINT'] as const) process.on(signal, () => { 
 
 try {
   await migrate(db);
-  await bootstrapOwner(db, 'monolab-browser-test-password');
+  await bootstrapOwner(db, 'monos-browser-test-password');
   await app.listen({ host: '127.0.0.1', port: 18555 });
   process.stdout.write('Isolated browser test server ready on port 18555.\n');
 } catch {

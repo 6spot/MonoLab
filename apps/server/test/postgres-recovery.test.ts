@@ -11,7 +11,7 @@ import { issueAttemptCredential } from '../src/auth.ts';
 import { Worker } from './fixtures/process-worker.ts';
 
 const signingKey = 'test-only-admission-worker-signing-key';
-describe.skipIf(process.env.MONOLAB_TEST_DATABASE !== '1')('PostgreSQL process-crash admission recovery', () => {
+describe.skipIf(process.env.MONOS_TEST_DATABASE !== '1')('PostgreSQL process-crash admission recovery', () => {
   let db: Database;
   let admin: Database;
   let url: string;

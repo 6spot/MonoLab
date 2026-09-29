@@ -1,7 +1,11 @@
 # Research: OpenCode 1.18.30 permissions and Linux execution boundary
 
-- Query: Can the installed OpenCode run noninteractively, invoke bundled `monolab`, access lazily materialized reserved paths, and keep Planner repositories read-only without a new sandbox framework?
-- Scope: mixed; official release source/documentation and MonoLab contracts. No remote changes, provider requests, credential inspection or package installation performed by this researcher.
+> Product terminology and command/path examples were normalized to `monos` on
+> 2026-09-29. Exact historical names and observations remain in the original Git
+> revisions and unchanged raw JSON attachments; this edit is not a new test run.
+
+- Query: Can the installed OpenCode run noninteractively, invoke bundled `monos`, access lazily materialized reserved paths, and keep Planner repositories read-only without a new sandbox framework?
+- Scope: mixed; official release source/documentation and monos contracts. No remote changes, provider requests, credential inspection or package installation performed by this researcher.
 - Date: 2026-09-28
 - Status: source evidence with an **earlier, superseded strict-profile candidate**, not a passed host test. Parent reports one successful free-model text-only request; actual boundary trials remain required.
 
@@ -11,11 +15,11 @@
 
 The Owner subsequently stated that normal CLI shell execution should not be restricted and asked how Multica handles it. [Multica source research](multica-runtime-permissions.md) confirms its normal-account/auto-approval model. The main session adopted normal shell freedom: **no shell allowlist, global read-only filesystem profile, PrivatePIDs or read-only XDG workaround**. Keep existing service/execution identity separation, per-Attempt cgroup lifecycle ownership and kernel-attributed Tool Protocol calls. Planner repositories remain read-only through service-owned immutable inspection snapshots and DAC; Node workspaces and normal CLI state remain writable by `me`.
 
-The exact OpenCode source/event/configuration facts below remain useful. The deny-first policy, strict systemd namespace/mount template and corresponding namespace/XDG tests are retained only as historical research candidates, **not implementation requirements**. The current unattended launch may use supported `--auto` (the visible alias corresponding to Multica's `--dangerously-skip-permissions`) while honoring explicit CLI denies. OpenCode's own internal config/plugin maintenance is not automatically a new MonoLab dependency; do not add write restrictions solely to suppress it.
+The exact OpenCode source/event/configuration facts below remain useful. The deny-first policy, strict systemd namespace/mount template and corresponding namespace/XDG tests are retained only as historical research candidates, **not implementation requirements**. The current unattended launch may use supported `--auto` (the visible alias corresponding to Multica's `--dangerously-skip-permissions`) while honoring explicit CLI denies. OpenCode's own internal config/plugin maintenance is not automatically a new monos dependency; do not add write restrictions solely to suppress it.
 
 ### Earlier candidate for the implementer — superseded above
 
-Use the installed `/home/linuxbrew/.linuxbrew/bin/opencode` version `1.18.30`, explicit `opencode/mimo-v2.6-flash-free`, `run --pure --format json --agent monolab-probe --dir <scratch>`, stdin for the assembled task input, and an explicit Adapter-owned configuration. Do not pass `--auto`, `--yolo` or `--dangerously-skip-permissions`.
+Use the installed `/home/linuxbrew/.linuxbrew/bin/opencode` version `1.18.30`, explicit `opencode/mimo-v2.6-flash-free`, `run --pure --format json --agent monos-probe --dir <scratch>`, stdin for the assembled task input, and an explicit Adapter-owned configuration. Do not pass `--auto`, `--yolo` or `--dangerously-skip-permissions`.
 
 Use a systemd **service**, not a caller-owned scope, for each Attempt. The fixed execution user is `me`. Native systemd filesystem namespaces provide Planner read-only repositories and narrowly writable Node paths; systemd/cgroup v2 provides whole-tree ownership. OpenCode's tool permissions supplement this boundary but cannot enforce it against arbitrary shell commands. This adds no product abstraction or sandbox dependency and preserves the architecture's non-hostile-Agent / no arbitrary-code-containment claim.
 
@@ -56,7 +60,7 @@ Source links: [run](https://github.com/anomalyco/opencode/blob/v1.18.30/packages
 
 ### Earlier restricted configuration recipe — not adopted
 
-The following is a **candidate Planner configuration**, to validate under the installed binary before launching real trials. Replace example paths with canonical task-owned paths. The custom agent is an Adapter implementation detail, not a MonoLab Role or Runtime Profile. Keep its complete policy in the selected agent as well as any global baseline; a global permission change alone does not override an existing agent-specific rule.
+The following is a **candidate Planner configuration**, to validate under the installed binary before launching real trials. Replace example paths with canonical task-owned paths. The custom agent is an Adapter implementation detail, not a monos Role or Runtime Profile. Keep its complete policy in the selected agent as well as any global baseline; a global permission change alone does not override an existing agent-specific rule.
 
 ```json
 {
@@ -68,10 +72,10 @@ The following is a **candidate Planner configuration**, to validate under the in
   "snapshot": false,
   "shell": "/bin/bash",
   "agent": {
-    "monolab-probe": {
+    "monos-probe": {
       "mode": "primary",
       "model": "opencode/mimo-v2.6-flash-free",
-      "prompt": "Adapter-owned fixed Tool Protocol instructions; use the native bash tool to invoke monolab for formal actions. Natural-language output is never a formal transition.",
+      "prompt": "Adapter-owned fixed Tool Protocol instructions; use the native bash tool to invoke monos for formal actions. Natural-language output is never a formal transition.",
       "permission": {
         "*": "deny",
         "read": "allow",
@@ -81,8 +85,8 @@ The following is a **candidate Planner configuration**, to validate under the in
         "edit": "deny",
         "external_directory": {
           "*": "deny",
-          "/var/lib/monolab-probe/execution/attempt-a/scratch/*": "allow",
-          "/var/lib/monolab-probe/execution/attempt-a/inspection/*": "allow"
+          "/var/lib/monos-probe/execution/attempt-a/scratch/*": "allow",
+          "/var/lib/monos-probe/execution/attempt-a/inspection/*": "allow"
         },
         "question": "deny",
         "task": "deny",
@@ -102,10 +106,10 @@ The following is a **candidate Planner configuration**, to validate under the in
 ```
 
 - The `*` rule comes first. Do not lexically sort permission object keys after generation: precedence is meaningful.
-- `bash: allow` permits native shell operation under the Linux filesystem boundary; it does **not** grant filesystem authority itself. `monolab`, repository inspection and arbitrary userland write-attempt tests can then run noninteractively. Narrow bash command patterns may reduce mistakes but are not a security boundary or a robust shell parser policy.
+- `bash: allow` permits native shell operation under the Linux filesystem boundary; it does **not** grant filesystem authority itself. `monos`, repository inspection and arbitrary userland write-attempt tests can then run noninteractively. Narrow bash command patterns may reduce mistakes but are not a security boundary or a robust shell parser policy.
 - Planner scratch JSON can be written via shell. If allowing a native edit tool for scratch, generate patterns relative to the actual `instance.worktree`; do not assume the documentation's absolute edit example matches this release's implementation.
-- Node profile: give `edit` appropriate relative scratch/workspace allow rules, or use `edit: allow` with the OS writable allowlist as the authoritative write boundary. Keep `external_directory` default deny and add each reserved Node workspace/worktree and Git common directory. The reserved path itself and descendants must match the request's `<dir>/*`; do not grant `/var/lib/monolab-probe/*` wholesale.
-- Do not treat external_directory as a network or Unix-socket permission. These are ordinary syscalls from `bash`/`monolab`, governed by Linux and backend authentication. No MCP server is needed.
+- Node profile: give `edit` appropriate relative scratch/workspace allow rules, or use `edit: allow` with the OS writable allowlist as the authoritative write boundary. Keep `external_directory` default deny and add each reserved Node workspace/worktree and Git common directory. The reserved path itself and descendants must match the request's `<dir>/*`; do not grant `/var/lib/monos-probe/*` wholesale.
+- Do not treat external_directory as a network or Unix-socket permission. These are ordinary syscalls from `bash`/`monos`, governed by Linux and backend authentication. No MCP server is needed.
 - Pin main, small/auxiliary and custom-agent models to the verified-free model. Disabling `task` prevents model-created native subagents from choosing another configured model. Validate resolved built-in title/summary/compaction configuration and record model IDs emitted by real events; explicit main `--model` alone does not demonstrate that all auxiliary work is free.
 - Set `OPENCODE_DISABLE_PROJECT_CONFIG=1`, `OPENCODE_DISABLE_AUTOUPDATE=1`, `OPENCODE_DISABLE_LSP_DOWNLOAD=1`, `OPENCODE_DISABLE_EXTERNAL_SKILLS=1` and `OPENCODE_DISABLE_CLAUDE_CODE=1` in the Adapter's explicit environment. `--pure` remains useful but is not a replacement for these or resolved configuration checks.
 - Use an Adapter-generated `OPENCODE_CONFIG_CONTENT` or a service-owned config file plus verified override strategy. Do not edit repository files or Owner configuration. The content must contain no backend/Runner credential. Normal CLI-owned credentials remain on the host under the existing execution identity.
@@ -136,7 +140,7 @@ KillMode=control-group
 SendSIGKILL=yes
 Restart=no
 UMask=0077
-ReadWritePaths=/var/lib/monolab-probe/execution/attempt-a/scratch
+ReadWritePaths=/var/lib/monos-probe/execution/attempt-a/scratch
 ```
 
 The launcher must add only exact approved writable roots for runtime XDG state and, for Nodes, reserved workspace/worktree **and Git common directory**. Planner inspection roots are never writable. Keep logs/journal/credential storage outside every granted execution subtree with ordinary account permissions as well. Empty capability sets and `NoNewPrivileges` ensure the execution-owned Linuxbrew executable is never invoked with root authority. Scope privileged launch/stop/freeze operations to fixed user, task-owned unit IDs and canonical paths; validate symlinks and prevent arbitrary unit properties/environment from a caller.
@@ -151,7 +155,7 @@ Why these details matter:
 6. `KillMode=control-group` stops every cgroup member, including shell children in a detached session/process group. `setsid` and double-fork do not escape a cgroup. Freeze before finalization, and verify `cgroup.events`/process inventory rather than freeing claims after only the main PID exits. Preserve durable unit/dispatch mapping and host boot identity across Runner restart.
 7. Pre-create **stable empty reserved directories before launch**; do not prefix necessary grants with `-` to silently ignore absent paths. Lazy clone/materialization must fill those directories, not rename/replace a bind-mounted root inode. An absent-at-launch `ReadWritePaths=-...` is not a durable grant for a later-created path. Reserve Git common directories separately before concurrent worktree use.
 8. Do not create nested writable host mounts beneath Planner read-only paths during an Attempt. systemd documents that newly propagated host mounts can remain writable. This is a probe constraint, not full hostile-host containment. Prefer ordinary directory materialization and check the resulting mount view.
-9. An inherited writable descriptor or connection to a more privileged helper is not blocked by read-only mounts. The launcher closes unneeded descriptors; `monolab` never receives host directory FDs or a broad administrative service. Preserve the architecture's explicit no arbitrary-code-containment claim.
+9. An inherited writable descriptor or connection to a more privileged helper is not blocked by read-only mounts. The launcher closes unneeded descriptors; `monos` never receives host directory FDs or a broad administrative service. Preserve the architecture's explicit no arbitrary-code-containment claim.
 10. `NoNewPrivileges` affects this process tree, not new processes started through an external user manager, cron/at daemon or other IPC service. Keep user-manager sockets such as `/run/user/1000/bus` inaccessible to probe Attempts when present, do not inject a user bus address or PAM login session, and test `systemd-run --user` fails. Apply task-specific `InaccessiblePaths` only after checking compatibility; do not mask the Runner socket or claim cgroup ownership alone fences unrelated external services.
 
 Systemd references: [v257 systemd.exec](https://github.com/systemd/systemd/blob/v257/man/systemd.exec.xml), [v257 systemd.kill](https://github.com/systemd/systemd/blob/v257/man/systemd.kill.xml), [v257 resource control](https://github.com/systemd/systemd/blob/v257/man/systemd.resource-control.xml). The current rendered systemd documentation was also fetched, but the versioned source is authoritative for proposed host properties.
@@ -173,7 +177,7 @@ Permission requests are not directly emitted as a dedicated JSON event by `run`.
 
 `run --format json` uses an in-process server for its local SDK path (`run.ts:948` onward), not a required externally listening `opencode serve`. Avoid `--attach` for this probe. stdin is read as the prompt (`run.ts:40`, input handling before session creation); preserve one invocation per Attempt. Session IDs are opaque, recorded with Runner/runtime identity. Resume and live input remain optional until separately tested; do not enable `--continue` to pick a convenient prior session.
 
-The model must call native `bash` → bundled `monolab`. The CLI journals its immutable envelope through the attributed Unix channel **before HTTPS send**. Only a backend receipt/admitted operation proves formal completion. A model's JSON/prose or OpenCode `step_finish` cannot substitute for that. After admitted completion stops the OpenCode tree, absence of a final `tool_use` or clean process exit is expected; Runner reads the admitted result with its own scoped recovery authority.
+The model must call native `bash` → bundled `monos`. The CLI journals its immutable envelope through the attributed Unix channel **before HTTPS send**. Only a backend receipt/admitted operation proves formal completion. A model's JSON/prose or OpenCode `step_finish` cannot substitute for that. After admitted completion stops the OpenCode tree, absence of a final `tool_use` or clean process exit is expected; Runner reads the admitted result with its own scoped recovery authority.
 
 ### Earlier candidate test matrix — use current decision to select cases
 
@@ -182,7 +186,7 @@ Run deterministic syscall/permission checks first with the exact service propert
 | Case | Required observable result |
 | --- | --- |
 | Resolved config | Installed binary parses custom primary agent, exact free main/small/auxiliary models and permission rules. Output is sanitized before leaving host. No paid fallback or model change. |
-| Planner tool use | Real OpenCode calls `monolab --help`, reads a fixture repository and writes a request input in scratch. Actual backend HTTPS and Unix socket connection succeeds. |
+| Planner tool use | Real OpenCode calls `monos --help`, reads a fixture repository and writes a request input in scratch. Actual backend HTTPS and Unix socket connection succeeds. |
 | Planner write attempts | `touch`, shell redirection, Python open/write, Git write/commit and symlink-path write against repository fail; file bytes, refs and metadata remain unchanged. Test `/proc/<other>/root` alias is inaccessible when same-UID companion exists. Successful scratch write is a positive control. |
 | Noninteractive deny | Deliberately denied `edit`, `task` or out-of-grant directory tool produces refusal/error without blocking for stdin; no effect occurs. Do not use `--auto` to make the case pass. |
 | Lazy Node paths | Runtime starts before repository contents exist; service materializes into reserved stable dirs; same OpenCode session reads/writes and commits there. Git common-dir writes work for Node and fail for Planner. |
@@ -194,7 +198,7 @@ Run deterministic syscall/permission checks first with the exact service propert
 
 No host reboot is needed for the above focused runtime tests. The separate agreed-window reboot acceptance item remains outstanding until executed.
 
-### MonoLab files and related specs
+### monos files and related specs
 
 | Repository path | One-line relevance |
 | --- | --- |
@@ -210,7 +214,7 @@ No host reboot is needed for the above focused runtime tests. The separate agree
 | `.trellis/tasks/09-28-stage-a-boundary-probe/design.md:65` | Approved permission/isolation probe and explicit OpenCode free-model substitution. |
 | `.trellis/tasks/09-28-stage-a-boundary-probe/research/host-preflight.md` | Debian 13.6/systemd 257.13/cgroup v2/OpenCode 1.18.30 and initial 7.15-second text-only success. |
 
-At inspection, backend/protocol package manifests were being scaffolded concurrently; no implemented Runner Adapter was available to cite. Recommendations are source-backed launch patterns, not claims about existing MonoLab source.
+At inspection, backend/protocol package manifests were being scaffolded concurrently; no implemented Runner Adapter was available to cite. Recommendations are source-backed launch patterns, not claims about existing monos source.
 
 ## Caveats / Not Found
 

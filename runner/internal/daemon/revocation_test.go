@@ -4,10 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	protocol "monolab.local/protocol"
-	"monolab.local/runner/internal/control"
-	"monolab.local/runner/internal/host"
-	"monolab.local/runner/internal/journal"
+	protocol "monos.local/protocol"
+	"monos.local/runner/internal/control"
+	"monos.local/runner/internal/host"
+	"monos.local/runner/internal/journal"
 	"testing"
 )
 

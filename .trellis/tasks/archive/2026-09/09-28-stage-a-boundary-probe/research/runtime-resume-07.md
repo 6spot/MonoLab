@@ -1,5 +1,9 @@
 # Runtime acceptance resumption — 2026-09-29
 
+> Product terminology and command/path examples were normalized to `monos` on
+> 2026-09-29. Exact historical names and observations remain in the original Git
+> revisions and unchanged raw JSON attachments; this edit is not a new test run.
+
 The Owner resumed deferred Runtime work, selected LongCat, required sequential
 main-session execution and explicitly authorized an immediate whole-host reboot,
 including temporary Chronicle/SSH interruption. No sub-agents were used.
@@ -20,7 +24,7 @@ including temporary Chronicle/SSH interruption. No sub-agents were used.
 | Agent identity | Existing `me`, UID 1000; separate service identity owns Runner journal/control credentials |
 
 The Adapter runs `opencode run --pure --auto --format json --model <selected-model>
---agent monolab-probe --dir <scratch>`, with prompt on stdin and explicit per-Attempt
+--agent monos-probe --dir <scratch>`, with prompt on stdin and explicit per-Attempt
 XDG paths. Its bounded catalog refresh uses the same environment/cwd. Required shell
 tools are permitted; Planner snapshot immutability is enforced by Linux ownership.
 The pinned CLI auto-handles asks and honors explicit denies; Runner recognizes its
@@ -36,8 +40,8 @@ hashes are in the [sanitized evidence](runtime-resume-07-evidence.json).
 
 ## Actual trials
 
-Commands were run from `/root/monolab-boundary-probe-src` with
-`python3 -u infra/probe/probe.py --evidence /root/monolab-probe-evidence-runtime-resume-07`:
+Commands were run from `/root/monos-boundary-probe-src` with
+`python3 -u infra/probe/probe.py --evidence /root/monos-probe-evidence-runtime-resume-07`:
 
 | Suffix | Observed outcome |
 | --- | --- |
@@ -80,7 +84,7 @@ release the hold or launch a successor.
 
 PostgreSQL/backend returned through existing container restart policies; verified
 TLS health reports database ready. Runner was disabled at boot before the test;
-`systemctl start monolab-probe-runner.service` was run after boot. Enablement remains
+`systemctl start monos-probe-runner.service` was run after boot. Enablement remains
 disabled. This proves recovery after daemon startup, not unattended Runner boot
 enablement or sudden power-loss durability.
 
@@ -98,7 +102,7 @@ units/cgroups/processes. Reusable `reboot-verify` passed on its first run.
 
 ## Retention and reproduction
 
-Raw evidence root: `/root/monolab-probe-evidence-runtime-resume-07`, mode 0700.
+Raw evidence root: `/root/monos-probe-evidence-runtime-resume-07`, mode 0700.
 Checked-in sanitized JSON includes checks, identities, immutable-request digests,
 installed hashes and SHA256 of original JSON evidence. Preboot profile and pair
 files retain their then-current `reboot: not_run` fields; the later reboot report

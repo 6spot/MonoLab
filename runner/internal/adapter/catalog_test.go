@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	protocol "monolab.local/protocol"
-	"monolab.local/runner/internal/host"
+	protocol "monos.local/protocol"
+	"monos.local/runner/internal/host"
 )
 
 const freeCost = `{"input":0,"output":0,"cache":{"read":0,"write":0}}`

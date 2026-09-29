@@ -13,7 +13,7 @@ type materialization struct {
 }
 
 func materializationPath(common string) string {
-	return filepath.Join(common, "monolab-materialization.json")
+	return filepath.Join(common, "monos-materialization.json")
 }
 
 func readMaterialization(common string) (materialization, error) {

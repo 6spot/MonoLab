@@ -28,13 +28,13 @@ function sameOrigin(request: FastifyRequest): void {
 
 function ownerCredential(request: FastifyRequest): string {
   if (request.headers.authorization !== undefined) return bearer(request);
-  const cookies = (request.headers.cookie ?? '').split(';').map((item) => item.trim()).filter((item) => item.startsWith('__Host-monolab='));
+  const cookies = (request.headers.cookie ?? '').split(';').map((item) => item.trim()).filter((item) => item.startsWith('__Host-monos='));
   if (cookies.length !== 1) throw new CommandError('unauthorized', 'Owner session required');
   if (!['GET', 'HEAD'].includes(request.method)) sameOrigin(request);
-  return cookies[0]!.slice('__Host-monolab='.length);
+  return cookies[0]!.slice('__Host-monos='.length);
 }
 
-const sessionCookie = (token: string, maxAge: number) => `__Host-monolab=${token}; Path=/; Secure; HttpOnly; SameSite=Strict; Max-Age=${maxAge}`;
+const sessionCookie = (token: string, maxAge: number) => `__Host-monos=${token}; Path=/; Secure; HttpOnly; SameSite=Strict; Max-Age=${maxAge}`;
 
 function errorResult(error: unknown): CommandResult {
   if (error instanceof ProtocolVersionError) return { schema_version: 1, status: 'error', error: { code: 'unsupported_version', message: 'Unsupported protocol version' } };

@@ -12,6 +12,6 @@
 {"file": ".trellis/spec/backend/directory-structure.md", "reason": "Place minimal scaffold within accepted module ownership."}
 {"file": ".trellis/tasks/09-28-stage-a-boundary-probe/research/host-preflight.md", "reason": "Observed Debian/Codex versions, explicit execution-account configuration authorization and untested host assumptions."}
 {"file": ".trellis/tasks/09-28-stage-a-boundary-probe/research/opencode-runtime.md", "reason": "Installed OpenCode and zero-cost model observations; strict sandbox candidate explicitly superseded."}
-{"file": ".trellis/tasks/09-28-stage-a-boundary-probe/research/multica-runtime-permissions.md", "reason": "Source-backed reference and Owner-directed shell freedom; preserve MonoLab service identity and lifecycle contracts."}
+{"file": ".trellis/tasks/09-28-stage-a-boundary-probe/research/multica-runtime-permissions.md", "reason": "Source-backed reference and Owner-directed shell freedom; preserve monos service identity and lifecycle contracts."}
 {"file": ".trellis/tasks/09-28-stage-a-boundary-probe/research/host-validation.md", "reason": "Observed Linux/PG/proxy/build failures and passes; do not infer unrun acceptance."}
 {"file": ".trellis/tasks/09-28-stage-a-boundary-probe/research/runner-implementation.md", "reason": "Current Runner boundaries, dependencies and test limits."}

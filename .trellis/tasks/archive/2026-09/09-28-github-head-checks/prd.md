@@ -1,5 +1,9 @@
 # Verify GitHub checks and exact-head merge
 
+> Product terminology and command/path examples were normalized to `monos` on
+> 2026-09-29. Exact historical names and observations remain in the original Git
+> revisions and unchanged raw JSON attachments; this edit is not a new test run.
+
 ## Goal
 
 Observe GitHub merge preconditions and checks behavior on an explicitly authorized test repository.
@@ -38,7 +42,7 @@ No team abstractions, generic workflow engine, cross-Runner migration/failover, 
 
 Review upstream evidence and the current source, refine leaf boundaries and observable failure cases, and resolve any Owner-owned acceptance choices. For each complex implementation leaf, complete design.md, implement.md and curated implement/check contexts, present the final planning summary, and obtain its approval before task.py start. Stage and work-package records coordinate acceptance and are not bulk implementation targets.
 
-- Owner authorized creating a dedicated synthetic test repository and the described push/PR/check/merge effects. Current gh authentication is account 6spot. Use a unique monolab-feasibility-* repository, private by default; if private branch protection is unavailable, retain that finding and use a separate public synthetic-only repository for enforcement evidence. No MonoLab source or credentials are published.
+- Owner authorized creating a dedicated synthetic test repository and the described push/PR/check/merge effects. Current gh authentication is account 6spot. Use a unique monos-feasibility-* repository, private by default; if private branch protection is unavailable, retain that finding and use a separate public synthetic-only repository for enforcement evidence. No monos source or credentials are published.
 
 ## Source contracts
 

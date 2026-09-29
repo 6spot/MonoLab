@@ -57,16 +57,16 @@ def merge_body(expected_sha):
 
 def protect(api, repo, branch):
     return api.request('PUT', f'repos/{repo}/branches/{branch}/protection', {
-        'required_status_checks': {'strict': False, 'contexts': ['monolab/probe']},
+        'required_status_checks': {'strict': False, 'contexts': ['monos/probe']},
         'enforce_admins': True, 'required_pull_request_reviews': None, 'restrictions': None,
     })
 
 
 def create_fixture(api, name, private):
     created = api.ok('POST', 'user/repos', {'name': name, 'private': private, 'auto_init': True,
-                                         'description': 'Synthetic MonoLab provider feasibility fixture; no product source.'})
+                                         'description': 'Synthetic monos provider feasibility fixture; no product source.'})
     repo = created['full_name']
-    if not repo.split('/')[1].startswith('monolab-feasibility-'):
+    if not repo.split('/')[1].startswith('monos-feasibility-'):
         raise RuntimeError('Unexpected fixture repository identity')
     api.save('repository-' + name, {'repo': repo, 'url': created['html_url'], 'private': private, 'id': created['id']})
     branch = created['default_branch']
@@ -82,10 +82,10 @@ def create_fixture(api, name, private):
 
 def run(api, existing_repo=None):
     stamp = datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%d-%H%M%S')
-    name = 'monolab-feasibility-' + stamp
+    name = 'monos-feasibility-' + stamp
     if existing_repo:
         info = api.ok('GET', f'repos/{existing_repo}')
-        if not info['name'].startswith('monolab-feasibility-') or info['description'] != 'Synthetic MonoLab provider feasibility fixture; no product source.':
+        if not info['name'].startswith('monos-feasibility-') or info['description'] != 'Synthetic monos provider feasibility fixture; no product source.':
             raise RuntimeError('Only the owned synthetic fixture is allowed')
         repo, base = info['full_name'], info['default_branch']
         sha = api.ok('GET', f'repos/{repo}/git/ref/heads/{base}')['object']['sha']
@@ -116,7 +116,7 @@ def run(api, existing_repo=None):
         'content': base64.b64encode(b'synthetic B\n').decode(),
     })
     current = second['commit']['sha']
-    api.ok('POST', f'repos/{repo}/statuses/{current}', {'state': 'success', 'context': 'monolab/probe', 'description': 'Isolate expected-SHA guard'})
+    api.ok('POST', f'repos/{repo}/statuses/{current}', {'state': 'success', 'context': 'monos/probe', 'description': 'Isolate expected-SHA guard'})
     for _ in range(20):
         ready = api.ok('GET', f'repos/{repo}/pulls/{number}')
         if ready['head']['sha'] == current and ready.get('mergeable') is True and ready.get('mergeable_state') == 'clean':
@@ -130,7 +130,7 @@ def run(api, existing_repo=None):
     checks['stale_request_left_pr_open'] = pr_state['state'] == 'open' and not pr_state['merged'] and pr_state['head']['sha'] == current
     observed = {}
     for state in ('pending', 'failure', 'success'):
-        api.ok('POST', f'repos/{repo}/statuses/{current}', {'state': state, 'context': 'monolab/probe', 'description': 'Synthetic ' + state})
+        api.ok('POST', f'repos/{repo}/statuses/{current}', {'state': state, 'context': 'monos/probe', 'description': 'Synthetic ' + state})
         combined = api.ok('GET', f'repos/{repo}/commits/{current}/status')
         observed[state] = combined['state']
         checks[state + '_visible'] = combined['state'] == state
@@ -153,7 +153,7 @@ def run(api, existing_repo=None):
     checks['merged_exact_head'] = final['merged'] is True and final['head']['sha'] == current
     report = {'outcome': 'pass' if all(checks.values()) and len(observed) == 3 else 'fail', 'repo': repo, 'pr': number,
               'accepted_old_head': accepted, 'merged_head': current, 'private_protection_http': private_protection,
-              'checks': checks, 'required_status_context': 'monolab/probe', 'source_sha256': hashlib.sha256(pathlib.Path(__file__).read_bytes()).hexdigest()}
+              'checks': checks, 'required_status_context': 'monos/probe', 'source_sha256': hashlib.sha256(pathlib.Path(__file__).read_bytes()).hexdigest()}
     api.save('result', report)
     print(json.dumps(report, indent=2))
     return report

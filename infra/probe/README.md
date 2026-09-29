@@ -3,13 +3,13 @@
 These scripts are an explicit test harness, not a product administration API.
 Main-session host operations install/build the reviewed backend/Runner first.
 Run only on the Owner-authorized Linux host with the staging checkout at
-`/root/monolab-boundary-probe-src`. They never reboot, publish Git, configure a
+`/root/monos-boundary-probe-src`. They never reboot, publish Git, configure a
 paid provider, or print bearer/config/environment contents.
 
 `probe.py` runs as root for private read-only evidence and explicitly targeted
 service restarts. `driver.py` is installed root-owned under
-`/var/lib/monolab-probe/probe-tools`, then invoked by the **real OpenCode native
-bash tool inside the `me` Attempt cgroup**. It invokes the bundled `monolab`,
+`/var/lib/monos-probe/probe-tools`, then invoked by the **real OpenCode native
+bash tool inside the `me` Attempt cgroup**. It invokes the bundled `monos`,
 including formal lifecycle handoff; a prose response does not pass the trial.
 The deterministic driver makes the sequence reproducible. This establishes
 tool/transport compatibility, not autonomous semantic planning quality.
@@ -49,7 +49,7 @@ config/CA/token and the service-owned Git fixture after the reviewed
 `infra/runner/bootstrap.sh` and `infra/compose/prepare.mjs` have completed:
 
 ```sh
-cd /root/monolab-boundary-probe-src
+cd /root/monos-boundary-probe-src
 python3 infra/probe/provision.py
 ```
 
@@ -62,19 +62,19 @@ are preserved and rejected; identical valid material is verified on rerun.
 It performs no service start, CLI install/login, publication or recursive chown.
 
 ```sh
-cd /root/monolab-boundary-probe-src
-python3 infra/probe/probe.py --evidence /root/monolab-probe-evidence enroll
-systemctl start monolab-probe-runner.service
-python3 infra/probe/probe.py --evidence /root/monolab-probe-evidence profile
-python3 infra/probe/probe.py --evidence /root/monolab-probe-evidence trial node-01 --kind node
-python3 infra/probe/probe.py --evidence /root/monolab-probe-evidence trial planner-01 --kind planner
-python3 infra/probe/probe.py --evidence /root/monolab-probe-evidence permissions node-01
-python3 infra/probe/probe.py --evidence /root/monolab-probe-evidence restart-pair concurrent-01
-python3 infra/probe/probe.py --evidence /root/monolab-probe-evidence delayed-revoke never-started-01
+cd /root/monos-boundary-probe-src
+python3 infra/probe/probe.py --evidence /root/monos-probe-evidence enroll
+systemctl start monos-probe-runner.service
+python3 infra/probe/probe.py --evidence /root/monos-probe-evidence profile
+python3 infra/probe/probe.py --evidence /root/monos-probe-evidence trial node-01 --kind node
+python3 infra/probe/probe.py --evidence /root/monos-probe-evidence trial planner-01 --kind planner
+python3 infra/probe/probe.py --evidence /root/monos-probe-evidence permissions node-01
+python3 infra/probe/probe.py --evidence /root/monos-probe-evidence restart-pair concurrent-01
+python3 infra/probe/probe.py --evidence /root/monos-probe-evidence delayed-revoke never-started-01
 # Run at least 65 seconds after terminal admission (the command enforces this):
-python3 infra/probe/probe.py --evidence /root/monolab-probe-evidence recover node-01 --require-expired
+python3 infra/probe/probe.py --evidence /root/monos-probe-evidence recover node-01 --require-expired
 # No model call; requires all Attempts released and this handoff committed:
-python3 infra/probe/probe.py --evidence /root/monolab-probe-evidence idle-restart node-01
+python3 infra/probe/probe.py --evidence /root/monos-probe-evidence idle-restart node-01
 ```
 
 Every trial writes a 160,000-character formal payload. The driver retains that
@@ -98,7 +98,7 @@ return the caller's own workspace; the pair trial uses its actual peer's ID.
 
 The pair trial runs two same-UID Attempts concurrently using the same request ID
 but separate authoritative scopes. It holds each at an explicit checkpoint,
-restarts only `monolab-probe-runner.service` and this Compose `server`, verifies
+restarts only `monos-probe-runner.service` and this Compose `server`, verifies
 the original PID/birth identity survives, then releases both to complete. Process
 identity evidence is read from live `/proc`, cross-checked against the journal,
 and records boot/cgroup/UID as well as PID/birth. Early
@@ -146,8 +146,8 @@ report must cite the actual output files from the authorized host.
 ## Checkpoint and recovery
 
 ```sh
-python3 infra/probe/probe.py --evidence /root/monolab-probe-evidence checkpoint node-01
-python3 infra/probe/probe.py --evidence /root/monolab-probe-evidence inspect node-01
+python3 infra/probe/probe.py --evidence /root/monos-probe-evidence checkpoint node-01
+python3 infra/probe/probe.py --evidence /root/monos-probe-evidence inspect node-01
 ```
 
 These generic snapshots record facts but do not establish the reboot criterion.
@@ -155,7 +155,7 @@ Use a fresh trial ID for the explicit interrupted-work case below, **after the
 Owner agrees to the reboot window**. All commands run from the staging root.
 
 ```sh
-python3 infra/probe/probe.py --evidence /root/monolab-probe-evidence reboot-hold reboot-01
+python3 infra/probe/probe.py --evidence /root/monos-probe-evidence reboot-hold reboot-01
 ```
 
 Require exit 0, `outcome: ready`, and all checks true in
@@ -173,8 +173,8 @@ existing services, preserving their storage:
 
 ```sh
 docker compose -f infra/compose/compose.yaml up -d database server
-systemctl start monolab-probe-runner.service
-python3 infra/probe/probe.py --evidence /root/monolab-probe-evidence reboot-verify reboot-01
+systemctl start monos-probe-runner.service
+python3 infra/probe/probe.py --evidence /root/monos-probe-evidence reboot-verify reboot-01
 ```
 
 `reboot-verify` only reads backend/journal/process state and writes a new private
@@ -196,7 +196,7 @@ Stop rather than deleting any journal or worktree:
 printf '%s\n' '{"action":"revoke","attempt_id":"reboot-01"}' |
   docker compose -f infra/compose/compose.yaml exec -T server \
     node --experimental-strip-types apps/server/src/admin.ts
-python3 infra/probe/probe.py --evidence /root/monolab-probe-evidence inspect reboot-01
+python3 infra/probe/probe.py --evidence /root/monos-probe-evidence inspect reboot-01
 ```
 
 Before updating a previously installed driver, settle any live trial and copy

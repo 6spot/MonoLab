@@ -1,7 +1,11 @@
 # Research: Multica runtime permissions and shell freedom
 
+> Product terminology and command/path examples were normalized to `monos` on
+> 2026-09-29. Exact historical names and observations remain in the original Git
+> revisions and unchanged raw JSON attachments; this edit is not a new test run.
+
 - Query: The Owner asked how Multica implements CLI restrictions after stating that normal CLI shell execution should not be restricted.
-- Scope: internal reference checkout, read-only inspection of `/Users/me/IdeaProjects/multica`; MonoLab recommendations are separate from reference behavior.
+- Scope: internal reference checkout, read-only inspection of `/Users/me/IdeaProjects/multica`; monos recommendations are separate from reference behavior.
 - Date: 2026-09-28
 - Reference HEAD: `44ea3b40c8b4f54f4c76d1dd3e3c92e0c0cabd19`, branch `main`; the main session subsequently confirmed the commit with `git rev-parse HEAD`.
 - Decision status: the main session communicated adoption of normal shell freedom, existing execution/service identity separation, cgroup lifecycle ownership and Tool Protocol attribution. The earlier strict filesystem/PID/XDG profile is **not adopted**.
@@ -61,11 +65,11 @@ Multica's Unix runtime helper at `server/pkg/agent/proc_other.go:22` sets **`Set
 
 Targeted searches of production `server/pkg/agent` and `server/internal/daemon` found no `SO_PEERCRED`, `GetsockoptUcred`, `boot_id`, `cgroup`, process credential switching, chroot/unshare or Linux read-only mount enforcement in these launch paths. This is a scoped source finding, not proof about external infrastructure around every Multica deployment.
 
-**MonoLab should retain its own cgroup supervision.** A process group does not guarantee that a `setsid`/double-fork descendant remains included, while MonoLab explicitly requires escaped/background descendant handling, restart inventory and birth/boot identity. Cgroups are useful process ownership infrastructure even when all ordinary shell commands are permitted; they do not imply global filesystem restrictions.
+**monos should retain its own cgroup supervision.** A process group does not guarantee that a `setsid`/double-fork descendant remains included, while monos explicitly requires escaped/background descendant handling, restart inventory and birth/boot identity. Cgroups are useful process ownership infrastructure even when all ordinary shell commands are permitted; they do not imply global filesystem restrictions.
 
 ### Workspaces, worktrees and home state
 
-- Standard task preparation is an initially empty task workdir; repositories are checked out on demand (`server/internal/daemon/execenv/execenv.go:365`). `Prepare` selects `<envRoot>/workdir`, output and logs at line 436; explicit local-directory and local-worktree modes are separate existing Multica features, not MonoLab concepts to import.
+- Standard task preparation is an initially empty task workdir; repositories are checked out on demand (`server/internal/daemon/execenv/execenv.go:365`). `Prepare` selects `<envRoot>/workdir`, output and logs at line 436; explicit local-directory and local-worktree modes are separate existing Multica features, not monos concepts to import.
 - A local worktree preserves the user-selected subdirectory depth under a private checkout (`server/internal/daemon/execenv/local_worktree.go:124`, line 144). Git worktree creation runs ordinary `git -C <root> worktree add -b ...` (`execenv/git.go:92`). This avoids accidental checkout collisions; it does not restrict other readable/writable paths.
 - `server/internal/daemon/daemon.go:96` documents a real Git common-directory failure: Codex workspace-write allowed checkout files but not linked worktree metadata in the shared cache. For Codex on Linux/Windows it still chooses isolated Git metadata layout at line 110, even though default sandboxing is now off. This supports testing Git common-directory permissions explicitly, not inventing shell command restrictions.
 - Task `CODEX_HOME` keeps config/session/skills separate, but `auth.json` is linked to shared CLI authentication (`execenv/codex_home.go:17`), while config files are copied (`:23`). This is state-management convenience, not a separate credential boundary.
@@ -76,24 +80,24 @@ Targeted searches of production `server/pkg/agent` and `server/internal/daemon` 
 - `server/internal/daemon/daemon.go:141` requires a task token with the `mat_` prefix; it never falls back to daemon credentials. The task environment contains `MULTICA_TOKEN` at line 152. The main launch path repeats this invariant at line 7319.
 - `server/internal/middleware/auth.go:77` hashes the token, loads its server record and overrides user-supplied agent/task/workspace identity headers. `server/pkg/db/queries/task_token.sql:6` requires the token not to be expired. Header hints do not decide identity.
 - `MULTICA_TASK_CONFIG_ROOT` redirects implicit Multica CLI profile lookup to task-local state (`daemon.go:7371`; `server/internal/cli/config.go:15,274,336`), reducing accidental fallback to an Owner profile.
-- Codex's default shell environment excludes credential-like variable names. Multica explicitly restores the **current** task's token and only authorized explicit credential names (`execenv/codex_shell_env.go:16,42`); it filters inherited `MULTICA_*` belonging to the daemon. This is a useful lesson for any future Codex Adapter, not a reason to copy token-in-environment into MonoLab.
-- Same-UID tasks still share the underlying account's readable files and credentials. Multica's own docs acknowledge that outer boundary. Its scoped bearer token design does not itself establish MonoLab's stronger kernel-attributed credential/journal channel for concurrent same-UID Attempts.
+- Codex's default shell environment excludes credential-like variable names. Multica explicitly restores the **current** task's token and only authorized explicit credential names (`execenv/codex_shell_env.go:16,42`); it filters inherited `MULTICA_*` belonging to the daemon. This is a useful lesson for any future Codex Adapter, not a reason to copy token-in-environment into monos.
+- Same-UID tasks still share the underlying account's readable files and credentials. Multica's own docs acknowledge that outer boundary. Its scoped bearer token design does not itself establish monos's stronger kernel-attributed credential/journal channel for concurrent same-UID Attempts.
 
-### User-directed MonoLab choice
+### User-directed monos choice
 
 The Owner requested normal CLI shell freedom and asked for Multica as the reference. The main session confirmed the following direction; this supersedes the **earlier candidate** strict profile in [OpenCode research](opencode-runtime.md):
 
 1. Let OpenCode execute normal shell commands, build tools, Git and CLI-maintained config/cache/plugin setup under execution account `me`. No shell command allowlist, global `ProtectSystem=strict` read-only filesystem, `PrivatePIDs`, or read-only XDG workaround is required for this task.
 2. Use OpenCode's supported unattended approval behavior, with explicit free-model selection. On installed 1.18.30, `--auto` is the visible alias corresponding to Multica's hidden `--dangerously-skip-permissions`; explicit CLI deny rules remain honored. Do not introduce restrictions solely to satisfy assumptions from the earlier candidate profile.
-3. Preserve **separate service and execution identities**, because this is an existing MonoLab architecture contract: service-owned journal/enrollment/delivery credentials and protected caches are not normal execution-account state. Runtime/CLI login remains Owner-managed under `me`. Use narrowly scoped launch privileges; no root coding Agent or broad root command endpoint.
+3. Preserve **separate service and execution identities**, because this is an existing monos architecture contract: service-owned journal/enrollment/delivery credentials and protected caches are not normal execution-account state. Runtime/CLI login remains Owner-managed under `me`. Use narrowly scoped launch privileges; no root coding Agent or broad root command endpoint.
 4. Preserve per-Attempt cgroups and durable dispatch identity for attribution, whole-tree stop/freeze and restart reconciliation. Keep execution users from moving processes into other Attempts' cgroups. This is lifecycle/Tool Protocol ownership, not a shell whitelist.
-5. Preserve Planner's semantic read-only repository contract using **service-owned immutable inspection snapshots with DAC read-only access to `me`**, under parent directories that `me` cannot rename/replace. Node workspaces remain execution-owned and writable. Planner can write scratch and invoke shell/`monolab` normally; copying a snapshot into scratch does not mutate the authoritative inspection snapshot. No global read-only mount is necessary for this mechanism.
-6. Preserve the existing `monolab` Unix socket peer PID/birth/boot/cgroup verification, immutable journal-before-send and backend fencing/receipt validation. Do not replace these with Multica's env hints or simply inject a long-lived daemon token.
-7. Distinguish **MonoLab dependencies** from an installed CLI maintaining its own dependencies. OpenCode internally ensuring its config/plugin files is a runtime behavior to observe, not automatically an extra product dependency or a reason to block XDG writes. Intervene only if a concrete runtime behavior prevents acceptance.
+5. Preserve Planner's semantic read-only repository contract using **service-owned immutable inspection snapshots with DAC read-only access to `me`**, under parent directories that `me` cannot rename/replace. Node workspaces remain execution-owned and writable. Planner can write scratch and invoke shell/`monos` normally; copying a snapshot into scratch does not mutate the authoritative inspection snapshot. No global read-only mount is necessary for this mechanism.
+6. Preserve the existing `monos` Unix socket peer PID/birth/boot/cgroup verification, immutable journal-before-send and backend fencing/receipt validation. Do not replace these with Multica's env hints or simply inject a long-lived daemon token.
+7. Distinguish **monos dependencies** from an installed CLI maintaining its own dependencies. OpenCode internally ensuring its config/plugin files is a runtime behavior to observe, not automatically an extra product dependency or a reason to block XDG writes. Intervene only if a concrete runtime behavior prevents acceptance.
 
 Required validation follows this smaller boundary: ordinary shell writes/build/Git/socket/HTTPS work; service credentials/journal and Planner snapshots cannot be modified by `me`; same-UID Attempt hints cannot obtain another dispatch's Tool Protocol authority; background descendants are stopped/reconciled; real formal completion is confirmed by backend receipts. Do not claim hostile arbitrary-code containment or complete isolation among all processes owned by `me`.
 
-### Related MonoLab specifications
+### Related monos specifications
 
 - `ARCHITECTURE.md`: semantic Agent work and deterministic Tool Protocol orchestration; read-only Planner inspection.
 - `docs/03-runtime-and-execution.md`: installed Runtime Adapter, cgroup/birth/boot ownership, reserved paths and objective permission behavior.
@@ -108,5 +112,5 @@ Required validation follows this smaller boundary: ordinary shell writes/build/G
 - This was read-only source research. No Multica code, local/remote environment, installed CLI, model or package was executed or changed. No runtime tests are claimed.
 - The main session verified `git diff --quiet HEAD --` succeeds for `security-model.mdx`, `opencode.go`, `codex.go`, `claude.go`, `proc_other.go` and `codex_sandbox.go` at the paths cited above. These selected files match the recorded commit. Other reference files were inspected from the local checkout; no whole-repository cleanliness claim is made.
 - Multica's comments about provider/OS bugs are its documented reasons at this commit, not independently verified present-day upstream behavior. The Windows sandbox opt-in and possible future macOS fix do not change its Linux default.
-- No per-task Unix user split or kernel-attributed local credential channel was found in the targeted reference launch path. MonoLab must preserve those requirements from its own architecture rather than infer that Multica implements them.
+- No per-task Unix user split or kernel-attributed local credential channel was found in the targeted reference launch path. monos must preserve those requirements from its own architecture rather than infer that Multica implements them.
 - Do not copy Multica workspace/team/agent organization entities, runtime profiles, MCP broker design or local-directory resource product model. Only the cited native launch and operational lessons are relevant here.

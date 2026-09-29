@@ -1,5 +1,5 @@
 {
-  "name": "@monolab/server",
+  "name": "@monos/server",
   "private": true,
   "type": "module",
   "dependencies": {

@@ -2,7 +2,7 @@
 
 ## Positioning
 
-MonoLab is a personal AI cloud development workspace for one Owner.
+monos is a personal AI cloud development workspace for one Owner.
 
 The primary loop is:
 

@@ -5,7 +5,7 @@ import { eq } from 'drizzle-orm';
 import { runners } from './schema.ts';
 
 export function database(url: string) {
-  const pool = new pg.Pool({ connectionString: url, max: 8, application_name: 'monolab-boundary-probe' });
+  const pool = new pg.Pool({ connectionString: url, max: 8, application_name: 'monos-boundary-probe' });
   return { pool, orm: drizzle(pool) };
 }
 

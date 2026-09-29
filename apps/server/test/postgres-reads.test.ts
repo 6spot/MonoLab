@@ -11,7 +11,7 @@ import { BoundaryService } from '../src/service.ts';
 import { createApp } from '../src/app.ts';
 import { initializeTask } from '../src/task-records.ts';
 
-describe.skipIf(process.env.MONOLAB_TEST_DATABASE !== '1')('canonical Owner reads and reconnect cursors', () => {
+describe.skipIf(process.env.MONOS_TEST_DATABASE !== '1')('canonical Owner reads and reconnect cursors', () => {
   let db: Database; let admin: Database; let reads: OwnerReads;
   const namespace = `reads_${randomUUID().replaceAll('-', '')}`;
   beforeAll(async () => {

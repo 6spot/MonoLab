@@ -12,7 +12,7 @@ Inspected upstream source at commit `fa5d470ae40a082d952b50e843287906566785a6`. 
 - Runtime transports differ: the Codex adapter calls `turn/steer` with an expected turn ID; the Claude adapter inserts context using hooks at supported boundaries. These are capabilities observed in Multica's adapters, not a universal CLI guarantee. See [Codex adapter](https://github.com/multica-ai/multica/blob/fa5d470ae40a082d952b50e843287906566785a6/server/pkg/agent/codex.go#L1946) and [Claude adapter](https://github.com/multica-ai/multica/blob/fa5d470ae40a082d952b50e843287906566785a6/server/pkg/agent/claude_supplement.go#L20).
 - The UI test demonstrates “Add to current run”, “Stop and start over”, and delivery receipts. It manually advances the receipt, so it does not prove provider-side delivery. See [steering scenario](https://github.com/multica-ai/multica/blob/fa5d470ae40a082d952b50e843287906566785a6/e2e/comment-steering.spec.ts).
 
-Multica's Issue and queued Agent run do not map one-to-one to MonoLab's Execution Task. Borrow the ongoing conversation and reliable input delivery patterns; retain MonoLab's explicit planning, completion evidence, and Owner acceptance boundaries.
+Multica's Issue and queued Agent run do not map one-to-one to monos's Execution Task. Borrow the ongoing conversation and reliable input delivery patterns; retain monos's explicit planning, completion evidence, and Owner acceptance boundaries.
 
 ## Assessment
 
@@ -32,7 +32,7 @@ Recommended change: keep a stable Task identity and allow its requirement to evo
 8. Conflicting active work must stop or reach a controlled boundary before revised work takes ownership. Fence stale formal commands and reconcile physical writers. Do not send a changed requirement to one Agent and assume all Nodes have adopted it.
 9. Pending unresolved requirement changes block acceptance of a potentially stale result. Acceptance binds the effective Specification, Plan, and result revision; an old review confirmation cannot authorize a new result. Delivery operations with unknown outcomes must be reconciled before switching their basis.
 10. Input delivery failure remains visible and recoverable. Unsupported live steering falls back to queued follow-up or controlled stop-and-resume with preserved workspace/history. Delivery success does not prove implementation. Retry and crash recovery must account for uncertain delivery rather than promise exactly-once provider consumption.
-11. Completed Tasks remain accepted historical deliveries. Under the adopted MonoLab boundary, Task Conversation serves only the current Task and terminal conversation is read-only. Further implementation or independent objectives are initiated by the Owner through Todo Discussion as independent Tasks, without inherited Task context or creation previews in Task Conversation; clarification and changes within unfinished delivery remain in the same Task.
+11. Completed Tasks remain accepted historical deliveries. Under the adopted monos boundary, Task Conversation serves only the current Task and terminal conversation is read-only. Further implementation or independent objectives are initiated by the Owner through Todo Discussion as independent Tasks, without inherited Task context or creation previews in Task Conversation; clarification and changes within unfinished delivery remain in the same Task.
 
 ## Suggested first-stage boundary
 

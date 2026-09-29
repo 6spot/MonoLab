@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/coder/websocket"
-	protocol "monolab.local/protocol"
+	protocol "monos.local/protocol"
 )
 
 type connectionHandler struct {

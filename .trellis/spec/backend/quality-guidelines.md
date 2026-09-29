@@ -14,7 +14,7 @@ The real database entrypoint now includes `postgres.test.ts` (16 cases),
 `postgres-claims.test.ts` (6 independent-process cases) and
 `postgres-recovery.test.ts` (3 process-crash/settlement cases). All 25 passed on
 the pinned Linux PostgreSQL deployment. The regular unit entrypoint skips all
-database suites unless `MONOLAB_TEST_DATABASE=1`; use `pnpm test:db` for this gate.
+database suites unless `MONOS_TEST_DATABASE=1`; use `pnpm test:db` for this gate.
 
 - Test deterministic rules independently of HTTP/Git/Runtime.
 - Use fakes for races, then real Linux/CLI/provider probes for external assumptions.

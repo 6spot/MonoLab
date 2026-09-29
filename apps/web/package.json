@@ -1,5 +1,5 @@
 {
-  "name": "@monolab/web",
+  "name": "@monos/web",
   "private": true,
   "type": "module",
   "scripts": {
@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@base-ui/react": "1.8.0",
-    "@monolab/protocol": "workspace:*",
+    "@monos/protocol": "workspace:*",
     "@tanstack/react-query": "5.104.0",
     "class-variance-authority": "0.7.1",
     "cn": "0.4.0",

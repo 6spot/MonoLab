@@ -11,9 +11,9 @@ import { createApp } from '../src/app.ts';
 import { BoundaryService } from '../src/service.ts';
 
 it('serves only the shell and hashed assets with separate cache rules', async () => {
-  const root = await mkdtemp(join(tmpdir(), 'monolab-web-'));
+  const root = await mkdtemp(join(tmpdir(), 'monos-web-'));
   await mkdir(join(root, 'assets'));
-  await writeFile(join(root, 'index.html'), '<!doctype html><title>MonoLab</title>');
+  await writeFile(join(root, 'index.html'), '<!doctype html><title>monos</title>');
   await writeFile(join(root, 'assets/app-hash.js'), 'export const ready = true;');
   const db = database('postgres://unused:unused@127.0.0.1:1/unused');
   const app = createApp(new BoundaryService(db, { signingKey: 'test-only-signing-key-never-for-deployment' }), undefined, root);

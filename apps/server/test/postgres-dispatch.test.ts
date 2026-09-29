@@ -10,7 +10,7 @@ import { BoundaryService } from '../src/service.ts';
 import { enrollFixture } from '../src/fixtures.ts';
 import { Worker } from './fixtures/process-worker.ts';
 
-describe.skipIf(process.env.MONOLAB_TEST_DATABASE !== '1')('durable selected Attempt dispatch', () => {
+describe.skipIf(process.env.MONOS_TEST_DATABASE !== '1')('durable selected Attempt dispatch', () => {
   let db: Database; let admin: Database; let queue: DispatchQueue; let url: string;
   const namespace = `dispatch_${randomUUID().replaceAll('-', '')}`;
   beforeAll(async () => {

@@ -9,8 +9,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	protocol "monolab.local/protocol"
-	"monolab.local/runner/internal/host"
+	protocol "monos.local/protocol"
+	"monos.local/runner/internal/host"
 )
 
 // Policy order is significant to OpenCode; this struct keeps '*' first.
@@ -43,7 +43,7 @@ func Config(d protocol.Dispatch) (string, error) {
 	perms := permissions{"allow", "allow", "allow", "allow", "allow", edit, json.RawMessage(external), "deny", "deny", "deny", "allow", "allow", "allow", "deny", "deny"}
 	fixed := map[string]any{"model": host.FreeModel}
 	cfg := map[string]any{"model": host.FreeModel, "small_model": host.FreeModel, "share": "disabled", "snapshot": false, "autoupdate": false, "shell": "/bin/bash", "agent": map[string]any{
-		"monolab-probe": map[string]any{"mode": "primary", "model": host.FreeModel, "permission": perms, "prompt": "Use native bash to invoke /usr/local/bin/monolab for formal MonoLab actions. Run monolab --help to discover commands. Natural-language output is never a formal state transition. Do not start background services or subagents."}, "title": fixed, "summary": fixed, "compaction": fixed}}
+		"monos-probe": map[string]any{"mode": "primary", "model": host.FreeModel, "permission": perms, "prompt": "Use native bash to invoke /usr/local/bin/monos for formal monos actions. Run monos --help to discover commands. Natural-language output is never a formal state transition. Do not start background services or subagents."}, "title": fixed, "summary": fixed, "compaction": fixed}}
 	raw, err := json.Marshal(cfg)
 	return string(raw), err
 }
@@ -53,7 +53,7 @@ func Environment(d protocol.Dispatch) ([]string, error) {
 		return nil, err
 	}
 	base := host.AttemptRoot(d.AttemptID)
-	return []string{"HOME=/home/me", "PWD=" + host.Path(d.AttemptID, "scratch"), "USER=me", "LOGNAME=me", "PATH=/usr/local/bin:/home/linuxbrew/.linuxbrew/bin:/usr/bin:/bin", "LANG=C.UTF-8", "SHELL=/bin/bash", "TMPDIR=" + filepath.Join(base, "tmp"), "XDG_DATA_HOME=" + filepath.Join(base, "data"), "XDG_CACHE_HOME=" + filepath.Join(base, "cache"), "XDG_CONFIG_HOME=" + filepath.Join(base, "config"), "XDG_STATE_HOME=" + filepath.Join(base, "state"), "MONOLAB_SOCKET=" + host.Socket, "OPENCODE_CONFIG_CONTENT=" + config, "OPENCODE_DISABLE_PROJECT_CONFIG=1", "OPENCODE_DISABLE_AUTOUPDATE=1", "OPENCODE_DISABLE_LSP_DOWNLOAD=1", "OPENCODE_DISABLE_EXTERNAL_SKILLS=1", "OPENCODE_DISABLE_CLAUDE_CODE=1"}, nil
+	return []string{"HOME=/home/me", "PWD=" + host.Path(d.AttemptID, "scratch"), "USER=me", "LOGNAME=me", "PATH=/usr/local/bin:/home/linuxbrew/.linuxbrew/bin:/usr/bin:/bin", "LANG=C.UTF-8", "SHELL=/bin/bash", "TMPDIR=" + filepath.Join(base, "tmp"), "XDG_DATA_HOME=" + filepath.Join(base, "data"), "XDG_CACHE_HOME=" + filepath.Join(base, "cache"), "XDG_CONFIG_HOME=" + filepath.Join(base, "config"), "XDG_STATE_HOME=" + filepath.Join(base, "state"), "MONOS_SOCKET=" + host.Socket, "OPENCODE_CONFIG_CONTENT=" + config, "OPENCODE_DISABLE_PROJECT_CONFIG=1", "OPENCODE_DISABLE_AUTOUPDATE=1", "OPENCODE_DISABLE_LSP_DOWNLOAD=1", "OPENCODE_DISABLE_EXTERNAL_SKILLS=1", "OPENCODE_DISABLE_CLAUDE_CODE=1"}, nil
 }
 
 // BoundedWriter preserves partial output but bounds retained logs per Attempt.
@@ -63,7 +63,7 @@ type BoundedWriter struct {
 	Truncated bool
 }
 
-const TruncationMarker = "\n[MonoLab log truncated: retention limit reached]\n"
+const TruncationMarker = "\n[monos log truncated: retention limit reached]\n"
 
 func (w *BoundedWriter) truncate() error {
 	if w.Truncated {
@@ -129,5 +129,5 @@ func run(d protocol.Dispatch, execute func(*exec.Cmd) error) error {
 }
 
 func Arguments(d protocol.Dispatch) []string {
-	return []string{"run", "--pure", "--auto", "--format", "json", "--model", host.FreeModel, "--agent", "monolab-probe", "--dir", host.Path(d.AttemptID, "scratch")}
+	return []string{"run", "--pure", "--auto", "--format", "json", "--model", host.FreeModel, "--agent", "monos-probe", "--dir", host.Path(d.AttemptID, "scratch")}
 }

@@ -17,8 +17,8 @@ import sys
 import time
 import urllib.request
 
-ROOT = pathlib.Path("/var/lib/monolab-probe")
-CONFIG = pathlib.Path("/etc/monolab-probe/runner.json")
+ROOT = pathlib.Path("/var/lib/monos-probe")
+CONFIG = pathlib.Path("/etc/monos-probe/runner.json")
 MODEL = "opencode/longcat-2.5-preview-free"
 ID = re.compile(r"^[A-Za-z0-9_-]{1,80}$")
 COMMON_CHECKS = {"bundled_help", "forged_hints_denied", "forged_environment_keeps_own_result", "workspace_command", "retry_ignores_changed_file", "same_id_changed_payload_conflicts", "long_payload_retained_before_send", "long_payload_changed_content_conflicts"}
@@ -72,7 +72,7 @@ def retained_live_identity(before, after):
 def physical_state(ownership, scratch):
     cgroup = ownership.get("cgroup", "")
     population = None
-    if re.fullmatch(r"/system.slice/monolab-probe-[A-Za-z0-9_-]+\.service", cgroup):
+    if re.fullmatch(r"/system.slice/monos-probe-[A-Za-z0-9_-]+\.service", cgroup):
         try:
             fields = dict(line.split() for line in (pathlib.Path("/sys/fs/cgroup" + cgroup) / "cgroup.events").read_text().splitlines())
             if fields.get("populated") in ("0", "1"):
@@ -95,7 +95,7 @@ class Probe:
     def __init__(self, source, evidence):
         self.source = pathlib.Path(source).resolve()
         self.evidence = pathlib.Path(evidence).resolve()
-        if self.source != pathlib.Path("/root/monolab-boundary-probe-src"):
+        if self.source != pathlib.Path("/root/monos-boundary-probe-src"):
             raise ValueError("use the explicitly reviewed staging root")
         self.evidence.mkdir(parents=True, exist_ok=True, mode=0o700)
         os.chmod(self.evidence, 0o700)
@@ -115,7 +115,7 @@ class Probe:
         return json.loads(output) if output.strip() else None
 
     def query(self, sql):
-        output = self.call(self.compose + ["exec", "-T", "database", "psql", "-X", "-U", "monolab", "-d", "monolab", "-At", "-v", "ON_ERROR_STOP=1"], sql.encode())
+        output = self.call(self.compose + ["exec", "-T", "database", "psql", "-X", "-U", "monos", "-d", "monos", "-At", "-v", "ON_ERROR_STOP=1"], sql.encode())
         return json.loads(output)
 
     def save(self, name, value):
@@ -165,8 +165,8 @@ class Probe:
                   "execution_cache_not_writable": not test("me", "-w", ROOT / "cache/fixture.git"),
                   "journal_private": not test("me", "-r", self.config["journal"]),
                   "control_credential_private": not test("me", "-r", self.config["token_file"]),
-                  "service_result_readable": test("monolab-probe", "-r", ROOT / "execution" / attempt / "workspace/probe-result.txt")}
-        result = subprocess.run(["runuser", "-u", "me", "--", "/usr/local/bin/monolab", "command-status", "--request-id", "shared-open"], capture_output=True, text=True, timeout=30, cwd="/home/me")
+                  "service_result_readable": test("monos-probe", "-r", ROOT / "execution" / attempt / "workspace/probe-result.txt")}
+        result = subprocess.run(["runuser", "-u", "me", "--", "/usr/local/bin/monos", "command-status", "--request-id", "shared-open"], capture_output=True, text=True, timeout=30, cwd="/home/me")
         try:
             body = json.loads(result.stdout)
         except ValueError:
@@ -198,11 +198,11 @@ class Probe:
         attempt = checked_id(attempt)
         catalog = self.catalog()  # Check free selection before every real trial.
         self.install_driver()
-        command = "python3 /var/lib/monolab-probe/probe-tools/driver.py --attempt " + attempt + " --kind " + kind + (" --hold" if hold else "")
+        command = "python3 /var/lib/monos-probe/probe-tools/driver.py --attempt " + attempt + " --kind " + kind + (" --hold" if hold else "")
         if peer_attempt:
             command += " --peer-attempt " + checked_id(peer_attempt)
-        prompt = ("This is the authorized MonoLab boundary test. Use your native bash tool to execute exactly the following command, with a 600000 ms tool timeout. "
-                  "The root-owned test driver calls bundled monolab --help, submits formal workspace and lifecycle commands using input files, tests retries and normal shell/Git. "
+        prompt = ("This is the authorized monos boundary test. Use your native bash tool to execute exactly the following command, with a 600000 ms tool timeout. "
+                  "The root-owned test driver calls bundled monos --help, submits formal workspace and lifecycle commands using input files, tests retries and normal shell/Git. "
                   "Do not replace it with a text answer or skip failed cases. Completion can stop this process tree before a final answer; that is expected.\n" + command)
         hashes = {name: hashlib.sha256((self.source / "infra/probe" / name).read_bytes()).hexdigest() for name in ("driver.py", "probe.py")}
         trial = {"attempt_id": attempt, "kind": kind, "model": catalog, "hold": hold, "prepared_at": time.time(), "harness_sha256": hashes}
@@ -253,7 +253,7 @@ class Probe:
         if previous.get("status") != "committed":
             raise RuntimeError("idle restart requires an existing committed handoff")
         self.save("before-idle-restart-" + attempt, {"state": before})
-        self.call(["systemctl", "restart", "monolab-probe-runner.service"])
+        self.call(["systemctl", "restart", "monos-probe-runner.service"])
         self.call(self.compose + ["restart", "server"])
         time.sleep(8)
         after = self.snapshot(attempt)
@@ -262,7 +262,7 @@ class Probe:
         checks = {field + "_unchanged": before[field] == after[field] for field in fields}
         checks["no_claims_created"] = not self.query(unresolved)
         checks["existing_result_readable"] = recovered == previous
-        checks["runner_active"] = self.call(["systemctl", "is-active", "monolab-probe-runner.service"]).strip() == "active"
+        checks["runner_active"] = self.call(["systemctl", "is-active", "monos-probe-runner.service"]).strip() == "active"
         result = {"outcome": "pass" if all(checks.values()) else "fail", "checks": checks, "state": after,
                   "limitation": "Completed Attempt recovery only; not live concurrent restart or host reboot."}
         self.save("after-idle-restart-" + attempt, result)
@@ -389,8 +389,8 @@ class Probe:
         pending = self.query("SELECT coalesce(jsonb_agg(id),'[]'::jsonb) FROM attempts WHERE runner_id='" + self.runner + "' AND NOT process_released;")
         if pending:
             raise RuntimeError("settle all existing probe ownership before this Runner interruption scenario")
-        self.call(["systemctl", "is-active", "monolab-probe-runner.service"])
-        self.call(["systemctl", "stop", "monolab-probe-runner.service"])
+        self.call(["systemctl", "is-active", "monos-probe-runner.service"])
+        self.call(["systemctl", "stop", "monos-probe-runner.service"])
         before = None
         failure = None
         try:
@@ -401,7 +401,7 @@ class Probe:
             failure = type(error).__name__
         finally:
             # Restore only the task-owned Runner that this command stopped.
-            self.call(["systemctl", "start", "monolab-probe-runner.service"])
+            self.call(["systemctl", "start", "monos-probe-runner.service"])
         after = self.wait(attempt, seconds=60)
         original = (before or {}).get("attempts", [])
         current = after.get("attempts", [])
@@ -413,14 +413,14 @@ class Probe:
             "runtime_never_started": len(current) == 1 and current[0]["started"] is False and not any(event["kind"] == "started" for event in after.get("events", [])),
             "verified_stop_released_claim": len(current) == 1 and current[0]["process_released"] is True and current[0]["process_absent"] is True and len(stops) == 1 and stops[0]["state"] == "succeeded" and stops[0]["writer_absent"] is True,
             "retained_revocation_tombstone": after.get("ownership", {}).get("phase") == "revoked" and marker.get("revoked") is True,
-            "no_attempt_unit": self.call(["systemctl", "show", "monolab-probe-a-" + attempt + ".service", "--property=LoadState", "--value"]).strip() == "not-found",
+            "no_attempt_unit": self.call(["systemctl", "show", "monos-probe-a-" + attempt + ".service", "--property=LoadState", "--value"]).strip() == "not-found",
         }
         return {"outcome": "pass" if all(checks.values()) else "fail", "checks": checks, "before": before, "after": after, "failure_category": failure}
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--source", default="/root/monolab-boundary-probe-src")
+    parser.add_argument("--source", default="/root/monos-boundary-probe-src")
     parser.add_argument("--evidence", required=True)
     sub = parser.add_subparsers(dest="action", required=True)
     sub.add_parser("enroll")
@@ -511,7 +511,7 @@ def main():
         if not all((item.get("driver") or {}).get("stage") == "ready_for_handoff" for item in before):
             probe.save(prefix, {"outcome": "fail", "reason": "concurrent Attempts did not reach explicit hold", "state": before})
             sys.exit(2)
-        probe.call(["systemctl", "restart", "monolab-probe-runner.service"])
+        probe.call(["systemctl", "restart", "monos-probe-runner.service"])
         probe.call(probe.compose + ["restart", "server"])
         time.sleep(8)
         after = [probe.snapshot(attempt) for attempt in attempts]

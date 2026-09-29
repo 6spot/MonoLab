@@ -29,7 +29,7 @@ creates the opaque hashed-token session in the same transaction. Avoid throwing
 inside that transaction for ordinary password rejection, which would roll back
 the failure count. Crypto work is bounded by the serialized access-row lock.
 
-Cookie is `__Host-monolab`, Secure, HttpOnly, SameSite=Strict, Path=/, no Domain.
+Cookie is `__Host-monos`, Secure, HttpOnly, SameSite=Strict, Path=/, no Domain.
 Explicit Bearer takes precedence; invalid Bearer never falls back to Cookie.
 Duplicate Cookie names fail authentication. Cookie writes and login require Origin
 equal to the request's HTTP(S) origin. Forwarded headers are not trusted by default.

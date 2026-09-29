@@ -17,8 +17,8 @@ import (
 	"syscall"
 	"time"
 
-	protocol "monolab.local/protocol"
-	"monolab.local/runner/internal/wire"
+	protocol "monos.local/protocol"
+	"monos.local/runner/internal/wire"
 )
 
 type Manifest struct {
@@ -229,7 +229,7 @@ func prepare(d protocol.Dispatch) error {
 	if err != nil || uid == 0 {
 		return fmt.Errorf("invalid execution uid")
 	}
-	group, err := user.LookupGroup("monolab-probe-read")
+	group, err := user.LookupGroup("monos-probe-read")
 	if err != nil {
 		return err
 	}
@@ -301,7 +301,7 @@ func command(ctx context.Context, path string, args ...string) ([]byte, error) {
 }
 func properties(id string, systemOp bool) []string {
 	// Fixed service ownership is independent of any caller-controlled runtime flags.
-	p := []string{"User=me", "Group=monolab-probe-read", "NoNewPrivileges=yes", "CapabilityBoundingSet=", "AmbientCapabilities=", "KillMode=control-group", "SendSIGKILL=yes", "Restart=no", "UMask=0027", "WorkingDirectory=" + Path(id, "scratch")}
+	p := []string{"User=me", "Group=monos-probe-read", "NoNewPrivileges=yes", "CapabilityBoundingSet=", "AmbientCapabilities=", "KillMode=control-group", "SendSIGKILL=yes", "Restart=no", "UMask=0027", "WorkingDirectory=" + Path(id, "scratch")}
 	if !systemOp {
 		p = append(p, "RemainAfterExit=yes")
 	}
@@ -342,7 +342,7 @@ func status(ctx context.Context, id string) (Status, error) {
 		}
 		return s, nil
 	}
-	if err = validateUnit(values, Unit(id), "MonoLab probe attempt "+m.Dispatch.DispatchID); err != nil {
+	if err = validateUnit(values, Unit(id), "monos probe attempt "+m.Dispatch.DispatchID); err != nil {
 		return s, err
 	}
 	if !m.Acknowledged {
@@ -525,7 +525,7 @@ func Handle(ctx context.Context, r Request) (Status, error) {
 		if err = saveManifest(m); err != nil {
 			return Status{}, err
 		}
-		args := []string{"--quiet", "--unit=" + Unit(r.AttemptID), "--service-type=exec", "--description=MonoLab probe attempt " + r.Dispatch.DispatchID}
+		args := []string{"--quiet", "--unit=" + Unit(r.AttemptID), "--service-type=exec", "--description=monos probe attempt " + r.Dispatch.DispatchID}
 		for _, p := range properties(r.AttemptID, false) {
 			args = append(args, "--property="+p)
 		}

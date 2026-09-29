@@ -9,7 +9,7 @@ import (
 	"syscall"
 	"testing"
 
-	protocol "monolab.local/protocol"
+	protocol "monos.local/protocol"
 )
 
 func TestEffectFailureSurvivesBothJSONBoundaries(t *testing.T) {

@@ -12,7 +12,7 @@ import { consumeTaskConfirmation, issueOwnerSession, OwnerCommands, prepareTaskP
 
 const signingKey = 'test-only-owner-command-signing-key';
 const error = (code: string) => ({ detail: { code } });
-describe.skipIf(process.env.MONOLAB_TEST_DATABASE !== '1')('PostgreSQL Owner commands', () => {
+describe.skipIf(process.env.MONOS_TEST_DATABASE !== '1')('PostgreSQL Owner commands', () => {
   let db: Database; let admin: Database; let commands: OwnerCommands;
   const namespace = `owner_${randomUUID().replaceAll('-', '')}`;
   beforeAll(async () => {

@@ -4,7 +4,7 @@ This deploys only the boundary probe, not the Stage A product. Use the Owner-aut
 
 The server joins a separate ordinary `ingress` bridge as well as the private `control` network. Docker 29 did not install the loopback port mapping when the server joined only an `internal:true` network. The ordinary bridge enables the explicit `127.0.0.1:18443` binding; PostgreSQL remains attached only to `control`, with no published database port.
 
-Prerequisites: Docker/Compose, Node >=20 for the dependency-free preparation script, OpenSSL, and no existing `monolab-boundary-probe` project, owned volume, listener on 18443 or `infra/compose/private`. Product/backend execution uses the isolated pinned Node 24 image, not the host Node installation. Main host operations must inventory collisions before running these commands. No CLI/provider login is changed by these scripts.
+Prerequisites: Docker/Compose, Node >=20 for the dependency-free preparation script, OpenSSL, and no existing `monos-boundary-probe` project, owned volume, listener on 18443 or `infra/compose/private`. Product/backend execution uses the isolated pinned Node 24 image, not the host Node installation. Main host operations must inventory collisions before running these commands. No CLI/provider login is changed by these scripts.
 
 ```sh
 node infra/compose/prepare.mjs
@@ -34,6 +34,10 @@ The local command reads a JSON object from stdin. Pipe it into `docker compose -
 No fixture or fault endpoint exists on HTTP. Crash hooks are constructor-only integration-test dependencies. To test actual service restart, use `docker compose ... restart server`; receipts, outbox and claims remain in the database volume. Read service logs only after sanitization; never dump environment/configuration or credentials.
 
 ## Recovery and cleanup
+
+Renamed templates target fresh `monos` installations. An existing deployment needs
+the coordinated [upgrade procedure](../../docs/12-product-naming-and-upgrades.md);
+a new Compose project otherwise selects a new empty database volume.
 
 First reconcile/stop all task-owned Runner Attempts and preserve unresolved journals/workspaces. Stop only this Compose project with `docker compose -f infra/compose/compose.yaml down`; **do not add `--volumes`** during ordinary cleanup. The database volume contains canonical receipts/claims. Private files and unresolved data remain for explicit inspection/recovery. Do not reset the database while Runner records still reference it. No automatic destructive rollback or down migration is provided. Whole-host reboot requires its separately agreed execution window.
 

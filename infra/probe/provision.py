@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Prepare only reviewed MonoLab probe configuration and a local Git fixture.
+"""Prepare only reviewed monos probe configuration and a local Git fixture.
 
 Run after infra/runner/bootstrap.sh. This never starts a service, installs or
 authenticates a Runtime, publishes Git, or overwrites differing existing data.
@@ -14,9 +14,9 @@ import stat
 import subprocess
 import sys
 
-SOURCE = pathlib.Path("/root/monolab-boundary-probe-src")
-ROOT = pathlib.Path("/var/lib/monolab-probe")
-CONFIG = pathlib.Path("/etc/monolab-probe")
+SOURCE = pathlib.Path("/root/monos-boundary-probe-src")
+ROOT = pathlib.Path("/var/lib/monos-probe")
+CONFIG = pathlib.Path("/etc/monos-probe")
 MARKER = ROOT / "launch/installed-by-boundary-probe"
 
 
@@ -69,12 +69,12 @@ def create_file(path, content, owner, group, mode):
 FIXTURE_WORKER = r'''
 import hashlib,json,os,pathlib,stat,subprocess,sys
 os.umask(0o027)
-root=pathlib.Path('/var/lib/monolab-probe/cache')
+root=pathlib.Path('/var/lib/monos-probe/cache')
 seed=root/'fixture-seed'
 repo=root/'fixture.git'
 marker=root/'fixture.provision.json'
-readme=b'# MonoLab boundary fixture\n\nLocal, disposable probe repository. No remote publication.\n'
-environment={'PATH':'/usr/bin:/bin','HOME':'/var/lib/monolab-probe/service','LANG':'C.UTF-8','GIT_CONFIG_NOSYSTEM':'1','GIT_CONFIG_GLOBAL':'/dev/null','GIT_TERMINAL_PROMPT':'0','GIT_AUTHOR_NAME':'MonoLab fixture','GIT_AUTHOR_EMAIL':'fixture@monolab.invalid','GIT_COMMITTER_NAME':'MonoLab fixture','GIT_COMMITTER_EMAIL':'fixture@monolab.invalid','GIT_AUTHOR_DATE':'2026-09-28T00:00:00Z','GIT_COMMITTER_DATE':'2026-09-28T00:00:00Z'}
+readme=b'# monos boundary fixture\n\nLocal, disposable probe repository. No remote publication.\n'
+environment={'PATH':'/usr/bin:/bin','HOME':'/var/lib/monos-probe/service','LANG':'C.UTF-8','GIT_CONFIG_NOSYSTEM':'1','GIT_CONFIG_GLOBAL':'/dev/null','GIT_TERMINAL_PROMPT':'0','GIT_AUTHOR_NAME':'monos fixture','GIT_AUTHOR_EMAIL':'fixture@monos.invalid','GIT_COMMITTER_NAME':'monos fixture','GIT_COMMITTER_EMAIL':'fixture@monos.invalid','GIT_AUTHOR_DATE':'2026-09-28T00:00:00Z','GIT_COMMITTER_DATE':'2026-09-28T00:00:00Z'}
 def git(cwd,*args):
     result=subprocess.run(['/usr/bin/git','-c','core.hooksPath=/dev/null',*args],cwd=cwd,env=environment,capture_output=True,timeout=30)
     if result.returncode: raise RuntimeError('local fixture Git command failed; existing data preserved')
@@ -104,7 +104,7 @@ else:
     with (seed/'README.md').open('xb') as output: output.write(readme)
     git(seed,'init','--quiet','--initial-branch=main')
     git(seed,'add','README.md')
-    git(seed,'commit','--quiet','-m','Initialize local MonoLab boundary fixture')
+    git(seed,'commit','--quiet','-m','Initialize local monos boundary fixture')
     git(root,'clone','--quiet','--bare','--no-local',str(seed),str(repo))
     if b'origin' in git(root,'--git-dir='+str(repo),'remote').splitlines(): git(root,'--git-dir='+str(repo),'remote','remove','origin')
     commit=git(root,'--git-dir='+str(repo),'rev-parse','HEAD').decode().strip()
@@ -123,9 +123,9 @@ print(json.dumps({'fixture':result,'commit':commit,'tree':tree}))
 def main():
     if len(sys.argv) != 1 or os.geteuid() != 0 or sys.platform != "linux":
         raise RuntimeError("run without arguments as root on the authorized Linux host")
-    service = pwd.getpwnam("monolab-probe")
+    service = pwd.getpwnam("monos-probe")
     execution = pwd.getpwnam("me")
-    shared = grp.getgrnam("monolab-probe-read")
+    shared = grp.getgrnam("monos-probe-read")
     if service.pw_uid in (0, execution.pw_uid) or execution.pw_uid == 0 or service.pw_gid != shared.gr_gid or service.pw_dir != str(ROOT / "service") or service.pw_shell != "/usr/sbin/nologin":
         raise RuntimeError("reviewed service/execution identity changed")
     if shared.gr_gid not in os.getgrouplist("me", execution.pw_gid):
@@ -141,9 +141,9 @@ def main():
         directory(ROOT / name, service.pw_uid, shared.gr_gid)
     directory(CONFIG, 0, shared.gr_gid, 0o750)
     regular(MARKER, 0, 0o600)
-    if MARKER.read_text() != "monolab-boundary-probe-v1\n":
+    if MARKER.read_text() != "monos-boundary-probe-v1\n":
         raise RuntimeError("reviewed bootstrap marker is missing or changed")
-    for path in ("/usr/local/libexec/monolab-probe-launch", "/usr/local/libexec/monolab-probe-exec", "/usr/local/libexec/monolab-runner", "/usr/local/bin/monolab", "/etc/sudoers.d/monolab-probe", "/etc/systemd/system/monolab-probe-runner.service"):
+    for path in ("/usr/local/libexec/monos-probe-launch", "/usr/local/libexec/monos-probe-exec", "/usr/local/libexec/monos-runner", "/usr/local/bin/monos", "/etc/sudoers.d/monos-probe", "/etc/systemd/system/monos-probe-runner.service"):
         regular(pathlib.Path(path), 0)
     private = SOURCE / "infra/compose/private"
     for path in (SOURCE / "infra", SOURCE / "infra/compose"):
@@ -158,7 +158,7 @@ def main():
     if b"PRIVATE KEY" in ca:
         raise RuntimeError("expected a public CA certificate")
     ssl.PEM_cert_to_DER_cert(ca.decode("ascii"))
-    settings = {"endpoint": "https://127.0.0.1:18443", "ca_file": str(CONFIG / "ca.pem"), "token_file": str(CONFIG / "runner-token"), "runner_id": "runner-a", "journal": str(ROOT / "service/journal.sqlite"), "socket": "/run/monolab-probe/command.sock", "execution_uid": execution.pw_uid}
+    settings = {"endpoint": "https://127.0.0.1:18443", "ca_file": str(CONFIG / "ca.pem"), "token_file": str(CONFIG / "runner-token"), "runner_id": "runner-a", "journal": str(ROOT / "service/journal.sqlite"), "socket": "/run/monos-probe/command.sock", "execution_uid": execution.pw_uid}
     config = (json.dumps(settings, indent=2, sort_keys=True) + "\n").encode()
     files = [(CONFIG / "runner-token", token, service.pw_uid, shared.gr_gid, 0o600),
              (CONFIG / "ca.pem", ca, 0, 0, 0o644),
@@ -168,7 +168,7 @@ def main():
     for entry, present in zip(files, existing):
         if not present:
             create_file(*entry)
-    result = subprocess.run(["/usr/sbin/runuser", "-u", "monolab-probe", "--", "/usr/bin/python3", "-"], input=FIXTURE_WORKER.encode(), cwd=ROOT / "cache", capture_output=True, timeout=120,
+    result = subprocess.run(["/usr/sbin/runuser", "-u", "monos-probe", "--", "/usr/bin/python3", "-"], input=FIXTURE_WORKER.encode(), cwd=ROOT / "cache", capture_output=True, timeout=120,
                             env={"PATH": "/usr/sbin:/usr/bin:/sbin:/bin", "LANG": "C.UTF-8"})
     if result.returncode:
         raise RuntimeError("service-owned fixture preparation failed; existing files/data preserved")

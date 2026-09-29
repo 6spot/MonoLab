@@ -11,8 +11,8 @@ import (
 	"path/filepath"
 
 	_ "github.com/mattn/go-sqlite3"
-	protocol "monolab.local/protocol"
-	"monolab.local/runner/internal/wire"
+	protocol "monos.local/protocol"
+	"monos.local/runner/internal/wire"
 )
 
 var ErrConflict = errors.New("payload_conflict")

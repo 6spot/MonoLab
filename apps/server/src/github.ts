@@ -5,13 +5,17 @@ import { validate } from '../../../packages/protocol/src/index.ts';
 import type { GitHubConfigurationInput, GitHubRepositoryPage } from '../../../packages/protocol/src/index.ts';
 import { repositoryIdentity, validateGitRef } from '../../../packages/domain/src/repositories.ts';
 
+// Persisted v1 ciphertext depends on these exact salt bytes. They are a storage
+// contract, independent of product branding; changing them requires key migration.
+const providerKeySaltV1 = Buffer.from('6d6f6e6f6c61622d70726f7669646572', 'hex');
+
 export interface GitHubCredentials { app_id: string; installation_id: string; encrypted_key: string; key_fingerprint: string }
 export class GitHub {
   private readonly key: Buffer;
   private readonly fetcher: typeof fetch;
   constructor(signingKey: string, fetcher: typeof fetch = fetch) {
     if (Buffer.byteLength(signingKey) < 32) throw new Error('Provider encryption requires the private service signing key');
-    this.key = Buffer.from(hkdfSync('sha256', signingKey, 'monolab-provider', 'github-private-key-v1', 32));
+    this.key = Buffer.from(hkdfSync('sha256', signingKey, providerKeySaltV1, 'github-private-key-v1', 32));
     this.fetcher = fetcher;
   }
   private aad(config: Pick<GitHubCredentials, 'app_id' | 'installation_id'>) { return Buffer.from(`github:v1:${config.app_id}:${config.installation_id}`); }
@@ -42,7 +46,7 @@ export class GitHub {
   }
   private async request(path: string, token: string, body?: unknown): Promise<unknown> {
     try {
-      const response = await this.fetcher(`https://api.github.com${path}`, { method: body ? 'POST' : 'GET', redirect: 'error', signal: AbortSignal.timeout(10000), headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28', 'User-Agent': 'MonoLab', ...(body ? { 'Content-Type': 'application/json' } : {}) }, ...(body ? { body: JSON.stringify(body) } : {}) });
+      const response = await this.fetcher(`https://api.github.com${path}`, { method: body ? 'POST' : 'GET', redirect: 'error', signal: AbortSignal.timeout(10000), headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28', 'User-Agent': 'monos', ...(body ? { 'Content-Type': 'application/json' } : {}) }, ...(body ? { body: JSON.stringify(body) } : {}) });
       if (!response.ok) { await response.body?.cancel(); throw new CommandError('unmet_precondition', response.status === 401 || response.status === 403 ? 'GitHub access denied; check App installation and repository permissions' : 'GitHub repository access is unavailable; retry later'); }
       if (!response.body) throw new Error();
       const reader = response.body.getReader(); const chunks: Uint8Array[] = []; let size = 0;

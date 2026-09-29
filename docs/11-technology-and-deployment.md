@@ -13,7 +13,7 @@ This is the accepted technology baseline. Modules 01–08 own domain and executi
 | Primary database | PostgreSQL | Canonical records, claims, receipts, events, outbox and projections |
 | Database access | Drizzle with reviewed SQL migrations | Typed queries and explicit SQL where locks/transactions require it |
 | Runner | Go, independently built daemon | Runtime adapters, native process supervision, workspace effects and local recovery |
-| Agent command client | Go `monolab` CLI bundled with the Runner release | Attempt-scoped HTTPS Tool Protocol calls through native Agent command tools |
+| Agent command client | Go `monos` CLI bundled with the Runner release | Attempt-scoped HTTPS Tool Protocol calls through native Agent command tools |
 | Execution host | Linux with Owner-installed/authenticated Agent CLIs | Native process execution and durable host workspace storage |
 | Git | System Git CLI invoked with structured argument arrays | Clone/fetch, worktrees, revision capture, integration and authorized push |
 | Remote delivery | GitHub App integration behind a provider adapter | Repository access, PR/checks and guarded merge |
@@ -55,7 +55,7 @@ Go Runner (Linux host service)
     └─ native Attempt processes
           ├─ Owner-installed Agent CLI and its existing authentication
           ├─ assigned host workspace/scratch directories
-          └─ bundled monolab CLI → backend HTTPS Tool Protocol
+          └─ bundled monos CLI → backend HTTPS Tool Protocol
 ```
 
 Planner is semantic Agent work executed through the same Runner/CLI infrastructure as Node work. Backend Planner code builds context and validates formal results; it does not silently replace Planner execution with an unrelated direct model API loop.
@@ -66,7 +66,7 @@ The backend and Runner are separate executable/deployment units from the first i
 
 - Web uses HTTPS JSON APIs. SSE carries persisted/provisional UI updates with resumable cursors; clients refresh authoritative state after gaps. A live connection is never lifecycle authority.
 - Runner initiates WSS to the backend, avoiding a required public inbound Runner port. RPC-style envelopes over that connection carry correlation IDs, stable operation IDs, schema versions and current ownership. Backend Workspace reads are routed through this service boundary rather than opening host paths.
-- Agents invoke the `monolab` command on PATH through their native command-execution tools. This Go executable ships with the Runner release and sends scoped HTTPS Tool Protocol commands to the backend (module 05). Runner configures its managed path, backend address and private Unix-domain socket at launch. The existing daemon validates CLI peer process birth/boot identity and cgroup membership against dispatch ownership, persists immutable request envelopes and supplies scoped credentials (module 05); no separate package-manager install, MCP server, or MCP registration is required. Command invocation is on demand and does not add a resident service. Runtime Adapter process/session transport remains separate from this command path.
+- Agents invoke the `monos` command on PATH through their native command-execution tools. This Go executable ships with the Runner release and sends scoped HTTPS Tool Protocol commands to the backend (module 05). Runner configures its managed path, backend address and private Unix-domain socket at launch. The existing daemon validates CLI peer process birth/boot identity and cgroup membership against dispatch ownership, persists immutable request envelopes and supplies scoped credentials (module 05); no separate package-manager install, MCP server, or MCP registration is required. Command invocation is on demand and does not add a resident service. Runtime Adapter process/session transport remains separate from this command path.
 - PostgreSQL outbox rows are committed with control transitions. Workers poll/claim bounded batches with transactional guards; notifications may wake workers but are not durable queue truth. No Redis, Kafka or Temporal is required in the baseline.
 - Keep large logs/content off the small command-response path: batch events, apply backpressure, and use authenticated HTTP transfer when needed. Runner-local spooling and acknowledged cursors remain mandatory.
 
@@ -74,19 +74,19 @@ Canonical cross-language payload definitions live as versioned JSON Schemas in `
 
 ## Native execution and local persistence
 
-The Go daemon directly invokes an installed host CLI with a resolved executable path, structured arguments, working directory, and controlled environment. It runs execution under the configured host account with that CLI's existing Owner-managed authentication. MonoLab does not require an execution container, execution image, reinstall, or new container-specific login.
+The Go daemon directly invokes an installed host CLI with a resolved executable path, structured arguments, working directory, and controlled environment. It runs execution under the configured host account with that CLI's existing Owner-managed authentication. monos does not require an execution container, execution image, reinstall, or new container-specific login.
 
 Each Attempt has supervised native process identity bound to dispatch/Attempt IDs, a process group or service scope, log streams and a durable start record. The Linux implementation must demonstrate process-tree termination and restart reconciliation, including escaped/background descendants; a single child PID or a shell `kill` alone is insufficient. Use the local journal and process birth/supervisor identity to reconcile uncertain starts without spawning duplicates. The concrete supervisor mechanism is selected by the feasibility probe.
 
 Runner creates separate workspace/scratch directories and grants each Attempt its reserved workspace paths at launch (module 03). `open_workspace` lazily clones/materializes the repository inside those paths; serial work may reuse the Task Workspace, and parallel work uses private Node worktrees. The Runtime's native tools then read/write/build/test in those host paths. A worktree separates code state; it is not a container or a security sandbox.
 
-Use supported CLI-native permission/sandbox settings and host account permissions. Keep backend state and system delivery credentials protected under separate service identities. Native execution uses the permissions of its configured account, so MonoLab does not claim arbitrary-code containment or protection from credentials independently available to that account. A stricter sandbox can be an explicit future execution-environment option without changing Task/Node/Attempt semantics; it is not a prerequisite for using an already-installed CLI.
+Use supported CLI-native permission/sandbox settings and host account permissions. Keep backend state and system delivery credentials protected under separate service identities. Native execution uses the permissions of its configured account, so monos does not claim arbitrary-code containment or protection from credentials independently available to that account. A stricter sandbox can be an explicit future execution-environment option without changing Task/Node/Attempt semantics; it is not a prerequisite for using an already-installed CLI.
 
-The V1 baseline permits normal CLI shell execution and Node workspace writes, following the native-runtime approach observed in Multica. Do not add a MonoLab shell-command allowlist, global read-only mounts, or private PID namespaces as prerequisites. Cgroup supervision provides process ownership/freeze/kill; separate service/execution accounts protect MonoLab credentials. Planner inspection uses service-owned immutable snapshots that the execution account can read but cannot modify. These are distinct responsibilities, not a promise to sandbox all execution-account activity. CLI-internal configuration/dependency maintenance is part of the installed Runtime's behavior; avoid inventing a filesystem sandbox solely to suppress it.
+The V1 baseline permits normal CLI shell execution and Node workspace writes, following the native-runtime approach observed in Multica. Do not add a monos shell-command allowlist, global read-only mounts, or private PID namespaces as prerequisites. Cgroup supervision provides process ownership/freeze/kill; separate service/execution accounts protect monos credentials. Planner inspection uses service-owned immutable snapshots that the execution account can read but cannot modify. These are distinct responsibilities, not a promise to sandbox all execution-account activity. CLI-internal configuration/dependency maintenance is part of the installed Runtime's behavior; avoid inventing a filesystem sandbox solely to suppress it.
 
 Runner's durable journal uses local SQLite for operation metadata and immutable CLI request envelopes, plus filesystem spool files for logs. Request records include original attribution, schema/version guards, full payload or pinned immutable content, digest and send/receipt reconciliation facts; they contain no bearer credentials. Persist them before HTTPS submission, keep them service-private, and retain unresolved records across restart. It is infrastructure bookkeeping, not a second database of Task/Node truth. Git objects, workspaces and journal/spool data live on durable host storage. PostgreSQL remains the canonical product/control database. Backup and disk-loss guarantees remain those in modules 04 and 06.
 
-The Owner installs and authenticates coding tools on the execution host. Discovery verifies the executable and startability under the actual execution account, including its permissions and login context. MonoLab never installs those Runtimes or performs login on the Owner's behalf.
+The Owner installs and authenticates coding tools on the execution host. Discovery verifies the executable and startability under the actual execution account, including its permissions and login context. monos never installs those Runtimes or performs login on the Owner's behalf.
 
 ## Host identities and hardening
 
@@ -107,7 +107,7 @@ The single-host deployment claims the module-05 boundary only when:
 - PostgreSQL has no host-published port, and backend secrets and Compose files are unreadable by the execution account;
 - Agents can reach the backend only through its authenticated HTTPS API.
 
-Runner enrollment checks the conditions it can observe and reports any violation as an unsafe-host fact in Runner status; while one remains, MonoLab does not claim the credential and authorization boundary. Project tests that need containers use a rootless container runtime owned by the execution account, or a separate execution host, never the control plane's Docker daemon.
+Runner enrollment checks the conditions it can observe and reports any violation as an unsafe-host fact in Runner status; while one remains, monos does not claim the credential and authorization boundary. Project tests that need containers use a rootless container runtime owned by the execution account, or a separate execution host, never the control plane's Docker daemon.
 
 ## Git delivery across the process boundary
 
@@ -128,8 +128,8 @@ packages/
   domain/               # TypeScript domain rules; no CLI/filesystem effects
   db/                   # PostgreSQL schema, repositories and SQL migrations
 runner/
-  cmd/monolab-runner/    # Go executable
-  cmd/monolab/           # bundled Agent command client for Tool Protocol
+  cmd/monos-runner/    # Go executable
+  cmd/monos/           # bundled Agent command client for Tool Protocol
   internal/             # transport, adapters, supervision, workspace, journal
   go.mod
 infra/
@@ -155,17 +155,17 @@ Versioned dispatch includes the Specification revision and input/guidance basis.
 
 ## Single-host installation and first-run contract
 
-Ship a single-host deployment recipe with Compose configuration, reviewed migrations, TLS ingress configuration, persistent-volume paths, Runner/systemd configuration, enrollment and health commands. The recipe may configure MonoLab services and OS identities with administrator authorization; it never installs or logs into coding CLIs for the Owner. A fresh installation must not require hand-written SQL, copying runtime session files, or placing system secrets in an Agent workspace.
+Ship a single-host deployment recipe with Compose configuration, reviewed migrations, TLS ingress configuration, persistent-volume paths, Runner/systemd configuration, enrollment and health commands. The recipe may configure monos services and OS identities with administrator authorization; it never installs or logs into coding CLIs for the Owner. A fresh installation must not require hand-written SQL, copying runtime session files, or placing system secrets in an Agent workspace.
 
 Bootstrap in this order:
 
-1. Create persistent backend/database and Runner/workspace locations with the documented service/execution ownership. Configure TLS ingress with an address reachable by both the host Runner and backend/browser deployment. Agent `monolab` commands use this configured backend URL, never a container's loopback address or an assumed host-path mount.
+1. Create persistent backend/database and Runner/workspace locations with the documented service/execution ownership. Configure TLS ingress with an address reachable by both the host Runner and backend/browser deployment. Agent `monos` commands use this configured backend URL, never a container's loopback address or an assumed host-path mount.
 2. Start PostgreSQL; run migrations under one migration lock; start the backend only after compatible schema readiness. Serve a same-origin Web/API and health endpoint. SSE/WSS pass through ingress with suitable streaming/idle settings and reconnect support.
 3. Provision the sole Owner through a local administrative bootstrap command. The baseline is a local Owner login with a salted password hash and revocable server-side sessions in PostgreSQL; use Secure/HttpOnly/SameSite cookies, CSRF/origin checks and login rate limiting. Provision/reset credentials through an interactive local command, not command-line password arguments or an unauthenticated public setup route. Bootstrap is idempotent and cannot create a second Owner. This avoids making an external identity provider a V1 dependency.
 4. Enroll the Runner with a one-use, expiring token issued through the authenticated Owner or local administrative interface. Store its distinct long-lived credential in service-only storage; ordinary daemon restart retains Runner identity and gets a new connection incarnation. Revocation/rotation does not delete unresolved execution ownership records.
-5. Discover CLIs under the actual execution account, including its explicit home/login environment and executable paths. Verify non-interactive launch, bundled `monolab` commands, structured output and physical Stop using that account, including Planner command access with read-only repositories. The Owner performs CLI login there. A login available only to an administrator's interactive shell does not satisfy this gate. The execution account also needs the project's build/test toolchains; unavailable tools produce actionable failure, not an automatic system-wide installer.
+5. Discover CLIs under the actual execution account, including its explicit home/login environment and executable paths. Verify non-interactive launch, bundled `monos` commands, structured output and physical Stop using that account, including Planner command access with read-only repositories. The Owner performs CLI login there. A login available only to an administrator's interactive shell does not satisfy this gate. The execution account also needs the project's build/test toolchains; unavailable tools produce actionable failure, not an automatic system-wide installer.
 6. Configure Planner policy and at least one reusable Role referencing a verified Runtime. Configure GitHub App credentials/installation and Project repository/default ref/delivery settings, then select the Role for the Project. Verify scoped repository read and delivery permissions independently from CLI login. Capture/discussion can precede a runnable Project; Start reports exact missing prerequisites.
-7. Run the Stage A smoke flow against an authorized test repository. Report separate backend/schema, Runner connection/storage, Agent CLI/`monolab` command access and Git provider readiness. An HTTP health response alone never means Task execution is ready.
+7. Run the Stage A smoke flow against an authorized test repository. Report separate backend/schema, Runner connection/storage, Agent CLI/`monos` command access and Git provider readiness. An HTTP health response alone never means Task execution is ready.
 
 Backend starts independently of Runner availability so the Owner can inspect state, cancel/withdraw and repair configuration while execution is offline. Runner reconnects with bounded backoff; startup does not require a live browser. Templates restart failed services, but process recovery follows recorded ownership rather than blindly restarting every Agent. Initial health checks must not publish or merge in arbitrary repositories.
 

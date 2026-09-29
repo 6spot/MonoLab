@@ -12,11 +12,11 @@ import (
 	"strings"
 	"time"
 
-	protocol "monolab.local/protocol"
-	"monolab.local/runner/internal/control"
-	"monolab.local/runner/internal/host"
-	"monolab.local/runner/internal/journal"
-	"monolab.local/runner/internal/wire"
+	protocol "monos.local/protocol"
+	"monos.local/runner/internal/control"
+	"monos.local/runner/internal/host"
+	"monos.local/runner/internal/journal"
+	"monos.local/runner/internal/wire"
 )
 
 type Request struct {

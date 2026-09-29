@@ -1,17 +1,21 @@
 # Stage A boundary feasibility probe
 
+> Product terminology and command/path examples were normalized to `monos` on
+> 2026-09-29. Exact historical names and observations remain in the original Git
+> revisions and unchanged raw JSON attachments; this edit is not a new test run.
+
 ## Goal
 
-Prove that one Owner-installed and authenticated coding CLI can operate through MonoLab's intended Linux Runner and Tool Protocol boundaries before broad product implementation. Produce repeatable evidence that supports the first Runtime Adapter choice or identifies the precise contract that prevents it from working.
+Prove that one Owner-installed and authenticated coding CLI can operate through monos's intended Linux Runner and Tool Protocol boundaries before broad product implementation. Produce repeatable evidence that supports the first Runtime Adapter choice or identifies the precise contract that prevents it from working.
 
 This task implements Stage A step 0, not the complete Stage A product loop.
 
 ## Background and confirmed facts
 
 - Architecture/spec baseline: commit `565f145`, pushed to `origin/main` on 2026-09-28. The repository has documentation and Trellis tooling but no product packages or passing product tests yet.
-- The selected boundary is a Fastify/TypeScript backend, PostgreSQL canonical control storage, a separate native Go Runner on Linux, and a bundled Go `monolab` command client. Runner-local SQLite stores infrastructure recovery data, not domain truth.
+- The selected boundary is a Fastify/TypeScript backend, PostgreSQL canonical control storage, a separate native Go Runner on Linux, and a bundled Go `monos` command client. Runner-local SQLite stores infrastructure recovery data, not domain truth.
 - Agents request formal state changes through the Tool Protocol; natural-language replies cannot substitute for admitted commands. Backend and Runner communicate over versioned authenticated transports, with distinct filesystem roots and no Runner database access.
-- The host profile uses separate service and execution accounts. CLI installation and authentication belong to the Owner; MonoLab must discover and use the existing installation under the execution account.
+- The host profile uses separate service and execution accounts. CLI installation and authentication belong to the Owner; monos must discover and use the existing installation under the execution account.
 - Current development host is macOS. A local build or fake-adapter test cannot establish Linux systemd/cgroup, two-account permissions, or installed-CLI compatibility.
 - The Owner supplied Linux test host `100.120.14.84:22`. Preflight confirmed Debian 13.6, systemd 257 and cgroup v2, with Codex 0.157.1 and OpenCode 1.18.30 installed via Linuxbrew. After Codex's configured provider failed TLS handshakes, the Owner explicitly authorized switching to OpenCode with free models. The selected `opencode/mimo-v2.6-flash-free` returned the expected real reply as `me` in 7.15 seconds; its catalog lists zero input/output/cache prices and tool calling. See [host evidence](research/host-preflight.md).
 - Use existing `me` (UID 1000) as the execution account, with a separate Runner service identity. The earlier Owner-authorized Codex configuration copy remains private and unchanged, but it is not used by the selected OpenCode probe. Root SSH is an administrative bootstrap path, not an Agent execution identity.
@@ -23,7 +27,7 @@ This task implements Stage A step 0, not the complete Stage A product loop.
 | ID | Requirement |
 | --- | --- |
 | R1 | Exercise a minimal backend, Runner and bundled CLI as separate processes using authenticated HTTPS/WSS and versioned JSON Schema contracts with generated TypeScript/Go types. Runner-owned reads cross the service boundary even when services share a host. Limit the command surface to the contracts needed by this probe. |
-| R2 | Run one real installed Runtime without interactive approval stalls. Demonstrate `monolab` discovery, help, long-payload submission and structured results from Node and Planner Attempts. Planner repository access remains read-only while native command execution, the local socket and backend HTTPS remain usable. |
+| R2 | Run one real installed Runtime without interactive approval stalls. Demonstrate `monos` discovery, help, long-payload submission and structured results from Node and Planner Attempts. Planner repository access remains read-only while native command execution, the local socket and backend HTTPS remain usable. |
 | R3 | Demonstrate lazy workspace materialization inside launch-time reserved grants, including isolated worktree Git common directories, without restarting the CLI. Exercise real cross-account repository cache access, execution-owned workspace writes and service-owned result access without exposing delivery/control credentials. |
 | R4 | Attribute CLI callers through kernel peer credentials, verified process birth/boot identity and supervised cgroup membership. Neither shared UID nor caller-provided Attempt/path/environment hints grant authority. Supervise and stop the entire descendant tree; retain ownership while process existence or termination is uncertain. |
 | R5 | Durably retain the complete immutable request envelope before HTTPS submission. Retry preserves the original identity, schema/version guards and payload. A journal failure prevents send; uncertain admission is reconciled rather than treated as permission to issue another mutation. Recovery storage contains no bearer credentials. |
@@ -34,7 +38,7 @@ This task implements Stage A step 0, not the complete Stage A product loop.
 ## Acceptance Criteria
 
 - [x] **AC1 — Transport and schemas (R1):** A real separate-process run completes authenticated Runner registration/dispatch, an Agent command and a Runner-owned read with disjoint filesystem roots. Shared fixtures validate both generated language representations; incompatible versions and unauthorized scopes are rejected.
-- [x] **AC2 — Real CLI and Planner access (R2):** The selected installed/authenticated CLI invokes bundled `monolab`, submits a payload beyond convenient inline argument size and receives structured results. A Planner can use its socket and HTTPS command path while attempted repository writes fail. An unexpected interactive permission request produces an observable failure/attention result rather than an indefinite silent wait.
+- [x] **AC2 — Real CLI and Planner access (R2):** The selected installed/authenticated CLI invokes bundled `monos`, submits a payload beyond convenient inline argument size and receives structured results. A Planner can use its socket and HTTPS command path while attempted repository writes fail. An unexpected interactive permission request produces an observable failure/attention result rather than an indefinite silent wait.
 - [x] **AC3 — Lazy workspace and account permissions (R3):** A running Attempt accesses a subsequently materialized reserved workspace and a worktree's Git common directory. The execution account can clone/read the service cache through permitted Git transport but cannot write the cache, service journal or control secrets; service finalization can read the execution-owned result. Record residual access under the non-hostile-Agent threat model.
 - [x] **AC4 — Caller attribution (R4):** Two concurrent Attempts under the same execution UID cannot select each other's scope using forged or missing hints. Ambiguous, revoked and mismatched process attribution is denied; PID reuse and a changed boot identity cannot revive old ownership.
 - [x] **AC5 — Whole-tree stop (R4):** Stop/freeze covers background and escaped descendants. Workspace reuse and slot release remain disallowed until old writer absence/isolation is established, including after Runner restart.

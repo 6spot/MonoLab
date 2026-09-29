@@ -1,5 +1,9 @@
 # Boundary probe implementation plan
 
+> Product terminology and command/path examples were normalized to `monos` on
+> 2026-09-29. Exact historical names and observations remain in the original Git
+> revisions and unchanged raw JSON attachments; this edit is not a new test run.
+
 Status: implementation approved; task started on `feat/stage-a-boundary-probe`. Only checked items below are complete.
 
 Current verification checkpoint: [acceptance status](research/acceptance-status.md).
@@ -45,7 +49,7 @@ These are ordered work packages within one verifiable probe deliverable. A and B
 - [x] Implement service-private SQLite start/effect/request records and bounded log handling. Inject journal-write failure and ensure no unpersisted command is sent.
 - [x] Implement constrained systemd/cgroup launch, process inventory, birth/boot identity and whole-tree freeze/kill. Hold claims for ambiguous ownership; reject old connection/dispatch authority.
 - [x] Implement the existing Runner's Unix socket credential/journal service with peer-process attribution before each operation; test two concurrent same-UID Attempts and forged hints.
-- [x] Implement bundled `monolab` help, schema validation, stdin/input-file commands, immutable retry and status reads. No credentials in logs, arguments or journal records.
+- [x] Implement bundled `monos` help, schema validation, stdin/input-file commands, immutable retry and status reads. No credentials in logs, arguments or journal records.
 - [x] Implement the OpenCode 1.18.30 Adapter with an explicitly selected verified-free model, resolved executable and explicit environment; determine supported Planner and Node permission profiles without bypassing required isolation or falling back to paid models.
 - [x] Implement reserved scratch/workspace/worktree-common paths, real cross-account cache clone/read and service-owned finalization/export fixtures; no remote publication.
 - [x] Implement completion admission and recovery independently of the stopped CLI process; verify that expired Agent credentials cannot regain mutation authority.

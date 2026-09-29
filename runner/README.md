@@ -1,8 +1,8 @@
 # Go boundary probe
 
-`monolab-runner` owns the authenticated WSS client, local SQLite infrastructure
+`monos-runner` owns the authenticated WSS client, local SQLite infrastructure
 journal, attributed Unix socket, supervised process lifecycle and limited local
-Git effects. `monolab` validates input, gets an immutable journal acknowledgement
+Git effects. `monos` validates input, gets an immutable journal acknowledgement
 and an Attempt token, then sends HTTPS directly. The daemon never reads the
 product database. The bundled CLI never sees Runner enrollment credentials.
 

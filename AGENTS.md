@@ -1,6 +1,6 @@
 # AGENTS.md
 
-This repository is the source of truth for MonoLab.
+This repository is the source of truth for monos.
 
 Before changing architecture or implementing a subsystem:
 
@@ -11,7 +11,7 @@ Before changing architecture or implementing a subsystem:
 
 ## Architecture rule
 
-MonoLab separates semantic work from deterministic orchestration:
+monos separates semantic work from deterministic orchestration:
 
 - Agent: understand, reason, decide what work is needed, and call system tools.
 - Program: perform deterministic state changes, workspace management, scheduling, persistence, and delivery.
@@ -20,7 +20,7 @@ System-level state changes must go through the Tool Protocol. Natural-language o
 
 ## Reference projects
 
-Multica may be used as a reference for mature runtime, daemon, repository, session, and execution patterns. Do not copy its organizational/team abstractions into MonoLab.
+Multica may be used as a reference for mature runtime, daemon, repository, session, and execution patterns. Do not copy its organizational/team abstractions into monos.
 <!-- TRELLIS:START -->
 # Trellis Instructions
 

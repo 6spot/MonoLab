@@ -17,7 +17,7 @@ const pem = keys.privateKey.export({ type: 'pkcs8', format: 'pem' }).toString();
 const installed: RuntimeInstallation = { runtime_id: 'opencode', executable: '/opt/owner/bin/opencode', availability: 'detected', version: '1.18.30', supports_model: true, supports_thinking: false, model_ids: [] };
 const policy: ExecutionPolicy = { default_target: { runtime_id: 'opencode', model_id: 'provider/new-manual-model', runner_id: 'pinned-runner' }, fallback_targets: [{ runtime_id: 'opencode', model_id: 'another/model' }], duration_budget: 600 };
 
-describe.skipIf(process.env.MONOLAB_TEST_DATABASE !== '1')('Runtime and GitHub configuration', () => {
+describe.skipIf(process.env.MONOS_TEST_DATABASE !== '1')('Runtime and GitHub configuration', () => {
   let db: Database; let admin: Database; let token: string; let configuration: Configuration;
   const namespace = `infrastructure_${randomUUID().replaceAll('-', '')}`;
   const requests: { url: string; init: RequestInit }[] = [];

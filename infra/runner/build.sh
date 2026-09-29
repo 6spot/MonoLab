@@ -5,6 +5,6 @@ destination=${1:-./artifacts/runner}
 mkdir -p "$destination"
 destination=$(cd "$destination" && pwd)
 cd runner
-for executable in monolab monolab-runner monolab-probe-launch monolab-probe-exec; do
+for executable in monos monos-runner monos-probe-launch monos-probe-exec; do
   CGO_ENABLED=1 go build -trimpath -o "$destination/$executable" "./cmd/$executable"
 done

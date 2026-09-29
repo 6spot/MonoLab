@@ -12,8 +12,8 @@ import { createApp } from '../src/app.ts';
 import { BoundaryService } from '../src/service.ts';
 
 const password = 'synthetic-only-owner-password';
-const origin = { host: 'monolab.test', origin: 'http://monolab.test' };
-describe.skipIf(process.env.MONOLAB_TEST_DATABASE !== '1')('single Owner access and browser sessions', () => {
+const origin = { host: 'monos.test', origin: 'http://monos.test' };
+describe.skipIf(process.env.MONOS_TEST_DATABASE !== '1')('single Owner access and browser sessions', () => {
   let db: Database; let admin: Database; let access: OwnerAccess; let url: string;
   const namespace = `access_${randomUUID().replaceAll('-', '')}`;
   beforeAll(async () => {
@@ -98,7 +98,7 @@ describe.skipIf(process.env.MONOLAB_TEST_DATABASE !== '1')('single Owner access 
     const cliPassword = 'synthetic-CLI-owner-password';
     const child = spawnSync(process.execPath, ['--experimental-strip-types', fileURLToPath(new URL('../src/owner-admin.ts', import.meta.url)), '--rotate'], {
       input: JSON.stringify({ password: cliPassword }), encoding: 'utf8', timeout: 10000,
-      env: { ...process.env, DATABASE_URL: url, MONOLAB_DATABASE_URL_FILE: '' },
+      env: { ...process.env, DATABASE_URL: url, MONOS_DATABASE_URL_FILE: '' },
     });
     expect(child.status).toBe(0); expect(child.stdout + child.stderr).not.toContain(cliPassword);
     expect((await access.login(cliPassword)).token).toMatch(/^owner\.v1\./);

@@ -1,9 +1,13 @@
 # GitHub exact-head feasibility
 
+> Product terminology and command/path examples were normalized to `monos` on
+> 2026-09-29. Exact historical names and observations remain in the original Git
+> revisions and unchanged raw JSON attachments; this edit is not a new test run.
+
 Build a task-only Python harness using the installed authenticated gh CLI and
 structured JSON stdin. Capture HTTP status separately from payload, never emit
 authentication headers or tokens. All writes target a new uniquely named
-monolab-feasibility-* synthetic repository; no product repository mutations.
+monos-feasibility-* synthetic repository; no product repository mutations.
 
 Create a small README baseline and a test branch via GitHub Git/contents APIs.
 Create a PR, record accepted head A, append synthetic head B and attempt merge

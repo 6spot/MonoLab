@@ -1,5 +1,9 @@
 # Independent claim evidence
 
+> Product terminology and command/path examples were normalized to `monos` on
+> 2026-09-29. Exact historical names and observations remain in the original Git
+> revisions and unchanged raw JSON attachments; this edit is not a new test run.
+
 Implemented `apps/server/test/postgres-claims.test.ts` and its test-only IPC worker.
 No business transaction or migration changes were needed. Separate Node processes
 use separate PostgreSQL sessions; the parent observes concurrent lock waits before
@@ -15,7 +19,7 @@ Node 24.21.0 / PostgreSQL 17.11 host, the full real database suite passes 22/22.
 Initial run: 7.04 s. Final source run after worker close-event cleanup: 6.95 s,
 including 6.205 s for independent-worker tests. Go/Runtime/model work was not invoked.
 
-Host evidence: `/root/monolab-pg-claim-evidence/run-01/` contains source hashes,
+Host evidence: `/root/monos-pg-claim-evidence/run-01/` contains source hashes,
 image build log and first result; `run-02/` retains the final test-file hash and
 result. The final run used the read-only staged test source mounted into the same
 built test image. Reproduce with the Compose test profile after rebuilding tests;

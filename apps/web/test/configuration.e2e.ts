@@ -7,7 +7,7 @@ async function navigate(page: Page, name: string) {
   await expect(page.getByRole('heading', { name, exact: true })).toBeVisible();
 }
 async function signIn(page: Page) {
-  await page.goto('/'); await page.getByLabel('Password', { exact: true }).fill('monolab-browser-test-password');
+  await page.goto('/'); await page.getByLabel('Password', { exact: true }).fill('monos-browser-test-password');
   await page.getByRole('button', { name: 'Sign in', exact: true }).click(); await expect(page.getByRole('heading', { name: 'Projects', exact: true })).toBeVisible();
 }
 async function save(page: Page) {
@@ -20,7 +20,7 @@ test('real login, Role/Project/policy/provider persistence, drafts and responsiv
   await page.goto('/');
   await page.getByLabel('Password', { exact: true }).fill('incorrect-test-password'); await page.getByRole('button', { name: 'Sign in', exact: true }).click();
   await expect(page.getByRole('alert')).toContainText('Invalid Owner credentials');
-  await page.getByLabel('Password', { exact: true }).fill('monolab-browser-test-password'); await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+  await page.getByLabel('Password', { exact: true }).fill('monos-browser-test-password'); await page.getByRole('button', { name: 'Sign in', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Projects', exact: true })).toBeVisible();
   await navigate(page, 'Roles'); await page.getByRole('button', { name: 'New role', exact: true }).click();
   await page.getByLabel('Role name', { exact: true }).fill('Product engineer'); await page.getByLabel('Description', { exact: true }).fill('Build thoughtful, tested product changes.');
@@ -49,8 +49,8 @@ test('real login, Role/Project/policy/provider persistence, drafts and responsiv
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.evaluate(() => scrollTo(0, 0));
   await page.screenshot({ path: info.outputPath('projects-mobile.png'), fullPage: true });
-  await page.getByRole('button', { name: 'Sign out', exact: true }).click(); await expect(page.getByRole('heading', { name: 'Sign in to MonoLab' })).toBeVisible();
-  await page.reload(); await expect(page.getByRole('heading', { name: 'Sign in to MonoLab' })).toBeVisible();
+  await page.getByRole('button', { name: 'Sign out', exact: true }).click(); await expect(page.getByRole('heading', { name: 'Sign in to monos' })).toBeVisible();
+  await page.reload(); await expect(page.getByRole('heading', { name: 'Sign in to monos' })).toBeVisible();
 });
 
 test('two tabs reject stale edits and explicitly reload the saved version', async ({ page, context }) => {
@@ -103,8 +103,8 @@ test('session check outages preserve drafts; revoked sessions clear private edit
   await page.unroute('**/v1/owner/session');
   expect(await page.evaluate(async () => (await fetch('/v1/owner/logout', { method: 'POST', credentials: 'same-origin' })).status)).toBe(200);
   await navigate(page, 'Execution'); await page.getByRole('button', { name: 'Refresh status', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Sign in to MonoLab' })).toBeVisible();
-  await page.getByLabel('Password', { exact: true }).fill('monolab-browser-test-password'); await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Sign in to monos' })).toBeVisible();
+  await page.getByLabel('Password', { exact: true }).fill('monos-browser-test-password'); await page.getByRole('button', { name: 'Sign in', exact: true }).click();
   await navigate(page, 'GitHub'); await expect(page.getByLabel('App private key', { exact: true })).toHaveValue('');
 });
 

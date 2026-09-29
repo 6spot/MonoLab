@@ -2,7 +2,7 @@
 """Runs inside the real OpenCode Attempt's native bash tool/cgroup.
 
 No credentials/config are printed or retained. Formal actions use bundled
-monolab; root-side probe.py verifies database receipts independently.
+monos; root-side probe.py verifies database receipts independently.
 """
 import argparse
 import json
@@ -24,7 +24,7 @@ def command(args, timeout=40, env=None):
 
 
 def formal(name, request_id, payload_path=None):
-    args = ["/usr/local/bin/monolab", name, "--request-id", request_id, "--output", "json"]
+    args = ["/usr/local/bin/monos", name, "--request-id", request_id, "--output", "json"]
     if payload_path is not None:
         args += ["--input", str(payload_path)]
     return command(args)
@@ -49,7 +49,7 @@ def write_report(path, report):
 def local_request(request):
     with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as client:
         client.settimeout(15)
-        client.connect("/run/monolab-probe/command.sock")
+        client.connect("/run/monos-probe/command.sock")
         client.sendall(json.dumps(request).encode())
         client.shutdown(socket.SHUT_WR)
         chunks = []
@@ -103,13 +103,13 @@ def main():
     args = parser.parse_args()
     if not args.attempt.replace("-", "").replace("_", "").isalnum():
         raise RuntimeError("invalid attempt")
-    scratch = pathlib.Path("/var/lib/monolab-probe/execution") / args.attempt / "scratch"
+    scratch = pathlib.Path("/var/lib/monos-probe/execution") / args.attempt / "scratch"
     report_path = scratch / "probe-driver.json"
     report = {"schema_version": 1, "attempt_id": args.attempt, "kind": args.kind, "execution_uid": os.getuid(), "stage": "starting", "checks": {}}
     # A model retry must not overwrite the evidence of its first invocation.
     with report_path.open("x") as output:
         json.dump(report, output)
-    help_result = subprocess.run(["/usr/local/bin/monolab", "--help"], capture_output=True, text=True, timeout=10)
+    help_result = subprocess.run(["/usr/local/bin/monos", "--help"], capture_output=True, text=True, timeout=10)
     report["checks"]["bundled_help"] = help_result.returncode == 0 and "command-status" in help_result.stdout
     expected_workspace = scratch.parent / "workspace"
     report["checks"]["workspace_lazy_before_open"] = not (expected_workspace / ".git").exists()
@@ -123,13 +123,13 @@ def main():
     if result.get("status") != "committed":
         raise RuntimeError("formal workspace materialization failed")
     path = pathlib.Path(result["result"]["path"])
-    expected = expected_workspace if args.kind == "node" else pathlib.Path("/var/lib/monolab-probe/inspection") / args.attempt
+    expected = expected_workspace if args.kind == "node" else pathlib.Path("/var/lib/monos-probe/inspection") / args.attempt
     if path != expected:
         raise RuntimeError("unexpected workspace path")
     report["checks"]["workspace_command"] = True
     report["checks"]["forged_hints_denied"] = forged_hints_denied(args.peer_attempt)
-    environment = dict(os.environ, MONOLAB_ATTEMPT_ID=args.peer_attempt, MONOLAB_SCOPE_ID="task_" + args.peer_attempt, MONOLAB_PID="1")
-    hint_code, hint_result = command(["/usr/local/bin/monolab", "command-status", "--request-id", "shared-open", "--output", "json"], env=environment)
+    environment = dict(os.environ, MONOS_ATTEMPT_ID=args.peer_attempt, MONOS_SCOPE_ID="task_" + args.peer_attempt, MONOS_PID="1")
+    hint_code, hint_result = command(["/usr/local/bin/monos", "command-status", "--request-id", "shared-open", "--output", "json"], env=environment)
     report["checks"]["forged_environment_keeps_own_result"] = hint_code == 0 and hint_result.get("status") == "committed" and hint_result.get("result", {}).get("path") == str(path)
     payload.write_text(json.dumps({"resource_id": "changed-input-resource"}))
     retry_code, retry = formal("retry", "shared-open")
@@ -137,11 +137,11 @@ def main():
     conflict_code, conflict = formal(open_name, "shared-open", payload)
     report["checks"]["same_id_changed_payload_conflicts"] = conflict_code != 0 and "payload_conflict" in conflict.get("error", {}).get("message", "")
     if args.kind == "node":
-        (path / "probe-result.txt").write_text("MonoLab real OpenCode boundary probe\n")
-        commit = subprocess.run(["/usr/bin/git", "-C", str(path), "-c", "user.name=MonoLab probe", "-c", "user.email=probe@monolab.invalid", "-c", "core.hooksPath=/dev/null", "add", "probe-result.txt"], capture_output=True, timeout=20)
+        (path / "probe-result.txt").write_text("monos real OpenCode boundary probe\n")
+        commit = subprocess.run(["/usr/bin/git", "-C", str(path), "-c", "user.name=monos probe", "-c", "user.email=probe@monos.invalid", "-c", "core.hooksPath=/dev/null", "add", "probe-result.txt"], capture_output=True, timeout=20)
         if commit.returncode:
             raise RuntimeError("Node git add failed")
-        commit = subprocess.run(["/usr/bin/git", "-C", str(path), "-c", "user.name=MonoLab probe", "-c", "user.email=probe@monolab.invalid", "-c", "core.hooksPath=/dev/null", "commit", "-m", "Real CLI private probe change"], capture_output=True, timeout=20)
+        commit = subprocess.run(["/usr/bin/git", "-C", str(path), "-c", "user.name=monos probe", "-c", "user.email=probe@monos.invalid", "-c", "core.hooksPath=/dev/null", "commit", "-m", "Real CLI private probe change"], capture_output=True, timeout=20)
         report["checks"]["native_git_commit"] = commit.returncode == 0
         tree = subprocess.run(["/usr/bin/git", "-C", str(path), "rev-parse", "HEAD^{tree}"], capture_output=True, text=True, timeout=10)
         if tree.returncode:

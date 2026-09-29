@@ -1,5 +1,9 @@
 # Linux boundary probe evidence
 
+> Product terminology and command/path examples were normalized to `monos` on
+> 2026-09-29. Exact historical names and observations remain in the original Git
+> revisions and unchanged raw JSON attachments; this edit is not a new test run.
+
 Status: in progress. This records actual trials, including failures; it does not
 claim Stage A or V1 completion. See `prd.md` for the acceptance criteria.
 
@@ -11,8 +15,8 @@ claim Stage A or V1 completion. See `prd.md` for the acceptance criteria.
   The implementation was uncommitted when staged. Later fixes are recorded below.
 - Target: Owner-authorized Debian 13.6 host, kernel 6.12.107+deb13-amd64,
   systemd 257.13, cgroup v2, Docker 29.8.0 / Compose 5.5.1.
-- Source: `/root/monolab-boundary-probe-src`, private to root.
-- Project: `monolab-boundary-probe`; separate persistent PostgreSQL volume.
+- Source: `/root/monos-boundary-probe-src`, private to root.
+- Project: `monos-boundary-probe`; separate persistent PostgreSQL volume.
   No existing volumes or unrelated services were reset.
 - Native execution user remains `me` (UID 1000). Debian's signed `sudo`
   package `1.9.16p2-3+deb13u2` was installed as a launcher prerequisite;
@@ -158,8 +162,8 @@ completed successfully; the service was explicitly started afterwards.
 
 ## Initial native service startup
 
-`monolab-probe-runner.service` is active/running as `monolab-probe`, primary
-shared-read group `monolab-probe-read`. The backend reports `runner-a` connected
+`monos-probe-runner.service` is active/running as `monos-probe`, primary
+shared-read group `monos-probe-read`. The backend reports `runner-a` connected
 and ready with capacity 2 after WSS reconciliation. The source/root-private
 credential installation and service-owned fixture succeeded. Fixture commit:
 `786e3f10e40a6c51ac795bf9e95ce8f14eff93ac`; tree:
@@ -173,7 +177,7 @@ The first actual Node trial `node-01` failed before OpenCode started; details fo
 `trial node-01 --kind node` exited 2 and preserved `node-01.json`. Systemd
 reported `200/CHDIR`: the requested scratch directory could not be entered.
 `namei` showed the parent `/execution/node-01` as root:root 0750, while scratch
-was correctly me:monolab-probe-read 2750. The helper requested parent mode 0755
+was correctly me:monos-probe-read 2750. The helper requested parent mode 0755
 but inherited Runner umask 0027 and did not apply an explicit final mode.
 No real model/tool boundary success is claimed for this trial.
 
@@ -213,7 +217,7 @@ exits 1 after about 3.6 seconds, reporting `UnknownError` / `Unexpected server
 error` before tool invocation. The trial is **failed**, not a CLI compatibility
 success. Runner records started/output/exited, and its Stop succeeds with physical
 absence and released claim. Evidence is retained under
-`/root/monolab-probe-evidence-resume-01/node-02.json`. Internal Runtime diagnosis
+`/root/monos-probe-evidence-resume-01/node-02.json`. Internal Runtime diagnosis
 is ongoing; the old CHDIR failure is resolved.
 
 `delayed-revoke never-started-02` passed on the native host with current binaries:
@@ -225,7 +229,7 @@ Evidence: `delayed-revoke-never-started-02.json` in the same resume evidence roo
 
 Recovered the preceding session and resumed the same approved task. The old
 `node-02` is physically absent, its Stop succeeded and its claim is released;
-the pre-install snapshot is retained under `/root/monolab-probe-evidence-resume-02`.
+the pre-install snapshot is retained under `/root/monos-probe-evidence-resume-02`.
 An attempted `profile` write to the old evidence root correctly refused to
 overwrite `profile.json`; it did not invalidate or replace the old evidence.
 
@@ -239,7 +243,7 @@ provider overload. Private diagnostics are retained as `diagnostic-custom.*`.
 In that exact diagnostic environment, `models opencode --refresh --verbose
 --pure` populated the selected active, tool-capable model with zero input,
 output, cache-read and cache-write prices. The unchanged custom-agent invocation
-then returned `MONOLAB_DIAG_OK`, exit 0, in 6.53 s. Raw diagnostics remain private
+then returned `MONOS_DIAG_OK`, exit 0, in 6.53 s. Raw diagnostics remain private
 as `diagnostic-refreshed.*`; this is a text-only diagnostic, not Tool Protocol
 acceptance.
 
@@ -270,7 +274,7 @@ Recovered session `01a0e87f-be55-7d20-99e8-895c45d38713` and inspected canonical
 host state directly. `node-03` invoked the real native driver, opened its lazy
 workspace, committed Git and admitted the 160,000-character completion payload.
 Its initial finalization failed and remains recorded in
-`/root/monolab-probe-evidence-resume-02/node-03.json`. Retrying the same operation
+`/root/monos-probe-evidence-resume-02/node-03.json`. Retrying the same operation
 subsequently succeeded; this is recovered completion, not an uninterrupted pass.
 The Node is `COMPLETED`, Task `REVIEW`, and physical absence/claim release hold.
 Its finalized tree `79d37e70f5ba1a235f1b660ede6636aa65d52c27` exactly matches the
@@ -282,7 +286,7 @@ with a bounded two-second reconciliation window; unknown ownership still fails.
 The separate test-CA repair supplies strict key-usage/certificate extensions.
 The resume-04 source archive SHA256 is
 `533d7adcaebc6fb2c5755a04e414738670cf6614876fede04280c163594bfa09`.
-`/root/monolab-probe-evidence-resume-04/build.json` records native Linux module
+`/root/monos-probe-evidence-resume-04/build.json` records native Linux module
 verification, race tests, vet and four successful builds. `installation.json`
 confirms installed hashes, preserved old binaries and unchanged private keys
 and credentials. The public CA trust copy was updated and task services restarted.
@@ -306,7 +310,7 @@ resume-04. Initial inspection preceded those final files appearing; no permanent
 evidence-loss claim is made for these two trials.
 
 Saved `provider-limit-node-04.json` / `provider-limit-planner-02.json` under
-`/root/monolab-probe-evidence-resume-05`, then used the authenticated local admin
+`/root/monos-probe-evidence-resume-05`, then used the authenticated local admin
 surface with `{"action":"revoke","attempt_id":"<trial-id>"}`. Both Stop
 operations succeeded with `writer_absent=true`, mutation authority revoked and
 claims released. Separate `revoked-<trial-id>.json` snapshots retain that recovery.
@@ -338,7 +342,7 @@ execution). Linux Runner race tests and vet passed using cached test results.
 
 `delayed-revoke never-started-05` passed on the host and wrote its immutable
 resume-05 result. No model request or execution process was started.
-With zero unreleased Attempts, restarted only `monolab-probe-runner.service`
+With zero unreleased Attempts, restarted only `monos-probe-runner.service`
 and Compose `server`; completed node-03 state, receipts, Git operations, retained
 requests, ownership and runtime events remained unchanged. Scoped recovery still
 returned its original committed operation; Runner was active and no claims were
@@ -395,7 +399,7 @@ A final one-off host audit initially misclassified PID-zero/no-cgroup records;
 its original failure is retained. Independent unit/cgroup/process inspection and
 journal/boot checks in `final-host-audit.json` pass with 16 released Attempts and
 no remaining writers. Raw root-private evidence is under
-`/root/monolab-probe-evidence-runtime-resume-07`. See the complete
+`/root/monos-probe-evidence-runtime-resume-07`. See the complete
 [resumption report](runtime-resume-07.md), [sanitized evidence](runtime-resume-07-evidence.json)
 and [AC1–AC10 acceptance](acceptance-status.md). These supersede no original trial
 results and make no full product, semantic-planning or power-loss guarantee.

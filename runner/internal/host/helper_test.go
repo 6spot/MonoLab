@@ -1,7 +1,7 @@
 package host
 
 import (
-	protocol "monolab.local/protocol"
+	protocol "monos.local/protocol"
 	"os"
 	"path/filepath"
 	"strings"
@@ -43,8 +43,8 @@ func TestTraversalRootSurvivesRestrictiveUmask(t *testing.T) {
 }
 
 func TestUnitOwnershipRejectsOtherServiceAndCgroup(t *testing.T) {
-	valid := map[string]string{"Transient": "yes", "User": "me", "Group": "monolab-probe-read", "Description": "MonoLab probe attempt dispatch-a", "ControlGroup": "/system.slice/" + Unit("a")}
-	if err := validateUnit(valid, Unit("a"), "MonoLab probe attempt dispatch-a"); err != nil {
+	valid := map[string]string{"Transient": "yes", "User": "me", "Group": "monos-probe-read", "Description": "monos probe attempt dispatch-a", "ControlGroup": "/system.slice/" + Unit("a")}
+	if err := validateUnit(valid, Unit("a"), "monos probe attempt dispatch-a"); err != nil {
 		t.Fatal(err)
 	}
 	for _, key := range []string{"Transient", "User", "Group", "Description", "ControlGroup"} {
@@ -53,7 +53,7 @@ func TestUnitOwnershipRejectsOtherServiceAndCgroup(t *testing.T) {
 			bad[k] = v
 		}
 		bad[key] = "other"
-		if validateUnit(bad, Unit("a"), "MonoLab probe attempt dispatch-a") == nil {
+		if validateUnit(bad, Unit("a"), "monos probe attempt dispatch-a") == nil {
 			t.Fatalf("accepted changed %s", key)
 		}
 	}
@@ -118,7 +118,7 @@ func TestOperationReplayBindsImmutableIdentity(t *testing.T) {
 }
 func TestPrivilegeConfigurationIsNotCallerControlled(t *testing.T) {
 	p := strings.Join(properties("a", false), "\n")
-	for _, required := range []string{"User=me", "Group=monolab-probe-read", "NoNewPrivileges=yes", "KillMode=control-group"} {
+	for _, required := range []string{"User=me", "Group=monos-probe-read", "NoNewPrivileges=yes", "KillMode=control-group"} {
 		if !strings.Contains(p, required) {
 			t.Fatal(required)
 		}

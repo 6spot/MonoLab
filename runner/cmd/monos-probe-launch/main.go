@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
-	"monolab.local/runner/internal/host"
+	"monos.local/runner/internal/host"
 	"os"
 	"time"
 )

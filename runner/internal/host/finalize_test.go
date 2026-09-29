@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	protocol "monolab.local/protocol"
+	protocol "monos.local/protocol"
 )
 
 func TestFinalizationReplayPreservesExactCommit(t *testing.T) {
@@ -50,7 +50,7 @@ func TestFinalizationReplayPreservesExactCommit(t *testing.T) {
 func TestInvalidRetainedFinalizationFailsBeforeGit(t *testing.T) {
 	for _, value := range []string{`{`, `{}`, `{"parent":"--help","tree":"` + strings.Repeat("a", 40) + `","date":"2026-09-28T00:00:00Z"}`} {
 		root := t.TempDir()
-		if err := os.WriteFile(filepath.Join(root, "monolab-finalization-op.json"), []byte(value), 0600); err != nil {
+		if err := os.WriteFile(filepath.Join(root, "monos-finalization-op.json"), []byte(value), 0600); err != nil {
 			t.Fatal(err)
 		}
 		if _, err := finalize("/does-not-exist", root, "op", strings.Repeat("a", 40)); err == nil || ClassifyFailure(err) != protocol.InvalidFinalization {

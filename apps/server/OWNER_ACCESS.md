@@ -1,7 +1,7 @@
 # Single-Owner access
 
 Run migrations and configure the Owner from a trusted local management shell with
-`DATABASE_URL` or `MONOLAB_DATABASE_URL_FILE` already configured. There is no public
+`DATABASE_URL` or `MONOS_DATABASE_URL_FILE` already configured. There is no public
 signup or unauthenticated setup route.
 
 The bootstrap command accepts one JSON object on stdin. Prompt without echoing the
@@ -22,7 +22,7 @@ the database stores a random salt and fixed-parameter scrypt hash, not the passw
 Browser API sequence:
 
 1. Same-origin `POST /v1/owner/login` with `{schema_version:1,password}`.
-2. The server sets the Secure, HttpOnly, SameSite=Strict `__Host-monolab` cookie.
+2. The server sets the Secure, HttpOnly, SameSite=Strict `__Host-monos` cookie.
 3. `GET /v1/owner/session` revalidates expiry/revocation. Existing Owner APIs accept
    this cookie; cookie-authenticated writes require matching Origin.
 4. `POST /v1/owner/logout` revokes the session and expires the cookie.
@@ -63,7 +63,7 @@ the boundary probe's fixed/free launch target.
 GitHub payload: `app_id`, `installation_id`, and write-only `private_key` PEM.
 Send secrets only in a same-origin HTTPS body, never argv, URLs, logs or source.
 The App must already be installed on the selected repositories with Contents and
-Metadata read permission. MonoLab mints only temporary read-only installation
+Metadata read permission. monos mints only temporary read-only installation
 tokens for the repository picker. Future delivery requires separately validated
 write/PR permissions. Omit private_key only to retain the key for the same App.
 Snapshots show its public-key fingerprint, never PEM or tokens. GET
@@ -71,7 +71,7 @@ Snapshots show its public-key fingerprint, never PEM or tokens. GET
 follow explicit next_page. This does not publish Git refs or verify merge access.
 
 Provider keys are encrypted with a domain-separated key from
-`MONOLAB_SIGNING_KEY_FILE`. Preserve this private secret with database backups.
+`MONOS_SIGNING_KEY_FILE`. Preserve this private secret with database backups.
 After signing-key rotation, re-enter the GitHub App key; the service never ignores
 a decryption failure. App/installation IDs are authenticated with ciphertext.
 

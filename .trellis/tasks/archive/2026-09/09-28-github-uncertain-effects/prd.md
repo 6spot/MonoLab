@@ -1,5 +1,9 @@
 # Verify uncertain GitHub create and merge recovery
 
+> Product terminology and command/path examples were normalized to `monos` on
+> 2026-09-29. Exact historical names and observations remain in the original Git
+> revisions and unchanged raw JSON attachments; this edit is not a new test run.
+
 ## Goal
 
 Demonstrate remote-truth reconciliation after lost PR creation and merge responses.
@@ -38,7 +42,7 @@ No team abstractions, generic workflow engine, cross-Runner migration/failover, 
 
 Review upstream evidence and the current source, refine leaf boundaries and observable failure cases, and resolve any Owner-owned acceptance choices. For each complex implementation leaf, complete design.md, implement.md and curated implement/check contexts, present the final planning summary, and obtain its approval before task.py start. Stage and work-package records coordinate acceptance and are not bulk implementation targets.
 
-- Use the already authorized synthetic repository 6spot/monolab-feasibility-20260928-160020-public and current gh authentication; only new synthetic branches/PRs/statuses/merges.
+- Use the already authorized synthetic repository 6spot/monos-feasibility-20260928-160020-public and current gh authentication; only new synthetic branches/PRs/statuses/merges.
 
 ## Source contracts
 

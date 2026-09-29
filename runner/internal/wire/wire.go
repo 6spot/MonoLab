@@ -14,7 +14,7 @@ import (
 
 	"github.com/cyberphone/json-canonicalization/go/src/webpki.org/jsoncanonicalizer"
 	"github.com/santhosh-tekuri/jsonschema/v6"
-	protocol "monolab.local/protocol"
+	protocol "monos.local/protocol"
 )
 
 const Limit = 1048576
@@ -42,14 +42,14 @@ func Validate(name string, raw []byte) error {
 		var doc any
 		compileErr = json.Unmarshal(protocol.SchemaJSON, &doc)
 		if compileErr == nil {
-			compileErr = compiler.AddResource("https://monolab.invalid/protocol/v1", doc)
+			compileErr = compiler.AddResource("https://monos.invalid/protocol/v1", doc)
 		}
 	})
 	if compileErr != nil {
 		return compileErr
 	}
 	mu.Lock()
-	schema, err := compiler.Compile("https://monolab.invalid/protocol/v1#/definitions/" + name)
+	schema, err := compiler.Compile("https://monos.invalid/protocol/v1#/definitions/" + name)
 	mu.Unlock()
 	if err != nil {
 		return err

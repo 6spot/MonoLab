@@ -1,5 +1,9 @@
 # Linux host preflight — 2026-09-28
 
+> Product terminology and command/path examples were normalized to `monos` on
+> 2026-09-29. Exact historical names and observations remain in the original Git
+> revisions and unchanged raw JSON attachments; this edit is not a new test run.
+
 ## Evidence boundary
 
 Owner supplied the test host and SSH access in the conversation. Initial read-only SSH inspection succeeded against `100.120.14.84:22`. The SSH password is deliberately not recorded in task files. A subsequent, explicitly authorized configuration transfer is recorded separately below. No package installation, account creation, model request, service deployment or reboot was performed.
@@ -36,7 +40,7 @@ These observations establish environment/provider facts, not passing results for
 
 The status command alone does not establish whether the custom provider can serve requests. No authenticated model request has been sent. Root's configuration must not be assumed accessible to an Agent running as `me`; running the Agent as root would invalidate the intended privilege-boundary test.
 
-The Owner subsequently explicitly authorized copying the existing provider configuration to `me`. This is environment preparation, not a new MonoLab runtime-login feature.
+The Owner subsequently explicitly authorized copying the existing provider configuration to `me`. This is environment preparation, not a new monos runtime-login feature.
 
 ## Authorized configuration preparation
 
@@ -79,9 +83,9 @@ Executed under `me` in an empty task-owned scratch directory:
 ```text
 /home/linuxbrew/.linuxbrew/bin/opencode run --pure --format json \
   --model opencode/mimo-v2.6-flash-free --dir <scratch> \
-  'Reply exactly MONOLAB_PROVIDER_OK. Do not call tools or inspect files.'
+  'Reply exactly MONOS_PROVIDER_OK. Do not call tools or inspect files.'
 ```
 
-Observed: exit 0, 7.15 seconds, exact expected reply, `step_start`, `text`, `step_finish` JSON events, no errors or stderr. Scratch: `/home/me/monolab-probe-smoke.xgpd2wb6`. No paid credentials were configured, and no session-sharing flag was used.
+Observed: exit 0, 7.15 seconds, exact expected reply, `step_start`, `text`, `step_finish` JSON events, no errors or stderr. Scratch: `/home/me/monos-probe-smoke.xgpd2wb6`. No paid credentials were configured, and no session-sharing flag was used.
 
 This clears the initial provider-usability checkpoint and allows backend/protocol implementation to begin. It does not prove native command invocation, permission enforcement, journal/recovery or any full PRD acceptance case. Those require the integrated probe.

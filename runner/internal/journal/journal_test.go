@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	protocol "monolab.local/protocol"
+	protocol "monos.local/protocol"
 )
 
 func openTest(t *testing.T) *DB {

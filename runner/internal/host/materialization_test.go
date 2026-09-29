@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	protocol "monolab.local/protocol"
+	protocol "monos.local/protocol"
 )
 
 func fixtureRepository(t *testing.T) (string, string) {
@@ -110,7 +110,7 @@ func TestFinalizationRejectsHistoryOutsideMaterializationBase(t *testing.T) {
 					if err != nil {
 						t.Fatal(err)
 					}
-					if err = os.WriteFile(filepath.Join(root, ".git", "monolab-finalization-op.json"), raw, 0600); err != nil {
+					if err = os.WriteFile(filepath.Join(root, ".git", "monos-finalization-op.json"), raw, 0600); err != nil {
 						t.Fatal(err)
 					}
 				}

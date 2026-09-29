@@ -36,12 +36,12 @@ Adapter responsibilities include detect, start/resume, send, interrupt, normaliz
 
 - headless invocation with a structured event stream;
 - how assembled context and the fixed protocol are injected (system-prompt or instruction mechanism) without editing repository files;
-- invocation of the Runner-bundled `monolab` CLI, its Attempt-scoped credential channel, and structured command results (module 05);
+- invocation of the Runner-bundled `monos` CLI, its Attempt-scoped credential channel, and structured command results (module 05);
 - a non-interactive permission mode and grants for the Attempt's reserved paths;
 - session capture/resume, including any launch-directory dependency;
 - whether one invocation can accept further input.
 
-Runner-to-Agent execution transport and Agent-to-MonoLab commands are separate boundaries. The Adapter uses the installed Runtime’s supported process/session interface to launch, send input, receive structured events, and stop execution. Agents invoke `monolab` to request formal platform actions; that CLI does not launch or control the coding Runtime. MCP is not required for either boundary in V1.
+Runner-to-Agent execution transport and Agent-to-monos commands are separate boundaries. The Adapter uses the installed Runtime’s supported process/session interface to launch, send input, receive structured events, and stop execution. Agents invoke `monos` to request formal platform actions; that CLI does not launch or control the coding Runtime. MCP is not required for either boundary in V1.
 
 These are verified implementation facts, not Role capabilities or a settings surface.
 
@@ -49,7 +49,7 @@ Typical normalized reasons include QUOTA_EXHAUSTED, AUTH_REQUIRED, RATE_LIMITED,
 
 Do not automatically declare an Agent "hung" merely because no output has appeared for a long period. Record factual activity data such as `last_activity_at` and let the Owner stop/switch manually.
 
-If a Runtime nevertheless reports that it is waiting for interactive input, such as an approval, login, or confirmation prompt, the Adapter normalizes that objective fact and MonoLab raises Owner attention with Stop/Switch actions. The fact comes from the CLI's structured events or documented prompts, never from silence.
+If a Runtime nevertheless reports that it is waiting for interactive input, such as an approval, login, or confirmation prompt, the Adapter normalizes that objective fact and monos raises Owner attention with Stop/Switch actions. The fact comes from the CLI's structured events or documented prompts, never from silence.
 
 ## Execution Policy
 
@@ -76,7 +76,7 @@ ExecutionTarget
 
 Every fallback is its own Execution Target, not merely a runtime ID.
 
-`duration_budget` is an optional deterministic wall-clock threshold. When a RUNNING Attempt exceeds the budget of its applicable policy, MonoLab raises Owner attention with Stop/Switch actions. The budget never stops the Attempt, triggers fallback, or changes Node/Task state. It measures configured elapsed time, not silence, so it is not a hang inference.
+`duration_budget` is an optional deterministic wall-clock threshold. When a RUNNING Attempt exceeds the budget of its applicable policy, monos raises Owner attention with Stop/Switch actions. The budget never stops the Attempt, triggers fallback, or changes Node/Task state. It measures configured elapsed time, not silence, so it is not a hang inference.
 
 Runner selection is optional:
 
@@ -87,7 +87,7 @@ Runner selection is optional:
 
 Model and thinking level may be absent, meaning "use the Runtime/CLI default".
 
-MonoLab defines a fixed set of common execution configuration fields. Runtime Adapters report which of those common fields they support and the currently discoverable values.
+monos defines a fixed set of common execution configuration fields. Runtime Adapters report which of those common fields they support and the currently discoverable values.
 
 V1 common fields are intentionally small:
 
@@ -96,21 +96,21 @@ V1 common fields are intentionally small:
 - Model;
 - Thinking level.
 
-The UI shows only MonoLab-defined fields that the selected Adapter supports. An Adapter must not inject arbitrary provider-specific configuration controls into the general UI.
+The UI shows only monos-defined fields that the selected Adapter supports. An Adapter must not inject arbitrary provider-specific configuration controls into the general UI.
 
-This mirrors the useful Multica behavior where model/thinking choices come from the selected tool, while keeping MonoLab's product surface controlled and consistent.
+This mirrors the useful Multica behavior where model/thinking choices come from the selected tool, while keeping monos's product surface controlled and consistent.
 
-The UI should also allow an Owner to enter a model identifier manually when needed, so unknown/new/provider-specific models do not require a MonoLab release.
+The UI should also allow an Owner to enter a model identifier manually when needed, so unknown/new/provider-specific models do not require a monos release.
 
-A manually entered model is an explicit override. MonoLab may validate format/basic compatibility where possible, but it should not require the model to already exist in a cached discovery list.
+A manually entered model is an explicit override. monos may validate format/basic compatibility where possible, but it should not require the model to already exist in a cached discovery list.
 
-If a future option becomes broadly useful, add it deliberately to MonoLab's common schema rather than dynamically exposing every CLI/provider flag.
+If a future option becomes broadly useful, add it deliberately to monos's common schema rather than dynamically exposing every CLI/provider flag.
 
 Do not introduce a separate Runtime Profile layer unless future reuse proves it necessary.
 
-MonoLab never installs Codex, Claude Code, OpenCode, or other coding tools for the Owner. The Runner only discovers and invokes tools that already exist on that machine.
+monos never installs Codex, Claude Code, OpenCode, or other coding tools for the Owner. The Runner only discovers and invokes tools that already exist on that machine.
 
-MonoLab also does not own or manage authentication for those coding tools. Login state and credentials remain under the tool/runtime on the Runner machine. MonoLab may report objective availability/startability facts, but it does not store or provision those runtime credentials.
+monos also does not own or manage authentication for those coding tools. Login state and credentials remain under the tool/runtime on the Runner machine. monos may report objective availability/startability facts, but it does not store or provision those runtime credentials.
 
 Resolution priority:
 
@@ -239,13 +239,13 @@ Creating an Execution Task does not immediately create its Plan or start any Run
 
 A newly created Task enters PLANNING with `current_plan_id = null`. PLANNING is the Owner-controlled pre-start task library state.
 
-MonoLab must not automatically admit or start a PLANNING Task.
+monos must not automatically admit or start a PLANNING Task.
 
 When the Owner explicitly starts the Task:
 
 1. Task transitions PLANNING → RUNNING;
-2. MonoLab reads the latest current Project Context, Project Resources, Project-selected Role descriptors, Planner Guidance, and Planner Execution Policy;
-3. MonoLab starts the Execution Task Planner through the shared Attempt / Runtime machinery;
+2. monos reads the latest current Project Context, Project Resources, Project-selected Role descriptors, Planner Guidance, and Planner Execution Policy;
+3. monos starts the Execution Task Planner through the shared Attempt / Runtime machinery;
 4. Planner publishes the initial Plan;
 5. Orchestrator derives runnable Nodes and begins normal Node scheduling.
 
@@ -380,7 +380,7 @@ Node
 
 Sessions never cross Todo / Execution Task / Node boundaries.
 
-A Todo Planner Session may be resumed across normal Owner messages in that Todo. If it cannot be resumed, MonoLab rebuilds the Planner context from Todo formal data such as Original Capture, Working Requirement State, recent Discussion, and Project Context.
+A Todo Planner Session may be resumed across normal Owner messages in that Todo. If it cannot be resumed, monos rebuilds the Planner context from Todo formal data such as Original Capture, Working Requirement State, recent Discussion, and Project Context.
 
 Creating an Execution Task ends the Todo Planner's participation in that execution chain. Task Conversation, planning, and Replan use a separate Execution Task Planner Session and never resumes the Todo Planner Session.
 
@@ -392,14 +392,14 @@ If execution switches Runtime, the new Runtime starts a fresh Session. If work t
 
 Rework of the same Node may resume its previous Session when the Runtime is unchanged and the session remains valid. The new Attempt still receives current formal context, current Role instructions, and the Rework reason.
 
-Session loss must never make a Node unrecoverable. MonoLab must be able to start a fresh Session from Task / Project / Node / Role / Artifact / Workspace state.
+Session loss must never make a Node unrecoverable. monos must be able to start a fresh Session from Task / Project / Node / Role / Artifact / Workspace state.
 
 
 ## Node and Attempt
 
 Node is the durable work unit inside an Execution Plan.
 
-Attempt is one concrete Runtime execution in MonoLab. It is shared infrastructure for both Planner work and Node Agent work.
+Attempt is one concrete Runtime execution in monos. It is shared infrastructure for both Planner work and Node Agent work.
 
 An Attempt has exactly one execution owner. The owner identifies the scope whose Runtime work is being performed:
 
@@ -456,7 +456,7 @@ Attempt failure does not mean Node failure.
 
 Client state never participates in Attempt lifecycle. Browser close, mobile disconnect, UI navigation, or client network loss are irrelevant because execution is owned by the backend Runner.
 
-Attempt continuity is determined only by server-side Runtime execution continuity. If the same Runtime execution process/invocation remains alive, it is the same Attempt. If that execution ends and MonoLab must start or resume a Runtime execution again, that is a new Attempt.
+Attempt continuity is determined only by server-side Runtime execution continuity. If the same Runtime execution process/invocation remains alive, it is the same Attempt. If that execution ends and monos must start or resume a Runtime execution again, that is a new Attempt.
 
 ## Owner execution controls after Plan publication
 

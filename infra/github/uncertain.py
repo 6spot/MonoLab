@@ -37,11 +37,11 @@ def merged_result(pr, expected_head):
 
 def run(api, repo):
     info = api.ok('GET', f'repos/{repo}')
-    if not info['name'].startswith('monolab-feasibility-') or info['description'] != 'Synthetic MonoLab provider feasibility fixture; no product source.':
+    if not info['name'].startswith('monos-feasibility-') or info['description'] != 'Synthetic monos provider feasibility fixture; no product source.':
         raise RuntimeError('Unrecognized synthetic repository')
     stamp = datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%d-%H%M%S')
     branch = 'uncertain-' + stamp
-    marker = 'MonoLab synthetic operation ' + stamp
+    marker = 'monos synthetic operation ' + stamp
     base = info['default_branch']
     base_sha = api.ok('GET', f'repos/{repo}/git/ref/heads/{base}')['object']['sha']
     api.save('operation', {'repository_id': info['id'], 'repo': repo, 'head_branch': branch, 'base': base, 'marker': marker})
@@ -63,7 +63,7 @@ def run(api, repo):
     if recovered['head']['sha'] != expected_head:
         raise RuntimeError('Recovered PR head differs from accepted head')
     api.save('create-recovered', {'number': number, 'head': expected_head, 'source': 'remote lookup'})
-    api.ok('POST', f'repos/{repo}/statuses/{expected_head}', {'state': 'success', 'context': 'monolab/probe', 'description': 'Synthetic recovery check'})
+    api.ok('POST', f'repos/{repo}/statuses/{expected_head}', {'state': 'success', 'context': 'monos/probe', 'description': 'Synthetic recovery check'})
     for _ in range(30):
         pr = api.ok('GET', f'repos/{repo}/pulls/{number}')
         if pr['head']['sha'] != expected_head:

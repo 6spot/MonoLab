@@ -25,7 +25,7 @@ the rest conversationally.
 - [x] Fill frontend guidelines
 - [ ] Add code examples
 
-Architecture-backed baseline completed on 2026-09-28: all spec templates now contain MonoLab guidance, with protocol and Runner layers added. See [the spec index](../../spec/index.md). Contract sketches and official Base UI examples are labeled; real product source/test examples remain pending because product packages have not been scaffolded. The remaining checkbox is that later evidence task, not a request to regenerate the completed baseline.
+Architecture-backed baseline completed on 2026-09-28: all spec templates now contain monos guidance, with protocol and Runner layers added. See [the spec index](../../spec/index.md). Contract sketches and official Base UI examples are labeled; real product source/test examples remain pending because product packages have not been scaffolded. The remaining checkbox is that later evidence task, not a request to regenerate the completed baseline.
 
 ---
 

@@ -10,7 +10,7 @@ COPY infra/compose/test-db.mjs ./infra/compose/test-db.mjs
 
 FROM source AS test
 RUN pnpm install --frozen-lockfile
-RUN pnpm --filter @monolab/web build
+RUN pnpm --filter @monos/web build
 CMD ["node", "infra/compose/test-db.mjs"]
 
 FROM source AS server

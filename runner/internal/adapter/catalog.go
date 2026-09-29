@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	protocol "monolab.local/protocol"
-	"monolab.local/runner/internal/host"
+	protocol "monos.local/protocol"
+	"monos.local/runner/internal/host"
 )
 
 // OpenCode's fresh-cache startup may use its bundled catalog before the

@@ -14,21 +14,21 @@ import (
 	"strings"
 	"time"
 
-	protocol "monolab.local/protocol"
-	"monolab.local/runner/internal/control"
-	"monolab.local/runner/internal/host"
-	"monolab.local/runner/internal/local"
-	"monolab.local/runner/internal/wire"
+	protocol "monos.local/protocol"
+	"monos.local/runner/internal/control"
+	"monos.local/runner/internal/host"
+	"monos.local/runner/internal/local"
+	"monos.local/runner/internal/wire"
 )
 
-const help = `monolab — formal MonoLab Tool Protocol commands
+const help = `monos — formal monos Tool Protocol commands
 
-  monolab open_workspace --input payload.json [--request-id ID] --output json
-  monolab inspect_repository --input payload.json [--request-id ID] --output json
-  monolab complete_node --input payload.json [--request-id ID] --output json
-  monolab commit_task_turn --input payload.json [--request-id ID] --output json
-  monolab retry --request-id ID --output json
-  monolab command-status --request-id ID --output json
+  monos open_workspace --input payload.json [--request-id ID] --output json
+  monos inspect_repository --input payload.json [--request-id ID] --output json
+  monos complete_node --input payload.json [--request-id ID] --output json
+  monos commit_task_turn --input payload.json [--request-id ID] --output json
+  monos retry --request-id ID --output json
+  monos command-status --request-id ID --output json
 
 Use --input - to read a JSON payload from stdin (maximum 1 MiB).
 Workspace payload: {"resource_id":"RESOURCE"}
@@ -40,7 +40,7 @@ An uncertain response must be reconciled with command-status using the same ID.
 `
 
 func call(req local.Request) (local.Response, error) {
-	path := os.Getenv("MONOLAB_SOCKET")
+	path := os.Getenv("MONOS_SOCKET")
 	if path == "" {
 		path = host.Socket
 	}
@@ -71,7 +71,7 @@ func call(req local.Request) (local.Response, error) {
 }
 func run(args []string) (protocol.CommandResult, error) {
 	var result protocol.CommandResult
-	flags := flag.NewFlagSet("monolab", flag.ContinueOnError)
+	flags := flag.NewFlagSet("monos", flag.ContinueOnError)
 	input := flags.String("input", "", "JSON payload file, or - for stdin")
 	requestID := flags.String("request-id", "", "immutable request identity")
 	output := flags.String("output", "json", "structured output")

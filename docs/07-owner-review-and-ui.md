@@ -125,7 +125,7 @@ Todo rows should remain compact and recognizable rather than becoming mini task 
 Recommended row content:
 
 ~~~text
-● Runtime fallback handling           MonoLab
+● Runtime fallback handling           monos
   Codex quota exhausted; switch Claude        12m
 ~~~
 
@@ -278,13 +278,13 @@ Do not add a Team/Blueprint layer between the global Role library and Project.
 For example:
 
 ~~~text
-Project: MonoLab
+Project: monos
 
 Context
 ...
 
 Resources
-6spot/MonoLab · main
+6spot/monos · main
 
 Roles
 General Coding · Swift/macOS · Debug
@@ -310,7 +310,7 @@ Runner
 [ Auto ▼ ]
 
 Auto
-monolab-01
+monos-01
 ~~~
 
 Default is `Auto`. The Owner is never required to choose a Runner.
@@ -319,13 +319,13 @@ Selecting a concrete Runner means "run this target only on that Runner", not mer
 
 V1 may expose only one concrete Runner plus Auto, but the UI and data model should already support multiple Runner instances later without introducing different Runner types.
 
-Model and Thinking are MonoLab-defined common fields. The selected Runtime Adapter reports whether each field is supported and which values are discoverable; unsupported fields are hidden.
+Model and Thinking are monos-defined common fields. The selected Runtime Adapter reports whether each field is supported and which values are discoverable; unsupported fields are hidden.
 
-Do not let Runtime Adapters dynamically add arbitrary provider-specific form controls. MonoLab owns the fixed settings surface and only renders common fields it explicitly understands.
+Do not let Runtime Adapters dynamically add arbitrary provider-specific form controls. monos owns the fixed settings surface and only renders common fields it explicitly understands.
 
 Manual model entry remains available for new or provider-specific model identifiers that discovery does not yet return.
 
-MonoLab does not install coding tools and does not manage their login credentials. Runtime setup/authentication stays with the tool on the Runner machine.
+monos does not install coding tools and does not manage their login credentials. Runtime setup/authentication stays with the tool on the Runner machine.
 
 An Execution Policy may set an optional duration budget. Present it as an attention threshold, not a timeout: exceeding it never stops execution.
 

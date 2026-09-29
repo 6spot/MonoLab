@@ -4,7 +4,7 @@ Source: [Tool Protocol](../../../docs/05-tool-protocol.md).
 
 ## 1. Scope / Trigger
 
-Owner HTTPS commands, Agent `monolab` commands, Runner WSS RPC/events and scoped recovery reads.
+Owner HTTPS commands, Agent `monos` commands, Runner WSS RPC/events and scoped recovery reads.
 
 ## 2. Signatures
 
@@ -19,7 +19,7 @@ server-authenticated binding:
 
 `POST /v1/commands` receives `CommandSubmission { envelope_json, sha256 }`. `GET /v1/commands/:request_id` reads the authenticated Attempt's receipt. Runner recovery uses `/v1/recovery/attempts/:attempt_id/commands/:request_id` or `/v1/recovery/operations/:operation_id`; its service credential never permits Agent command admission.
 
-The bundled [monolab](../../../runner/cmd/monolab/main.go) supports immutable retry/status, `open_workspace`, `inspect_repository`, `complete_node` and `commit_task_turn`. Consult its help and the [protocol README](../../../packages/protocol/README.md) for exact CLI argument syntax. Task-scoped Owner confirmation uses separate Owner routes described in [Owner commands](../backend/owner-commands.md); delivery execution remains separate work.
+The bundled [monos](../../../runner/cmd/monos/main.go) supports immutable retry/status, `open_workspace`, `inspect_repository`, `complete_node` and `commit_task_turn`. Consult its help and the [protocol README](../../../packages/protocol/README.md) for exact CLI argument syntax. Task-scoped Owner confirmation uses separate Owner routes described in [Owner commands](../backend/owner-commands.md); delivery execution remains separate work.
 
 ## 3. Contracts
 
@@ -31,6 +31,7 @@ The bundled [monolab](../../../runner/cmd/monolab/main.go) supports immutable re
 - Return committed result, admitted operation or deterministic error distinctly.
 - Retry loads the immutable original payload; no mutable-file reread or new ID after uncertainty.
 - Revoked Attempts cannot make new effects. Scoped recovery reads never renew old mutation authority.
+- Product naming changes do not rewrite stored envelopes, digests or process identities. `monos` is the current CLI and `MONOS_SOCKET` its local-channel setting; historical raw evidence retains original bytes. See [deployment upgrades](../../../docs/12-product-naming-and-upgrades.md) before moving existing storage.
 - Authenticate the signed Attempt identity's exact fields/types and expiry, not only its signature. Reject malformed, padded or trailing credential encodings as `unauthorized`.
 - Canonical envelope input rejects malformed Unicode instead of hashing a replacement string differently in TS and Go.
 - Complete every inventory page under the same snapshot before reconciliation; a partial page never proves process absence.

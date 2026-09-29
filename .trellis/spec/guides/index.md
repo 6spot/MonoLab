@@ -1,4 +1,4 @@
-# MonoLab Thinking Guides
+# monos Thinking Guides
 
 These are short review prompts, not another source of domain contracts. Start from the [spec index](../index.md) and owning architecture module.
 

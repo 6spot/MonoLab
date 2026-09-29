@@ -5,8 +5,8 @@ import { createAttemptFixture, enrollFixture, retryOperationFixture, revokeFixtu
 import type { AttemptFixture } from './fixtures.ts';
 
 // Local administrative surface only. Secrets arrive through stdin, never argv.
-const databaseURL = process.env.MONOLAB_DATABASE_URL_FILE ? readFileSync(process.env.MONOLAB_DATABASE_URL_FILE, 'utf8').trim() : process.env.DATABASE_URL;
-if (!databaseURL) throw new Error('DATABASE_URL or MONOLAB_DATABASE_URL_FILE is required');
+const databaseURL = process.env.MONOS_DATABASE_URL_FILE ? readFileSync(process.env.MONOS_DATABASE_URL_FILE, 'utf8').trim() : process.env.DATABASE_URL;
+if (!databaseURL) throw new Error('DATABASE_URL or MONOS_DATABASE_URL_FILE is required');
 const input = JSON.parse(readFileSync(0, 'utf8')) as AttemptFixture & { action: string; credential: string; capacity?: number; operation_id: string };
 const db = database(databaseURL);
 try {

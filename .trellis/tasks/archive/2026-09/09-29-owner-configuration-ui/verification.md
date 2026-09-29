@@ -1,5 +1,9 @@
 # Owner configuration UI verification — 2026-09-29
 
+> Product terminology and command/path examples were normalized to `monos` on
+> 2026-09-29. Exact historical names and observations remain in the original Git
+> revisions and unchanged raw JSON attachments; this edit is not a new test run.
+
 ## Result
 
 All three leaf acceptance criteria passed. Implemented the protected React/Vite
@@ -18,7 +22,7 @@ the main session under Owner authorization; no sub-agents or permission prompts.
 | Playwright against actual backend + isolated PostgreSQL | 6 passed; final cleanup-verification run 16.8 seconds |
 | Linux Go tests with race detector and vet | Passed |
 | Vite production build | JS 468.53 kB / 141.96 kB gzip; CSS 25.60 kB / 6.54 kB gzip |
-| Production Docker target | Built as monolab-owner-ui-validation |
+| Production Docker target | Built as monos-owner-ui-validation |
 | Network-disabled production image smoke | Shell 200/no-store, built JS 200/immutable, protected API 401 |
 | Context manifests and diff whitespace | Passed |
 

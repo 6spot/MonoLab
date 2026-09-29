@@ -1,7 +1,7 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "MonoLab boundary probe",
+    "title": "monos boundary probe",
     "version": "1.0.0"
   },
   "paths": {
@@ -211,7 +211,7 @@
     },
     "/v1/owner/login": {
       "post": {
-        "description": "Same-origin password login; sets Secure HttpOnly __Host-monolab cookie.",
+        "description": "Same-origin password login; sets Secure HttpOnly __Host-monos cookie.",
         "requestBody": {
           "required": true,
           "content": {
@@ -2797,7 +2797,7 @@
       "OwnerCookie": {
         "type": "apiKey",
         "in": "cookie",
-        "name": "__Host-monolab",
+        "name": "__Host-monos",
         "description": "Secure HttpOnly Owner session; state-changing requests require same Origin."
       },
       "OwnerAuth": {

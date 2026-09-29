@@ -26,7 +26,7 @@ it('validates graph identities, references and cycles before publication', () =>
   expect(() => validatePlan([{ ...graph[0]!, dependencies: [graph[1]!.node_id] }, graph[1]!])).toThrow();
 });
 
-describe.skipIf(process.env.MONOLAB_TEST_DATABASE !== '1')('PostgreSQL Task records', () => {
+describe.skipIf(process.env.MONOS_TEST_DATABASE !== '1')('PostgreSQL Task records', () => {
   let db: Database; let admin: Database;
   const namespace = `records_${randomUUID().replaceAll('-', '')}`;
   beforeAll(async () => {

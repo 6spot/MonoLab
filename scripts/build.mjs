@@ -15,5 +15,5 @@ for (const project of ['apps/server', 'packages/protocol', 'packages/domain', 'p
   if (existsSync(`${project}/node_modules`) && !existsSync(dependencyPath)) symlinkSync(resolve(`${project}/node_modules`), dependencyPath, 'dir');
 }
 
-execFileSync('pnpm', ['--filter', '@monolab/web', 'build'], { stdio: 'inherit' });
+execFileSync('pnpm', ['--filter', '@monos/web', 'build'], { stdio: 'inherit' });
 cpSync('apps/web/dist', 'dist/apps/web/dist', { recursive: true });

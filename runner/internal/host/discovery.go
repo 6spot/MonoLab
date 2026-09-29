@@ -14,7 +14,7 @@ import (
 	"syscall"
 	"time"
 
-	protocol "monolab.local/protocol"
+	protocol "monos.local/protocol"
 )
 
 var versionPattern = regexp.MustCompile(`^[0-9]+\.[0-9]+\.[0-9]+(?:[-+][A-Za-z0-9.-]+)?$`)

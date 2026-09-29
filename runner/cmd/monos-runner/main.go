@@ -5,18 +5,18 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"monolab.local/runner/internal/control"
-	"monolab.local/runner/internal/daemon"
-	"monolab.local/runner/internal/host"
-	"monolab.local/runner/internal/journal"
-	"monolab.local/runner/internal/local"
+	"monos.local/runner/internal/control"
+	"monos.local/runner/internal/daemon"
+	"monos.local/runner/internal/host"
+	"monos.local/runner/internal/journal"
+	"monos.local/runner/internal/local"
 	"os"
 	"os/signal"
 	"syscall"
 )
 
 func run() error {
-	path := flag.String("config", "/etc/monolab-probe/runner.json", "private Runner configuration")
+	path := flag.String("config", "/etc/monos-probe/runner.json", "private Runner configuration")
 	flag.Parse()
 	if os.Geteuid() == 0 {
 		return fmt.Errorf("Runner must use dedicated service account")

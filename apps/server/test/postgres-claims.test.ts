@@ -9,7 +9,7 @@ import type { AttemptFixture } from '../src/fixtures.ts';
 import { BoundaryService } from '../src/service.ts';
 import { Worker } from './fixtures/process-worker.ts';
 
-describe.skipIf(process.env.MONOLAB_TEST_DATABASE !== '1')('independent PostgreSQL claim workers', () => {
+describe.skipIf(process.env.MONOS_TEST_DATABASE !== '1')('independent PostgreSQL claim workers', () => {
   let db: Database;
   let admin: Database;
   let url: string;

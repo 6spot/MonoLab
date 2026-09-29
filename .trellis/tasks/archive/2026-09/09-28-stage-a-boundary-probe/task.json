@@ -2,7 +2,7 @@
   "id": "stage-a-boundary-probe",
   "name": "stage-a-boundary-probe",
   "title": "Stage A boundary feasibility probe",
-  "description": "Validate the minimal backend, Linux Runner and bundled monolab CLI boundary with one Owner-installed Runtime before broad product implementation.",
+  "description": "Validate the minimal backend, Linux Runner and bundled monos CLI boundary with one Owner-installed Runtime before broad product implementation.",
   "status": "completed",
   "dev_type": null,
   "scope": null,

@@ -1,5 +1,5 @@
 {
-  "name": "@monolab/db",
+  "name": "@monos/db",
   "private": true,
   "type": "module",
   "dependencies": { "drizzle-orm": "0.45.3", "pg": "8.23.0" }

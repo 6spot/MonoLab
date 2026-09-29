@@ -1,4 +1,4 @@
-# MonoLab Engineering Specs
+# monos Engineering Specs
 
 ## Status and authority
 

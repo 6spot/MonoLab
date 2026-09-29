@@ -88,7 +88,7 @@ func SocketPeer(c *net.UnixConn) (Peer, error) {
 	return first, nil
 }
 func Population(cgroup string) (bool, error) {
-	if !strings.HasPrefix(cgroup, "/system.slice/monolab-probe-") || strings.Contains(cgroup, "..") {
+	if !strings.HasPrefix(cgroup, "/system.slice/monos-probe-") || strings.Contains(cgroup, "..") {
 		return true, fmt.Errorf("unowned cgroup")
 	}
 	raw, err := os.ReadFile("/sys/fs/cgroup" + cgroup + "/cgroup.events")

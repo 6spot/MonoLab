@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
-	protocol "monolab.local/protocol"
-	"monolab.local/runner/internal/adapter"
-	"monolab.local/runner/internal/host"
+	protocol "monos.local/protocol"
+	"monos.local/runner/internal/adapter"
+	"monos.local/runner/internal/host"
 	"os"
 )
 

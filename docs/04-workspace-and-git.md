@@ -12,7 +12,7 @@ Core models should not depend on Git Worktree semantics.
 
 Project Context already contains its repositories/resources.
 
-MonoLab core is Git-first, while V1 product UX is intentionally GitHub-first.
+monos core is Git-first, while V1 product UX is intentionally GitHub-first.
 
 The core resource model must not be named or designed as a GitHub-only object. A repository resource should represent a Git repository with provider metadata layered on top:
 
@@ -196,9 +196,9 @@ Agents do not directly push the final delivery branch, create the final PR, or m
 
 ## Git delivery
 
-Formal remote delivery is owned by MonoLab, not by the execution Agent.
+Formal remote delivery is owned by monos, not by the execution Agent.
 
-For GitHub-backed resources with automatic remote preparation (the default), when all required work is integrated and the Task enters REVIEW, MonoLab automatically starts delivery preparation:
+For GitHub-backed resources with automatic remote preparation (the default), when all required work is integrated and the Task enters REVIEW, monos automatically starts delivery preparation:
 
 1. finalize the Task Workspace and prepare a candidate delivery commit from its exact result tree;
 2. run pre-push checks on that candidate and its publication range;
@@ -217,7 +217,7 @@ Checks flag tracked files excluded by ignore rules, files over a publication-siz
 
 A resource may set `remote_preparation: after_acceptance`, for example for a public repository or for CI that exposes secrets to pushed branches. REVIEW then shows only the local result. Accept pushes the delivery branch, opens the review request, waits for required checks on that exact head, and merges. A failure at any step leaves the Task in REVIEW, and any review request already opened stays open.
 
-The review request title is the Task title; its body is rendered deterministically from current completion summaries and a MonoLab Task reference, and updates re-render it. `merge_method` selects merge, squash, or rebase; when unset, delivery uses the first of these the repository allows. Internal Task Workspace history and published delivery history are separate. Published delivery branches only fast-forward; MonoLab never force-pushes them. The candidate construction and recovery rules below enforce this independently of Agent commit history.
+The review request title is the Task title; its body is rendered deterministically from current completion summaries and a monos Task reference, and updates re-render it. `merge_method` selects merge, squash, or rebase; when unset, delivery uses the first of these the repository allows. Internal Task Workspace history and published delivery history are separate. Published delivery branches only fast-forward; monos never force-pushes them. The candidate construction and recovery rules below enforce this independently of Agent commit history.
 
 The PR is infrastructure for Review/Delivery, not a separate business decision.
 
@@ -288,7 +288,7 @@ Only the explicit delivery ref and its intended reachable history are published.
 
 For example, an internal commit may add a credential-like value and a later corrective commit remove it. A clean exported result can then pass checks because the private intermediate commit is not an ancestor of the delivery head. Conversely, any prohibited content still in the exported tree must be corrected or explicitly handled under the finding policy; export is not an automatic content sanitizer.
 
-If sensitive content was already published, deleting it in a later commit does not remove its remote history. Stop automatic delivery and report the affected published revision for explicit remediation. Credential revocation/rotation and any provider-side history cleanup are separate Owner-controlled operations; ordinary Rework does not claim to undo exposure and MonoLab does not automatically rewrite remote history.
+If sensitive content was already published, deleting it in a later commit does not remove its remote history. Stop automatic delivery and report the affected published revision for explicit remediation. Credential revocation/rotation and any provider-side history cleanup are separate Owner-controlled operations; ordinary Rework does not claim to undo exposure and monos does not automatically rewrite remote history.
 
 ## Delivery targets, acceptance, and partial delivery
 
@@ -306,7 +306,7 @@ Multiple repositories are not an atomic transaction. Before finalizing the first
 
 For arbitrary Git URLs without PR/merge capabilities, V1 prepares a Task delivery branch and exposes its exact commit/diff. With automatic preparation, push that branch during REVIEW and offer `Accept delivered branch`. A successful push is preparation only: before Owner acceptance admits a delivery operation, Request Changes and authorized requirement revisions remain available under the ordinary guards and update the same branch by fast-forward. After acceptance, the batch is frozen even while publication verification is pending. Merely publishing the branch does not trigger partial-delivery restrictions.
 
-Plain-Git final delivery requires both an exact-result Owner receipt and verified publication of that accepted commit. Reconcile the remote ref to the candidate head, then record the item's final acceptance under the still-authorized delivery operation and frozen result basis. Later chat is outside that batch and cannot block this record. A mismatched or uncertain remote head leaves REVIEW with recovery attention; never accept a different head or treat a timeout as success. Persist the verified head and observation with the receipt. Later remote edits do not rewrite the historical accepted version, and MonoLab does not claim to prevent external branch changes.
+Plain-Git final delivery requires both an exact-result Owner receipt and verified publication of that accepted commit. Reconcile the remote ref to the candidate head, then record the item's final acceptance under the still-authorized delivery operation and frozen result basis. Later chat is outside that batch and cannot block this record. A mismatched or uncertain remote head leaves REVIEW with recovery attention; never accept a different head or treat a timeout as success. Persist the verified head and observation with the receipt. Later remote edits do not rewrite the historical accepted version, and monos does not claim to prevent external branch changes.
 
 With `remote_preparation: after_acceptance`, show the local candidate and label the action `Accept & publish branch`: Owner confirmation admits delivery of that exact candidate, but the item remains unfinished until publication is verified and final acceptance is recorded. A failed push remains REVIEW with Retry of the same accepted batch. Later messages do not block that retry or finalization. Explicit Request Changes may revoke the operation under the guards below; reconcile any in-flight push before returning to correction. The acceptance transaction, not push success, determines whether input belongs before or after the batch cutoff.
 

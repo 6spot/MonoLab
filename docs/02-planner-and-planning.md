@@ -6,7 +6,7 @@ Planner is a system control role.
 
 It is not part of the reusable Role library.
 
-MonoLab may reuse the same Planner configuration and Execution Policy across modules, but Todo planning and Execution Task planning are separate session/context domains.
+monos may reuse the same Planner configuration and Execution Policy across modules, but Todo planning and Execution Task planning are separate session/context domains.
 
 ~~~text
 Todo Planner
@@ -43,7 +43,7 @@ Fixed System Protocol
 + Owner Planner Guidance
 ~~~
 
-Fixed System Protocol defines MonoLab's non-overridable product and orchestration rules, including formal state/tool boundaries, required Owner confirmations, immutable Specification/Plan revision semantics, and final acceptance/delivery authority.
+Fixed System Protocol defines monos's non-overridable product and orchestration rules, including formal state/tool boundaries, required Owner confirmations, immutable Specification/Plan revision semantics, and final acceptance/delivery authority.
 
 Owner Planner Guidance is user-editable and controls collaboration style, preferences, tone, planning habits, and other soft behavior. It must not override the Fixed System Protocol.
 
@@ -115,9 +115,9 @@ This phase produces only the proposed title/specification for the mandatory Exec
 
 Owner confirmation creates the Task and its immutable initial Specification revision, but does not immediately materialize an Execution Plan.
 
-A newly created Task enters PLANNING with no current Plan. In this state the Task is a formal, ready-to-run item in the Owner's execution library, but MonoLab does not yet invoke the Execution Task Planner.
+A newly created Task enters PLANNING with no current Plan. In this state the Task is a formal, ready-to-run item in the Owner's execution library, but monos does not yet invoke the Execution Task Planner.
 
-Initial planning begins only when the Owner explicitly starts the Task. Starting moves the Task to RUNNING immediately, then MonoLab starts a separate Execution Task Planner Session. This is not a continuation of the Todo Planner Session.
+Initial planning begins only when the Owner explicitly starts the Task. Starting moves the Task to RUNNING immediately, then monos starts a separate Execution Task Planner Session. This is not a continuation of the Todo Planner Session.
 
 Deferring initial planning until Owner Start is intentional: the Planner should use the current Project Context, current Project Resources, and the current set of Project-selected Roles at the moment execution really begins. Changes made while the Task remains in PLANNING therefore naturally affect the initial Plan with the latest Owner-authorized Specification revision.
 
@@ -162,7 +162,7 @@ The call returns a disposable read-only snapshot at a finalized revision:
 - Todo Planner: the resource's current default ref;
 - Execution Task Planner: the Task's latest finalized Task Workspace revision for that resource when one exists, otherwise the resource's default ref.
 
-Inspecting the Task's own result runs on its workspace host (module 03). A snapshot is not a Task Workspace. It has no delivery lineage, does not count as the Task opening that resource, and nothing written inside it is a formal output. All Planner Attempts, with or without inspection, keep repository access read-only while permitting invocation of the bundled `monolab` CLI for authorized Tool Protocol commands. Use a verified native command allowlist or a read-only sandbox that permits the command and its required control connection; do not disable every command-execution path. Module 05 records the residual boundary.
+Inspecting the Task's own result runs on its workspace host (module 03). A snapshot is not a Task Workspace. It has no delivery lineage, does not count as the Task opening that resource, and nothing written inside it is a formal output. All Planner Attempts, with or without inspection, keep repository access read-only while permitting invocation of the bundled `monos` CLI for authorized Tool Protocol commands. Use a verified native command allowlist or a read-only sandbox that permits the command and its required control connection; do not disable every command-execution path. Module 05 records the residual boundary.
 
 Inspection does not give Planner repository selection authority. Planner still does not preselect repositories for a Task; Node Agents decide which resources they open with `open_workspace(resource_id)`.
 
@@ -204,7 +204,7 @@ Role is a globally reusable logical behavioral profile, not a runtime.
 
 Role describes execution behavior: how the Agent should work, communicate, inspect the codebase, structure its completion summary, and present human-readable output. Project-specific technical constraints such as dependency policy, technology choices, repository conventions, or delivery rules belong in Project Context rather than Role.
 
-System-required protocol/output requirements are injected by MonoLab's fixed Agent Protocol and do not need to be duplicated in every Role.
+System-required protocol/output requirements are injected by monos's fixed Agent Protocol and do not need to be duplicated in every Role.
 
 There is no Team or Team Blueprint abstraction.
 
@@ -244,7 +244,7 @@ When a Node starts, the execution Agent receives a compact, execution-focused co
 
 Default Node context should include:
 
-- Fixed Agent Protocol / MonoLab Tool Protocol boundaries;
+- Fixed Agent Protocol / monos Tool Protocol boundaries;
 - full instructions for the selected Role;
 - effective immutable Specification revision and active Node-scoped guidance with input provenance;
 - current Project Context;

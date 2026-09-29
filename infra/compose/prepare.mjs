@@ -9,11 +9,11 @@ mkdirSync(directory, { mode: 0o700 });
 const write = (name, value) => writeFileSync(`${directory}/${name}`, `${value}\n`, { mode: 0o600, flag: 'wx' });
 const password = randomBytes(32).toString('hex');
 write('db_password', password);
-write('database_url', `postgresql://monolab:${password}@database:5432/monolab`);
+write('database_url', `postgresql://monos:${password}@database:5432/monos`);
 write('signing_key', randomBytes(48).toString('hex'));
 write('runner_credential', randomBytes(48).toString('hex'));
 const openssl = (args) => execFileSync('openssl', args, { cwd: directory, stdio: 'ignore' });
-openssl(['req', '-x509', '-newkey', 'rsa:3072', '-nodes', '-sha256', '-days', '30', '-subj', '/CN=MonoLab boundary probe CA', '-keyout', 'ca.key', '-out', 'ca.crt',
+openssl(['req', '-x509', '-newkey', 'rsa:3072', '-nodes', '-sha256', '-days', '30', '-subj', '/CN=monos boundary probe CA', '-keyout', 'ca.key', '-out', 'ca.crt',
   '-addext', 'basicConstraints=critical,CA:TRUE',
   '-addext', 'keyUsage=critical,keyCertSign,cRLSign',
   '-addext', 'subjectKeyIdentifier=hash',

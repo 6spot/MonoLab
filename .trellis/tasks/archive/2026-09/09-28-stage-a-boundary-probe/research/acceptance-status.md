@@ -1,5 +1,9 @@
 # Boundary probe acceptance status
 
+> Product terminology and command/path examples were normalized to `monos` on
+> 2026-09-29. Exact historical names and observations remain in the original Git
+> revisions and unchanged raw JSON attachments; this edit is not a new test run.
+
 Accepted on 2026-09-29 for the tested Linux/OpenCode boundary. **AC1–AC10 pass**
 with the evidence levels and limits below. This closes Runtime feasibility,
 not production Runtime integration or the complete Stage A/V1 product.
@@ -7,7 +11,7 @@ not production Runtime integration or the complete Stage A/V1 product.
 Tested source: `5b940b049d4591b780b191e8f1de29777149b0d9`. See the
 [current host report](runtime-resume-07.md), [sanitized evidence](runtime-resume-07-evidence.json)
 and [historical failures and repairs](host-validation.md). Raw evidence remains
-root-private at `/root/monolab-probe-evidence-runtime-resume-07` on `100.120.14.84`.
+root-private at `/root/monos-probe-evidence-runtime-resume-07` on `100.120.14.84`.
 
 ## Verification
 

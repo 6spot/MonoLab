@@ -1,0 +1,6 @@
+{"file": ".trellis/spec/backend/owner-access.md", "reason": "Rename owning namespace while preserving contracts and verification."}
+{"file": ".trellis/spec/backend/quality-guidelines.md", "reason": "Rename owning namespace while preserving contracts and verification."}
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "Rename owning namespace while preserving contracts and verification."}
+{"file": ".trellis/spec/protocol/schema-generation.md", "reason": "Rename owning namespace while preserving contracts and verification."}
+{"file": ".trellis/spec/runner/execution-guidelines.md", "reason": "Rename owning namespace while preserving contracts and verification."}
+{"file": ".trellis/spec/runner/quality-guidelines.md", "reason": "Rename owning namespace while preserving contracts and verification."}

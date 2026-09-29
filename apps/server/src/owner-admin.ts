@@ -15,7 +15,7 @@ try {
   }
   const body = JSON.parse(Buffer.concat(chunks).toString('utf8')) as { password: string };
   if (!body || Object.keys(body).join(',') !== 'password') throw new Error('Expected password JSON');
-  const url = process.env.MONOLAB_DATABASE_URL_FILE ? (await readFile(process.env.MONOLAB_DATABASE_URL_FILE, 'utf8')).trim() : process.env.DATABASE_URL;
+  const url = process.env.MONOS_DATABASE_URL_FILE ? (await readFile(process.env.MONOS_DATABASE_URL_FILE, 'utf8')).trim() : process.env.DATABASE_URL;
   if (!url) throw new Error('Database configuration required');
   const db = database(url);
   try {

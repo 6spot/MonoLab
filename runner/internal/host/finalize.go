@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	protocol "monolab.local/protocol"
+	protocol "monos.local/protocol"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -44,7 +44,7 @@ func requireAncestor(workspace, base, head string) error {
 // Persist all commit inputs before commit-tree. Retrying after any Git command
 // creates the same object and ref; it cannot add an extra private commit.
 func finalize(workspace, common, operation, base string) (protocol.EffectResult, error) {
-	path := filepath.Join(common, "monolab-finalization-"+operation+".json")
+	path := filepath.Join(common, "monos-finalization-"+operation+".json")
 	var intent finalizationIntent
 	raw, err := os.ReadFile(path)
 	fresh := os.IsNotExist(err)
@@ -119,11 +119,11 @@ func finalize(workspace, common, operation, base string) (protocol.EffectResult,
 	if err = validateFinalizationIntent(intent); err != nil {
 		return protocol.EffectResult{}, err
 	}
-	commit, err := gitEnv(workspace, []string{"GIT_AUTHOR_DATE=" + intent.Date, "GIT_COMMITTER_DATE=" + intent.Date}, "commit-tree", intent.Tree, "-p", intent.Parent, "-m", "MonoLab private probe finalization "+operation)
+	commit, err := gitEnv(workspace, []string{"GIT_AUTHOR_DATE=" + intent.Date, "GIT_COMMITTER_DATE=" + intent.Date}, "commit-tree", intent.Tree, "-p", intent.Parent, "-m", "monos private probe finalization "+operation)
 	if err != nil {
 		return protocol.EffectResult{}, err
 	}
-	if _, err = git(workspace, "update-ref", "refs/monolab/operations/"+operation, commit); err != nil {
+	if _, err = git(workspace, "update-ref", "refs/monos/operations/"+operation, commit); err != nil {
 		return protocol.EffectResult{}, err
 	}
 	head, err = git(workspace, "rev-parse", "HEAD")
